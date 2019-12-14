@@ -18,35 +18,35 @@ void Mesh::draw(Shader *shader, glm::mat4 model) {
 
   // Set Textures
   int number_diffuse_textures = 0;
-  int number_specular_textures = 0;
+  bool use_specular_map = false;
+  shader->use();
+
   for (unsigned int i=0; i<textures.size(); i++) {
     glActiveTexture(GL_TEXTURE0+i);
 
     std::string name = textures[i].type;
     std::string number;
-    if (name == "texture_diffuse") {
+    if (name == "albedo_map") {
       number_diffuse_textures++;
       number = std::to_string(number_diffuse_textures);
-    } else if (name == "texture_specular") {
-      number_specular_textures++;
-      number = std::to_string(number_specular_textures);
-    } else {
-      qDebug() << "Unknown texture type:" << name.c_str();
-      qDebug() << "This will most likely cause an error of some kind.";
+      shader->setInt(("material."+name+"["+number+"]").c_str(), i);
+    } else if (name == "specular_map") {
+      use_specular_map = true;
+      shader->setInt(("material."+name).c_str(), i);
     }
 
-    shader->use();
-    shader->setInt((name+number).c_str(), i);
     glBindTexture(GL_TEXTURE_2D, textures[i].id);
   }
 
-  shader->setInt("number_diffuse_textures", number_diffuse_textures);
-  shader->setInt("number_specular_textures", number_specular_textures);
+  shader->setFloat("material.metalness", 0.9f);
+  shader->setInt("material.number_albedo_maps", number_diffuse_textures);
+  shader->setBool("material.use_specular_map", use_specular_map);
+  shader->setBool("material.use_ambient_occlusion_map", false);
 
   shader->setVec3("material.ambient", material.ambient);
-  shader->setVec3("material.diffuse", material.diffuse);
-  shader->setVec3("material.specular", material.specular);
-  shader->setInt("material.shininess", material.shininess);
+  shader->setVec3("material.albedo", material.diffuse);
+  shader->setFloat("material.specularity", 1.0f);
+  shader->setFloat("material.shininess", material.shininess);
   // Draw Mesh
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);

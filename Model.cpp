@@ -32,7 +32,7 @@ void Model::load_model(std::string path) {
   }
 
   directory = path.substr(0, path.find_last_of('/'));
-  process_node(scene->mRootNode, scene);
+  process_node(scene->mRootNode, scene, glm::mat4(1.0f));
 }
 
 void Model::draw(Shader *shader, glm::mat4 &model) {
@@ -41,21 +41,21 @@ void Model::draw(Shader *shader, glm::mat4 &model) {
   }
 }
 
-void Model::process_node(aiNode *node, const aiScene *scene) {
-  glm::mat4 transformation = aiMat_to_glmMat(&node->mTransformation);
+void Model::process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation) {
+  glm::mat4 transform = transformation*aiMat_to_glmMat(&node->mTransformation);
   // Process the node's mesh (might be none)
   for (unsigned int i=0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes.push_back(process_mesh(mesh, scene, transformation));
+    meshes.push_back(process_mesh(mesh, scene, transform));
   }
 
   // Process the node's children (might be none)
   for (unsigned int i=0; i < node->mNumChildren; i++) {
-    process_node(node->mChildren[i], scene);
+    process_node(node->mChildren[i], scene, transform);
   }
 }
 
-Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, glm::mat4 &transformation) {
+Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transformation) {
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   std::vector<Texture> textures;
@@ -96,9 +96,9 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, glm::mat4 &transf
   // Load material
   aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
   // Load textures
-  std::vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+  std::vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "albedo_map");
   textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
-  std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "texture_specular");
+  std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "specular_map");
   textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
   // Load colors
   Material mesh_colors;
@@ -109,9 +109,20 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, glm::mat4 &transf
   material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
   mesh_colors.diffuse = glm::vec3(color.r,color.g,color.b);
   material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-  mesh_colors.specular = glm::vec3(color.r,color.g,color.b);
+  mesh_colors.specular = glm::normalize(glm::vec3(color.r,color.g,color.b));
   material->Get(AI_MATKEY_SHININESS, shininess);
   mesh_colors.shininess = shininess;
+  material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
+  //mesh_colors.specular /= shininess;
+
+  /*qDebug() << mesh->mName.C_Str();
+  qDebug() << "ambient:" << mesh_colors.ambient.x << mesh_colors.ambient.y << mesh_colors.ambient.z;
+  qDebug() << "diffuse:" << mesh_colors.diffuse.x << mesh_colors.diffuse.y << mesh_colors.diffuse.z;
+  qDebug() << "specular" << mesh_colors.specular.x << mesh_colors.specular.y << mesh_colors.specular.z;
+  qDebug() << "shininess" << mesh_colors.shininess;
+  qDebug() << "shininess strength" << shininess << '\n';
+
+  qDebug() << glm::normalize(glm::vec3(1.0f)).x << '\n';*/
 
   return new Mesh(vertices, indices, textures, mesh_colors, transformation);
 }
@@ -158,7 +169,7 @@ unsigned int Model::load_texture(const char *path, std::string directory) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   QImage img = QImage(filename.c_str()).convertToFormat(QImage::Format_RGB888);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
   glGenerateMipmap(GL_TEXTURE_2D);
 
   return textureID;

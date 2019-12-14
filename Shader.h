@@ -21,6 +21,7 @@ public:
   void loadShaders(const char *vertex_path, const char *fragment_path);
   void use();
 
+  void setBool(const char *name, bool value);
   void setInt(const char *name, int value);
   void setFloat(const char *name, float value);
   void setVec3(const char *name, const glm::vec3 &vec);

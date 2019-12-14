@@ -9,7 +9,7 @@ Object::Object(Material material, glm::vec3 position, glm::vec3 scale) :
 {}
 
 Object::Object() {
-  material = {glm::vec3(1.0f),glm::vec3(1.0f),glm::vec3(1.0f),0.0f};
+  material = {glm::vec3(0.1f),glm::vec3(1.0f),glm::vec3(1.0f),0.0f};
   position = glm::vec3(0.0f);
   scale = glm::vec3(1.0f);
 }
@@ -122,7 +122,7 @@ void Object::load_texture(const char *image_path, const char *image_name) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   QImage img = QImage(image_path).convertToFormat(QImage::Format_RGB888).mirrored( true, true);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
   glGenerateMipmap(GL_TEXTURE_2D);
 
   shader->use();
@@ -135,9 +135,10 @@ void Object::draw() {
     glActiveTexture(GL_TEXTURE0+i);
     glBindTexture(GL_TEXTURE_2D, textures[i]);
   }
+
+  shader->setVec3("material.albedo", material.diffuse);
   shader->setVec3("material.ambient", material.ambient);
-  shader->setVec3("material.diffuse", material.diffuse);
-  shader->setVec3("material.specular", material.specular);
+  shader->setFloat("material.specularity", 1.0f);
   shader->setInt("material.shininess", material.shininess);
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLvoid*)0);

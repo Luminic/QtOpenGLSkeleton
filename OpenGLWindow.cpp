@@ -12,7 +12,7 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) :
   QOpenGLWidget(parent),
   settings(new Settings(this)),
   scene(new Scene()),
-  object({glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), 64.0f}),
+  object({glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(0.0f), 64.0f}),
   light(glm::vec3(1.0f, 1.0f, 1.0f), 0.2f, 1.0f, 1.0f, glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f)),
   object_shader(new Shader()),
   light_shader(new Shader())
@@ -44,21 +44,24 @@ void OpenGLWindow::initializeGL() {
 
   object.initialize_shader(object_shader);
   object.initialize_buffers();
-  object.load_texture("textures/container2.png", "diffuse1");
-  object.load_texture("textures/container2_specular.png", "specular1");
+  object.load_texture("textures/container2.png", "material.albedo_map[0]");
+  object.load_texture("textures/container2_specular.png", "material.specular_map");
 
   light.initialize_shader(light_shader);
   light.initialize_buffers();
 
   scene->initialize_scene(light_shader, object.get_VBO(), object.get_EBO());
 
-  nanosuit = new Model("models/mouse/mouse.fbx");
+  nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/material_test/material_test.fbx");
+  //nanosuit = new Model("models/mouse/mouse.fbx");
   //nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->set_scale(glm::vec3(0.5f));
   settings->set_object(nanosuit, "Nanosuit");
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
   //glEnable(GL_CULL_FACE);
+  //glEnable(GL_FRAMEBUFFER_SRGB);
   glEnable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glClearColor(0.1, 0.1, 0.2, 1.0);
@@ -105,8 +108,10 @@ void OpenGLWindow::paintGL() {
   object_shader->setMat4("view", view);
 
   scene->set_sunlight_settings("sunlight", object_shader);
-  object_shader->setInt("number_diffuse_textures", 1);
-  object_shader->setInt("number_specular_textures", 1);
+  object_shader->setFloat("material.metalness", 1.0f);
+  object_shader->setInt("material.number_albedo_maps", 1);
+  object_shader->setBool("material.use_ambient_occlusion_map", false);
+  object_shader->setBool("material.use_specular_map", true);
 
   glm::vec3 cube_positions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),

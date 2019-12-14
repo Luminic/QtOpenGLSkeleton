@@ -28,8 +28,8 @@ public:
 
 protected:
   void load_model(std::string path);
-  void process_node(aiNode *node, const aiScene *scene);
-  Mesh * process_mesh(aiMesh *mesh, const aiScene *scene, glm::mat4 &transformation);
+  void process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation);
+  Mesh * process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transformation);
   std::vector<Texture> load_material_textures(aiMaterial *mat, aiTextureType type, std::string type_name);
   unsigned int load_texture(const char *path, std::string directory);
 
