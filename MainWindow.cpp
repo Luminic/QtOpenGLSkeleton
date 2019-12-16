@@ -3,14 +3,6 @@
 
 #include "MainWindow.h"
 
-/*
-Let me briefly describe what each option does so you'll understand :)
-Include Normals: makes sure the normal vectors are included within the wavefront file (used for lighting).
-Include UVs: makes sure the texture coordinates are included if any (UV = texture coordinate).
-Write Materials: also exports a .mtl file that contains all the textures used and/or colors of the model.
-Triangulate Faces: this option makes sure that all shapes are first transformed to triangles before exporting. This is important, because Blender by default uses quads as their primitive shapes and OpenGL prefers triangles as its input. By enabling this option, Blender automatically transforms all their shapes to triangles first so you can directly draw the model (then you don't have to take this into account when importing your model).
-*/
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
   GLWindow(new OpenGLWindow(this)),
   frame_time(new QTime()),
