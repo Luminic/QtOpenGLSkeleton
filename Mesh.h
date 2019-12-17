@@ -1,6 +1,10 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include <QObject>
+#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_2_Core>
+
 #include <vector>
 #include <string>
 
@@ -8,7 +12,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Object.h"
 #include "Shader.h"
 #include "Material.h"
 
@@ -18,7 +21,7 @@ struct Vertex {
   glm::vec2 texture_coordinate;
 };
 
-class Mesh : public Object {
+class Mesh : public QObject, protected QOpenGLFunctions_4_2_Core {
   Q_OBJECT
 
 public:
@@ -36,8 +39,12 @@ public:
 
   Material *material;
 
-private:
+protected:
   glm::mat4 transformation;
+
+  unsigned int VAO;
+  unsigned int VBO;
+  unsigned int EBO;
 };
 
 #endif

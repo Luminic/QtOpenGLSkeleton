@@ -39,6 +39,12 @@ void PointLight::draw(Shader *shader) {
 }
 
 // Getters
+glm::mat4 PointLight::get_model_matrix() {
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
+  model = glm::scale(model, glm::vec3(scale));
+  return model;
+}
+
 glm::vec3 PointLight::get_color() {return color;}
 float PointLight::get_ambient() {return ambient;}
 float PointLight::get_diffuse() {return diffuse;}

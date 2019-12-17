@@ -13,7 +13,7 @@
 
 #include "Shader.h"
 #include "Camera.h"
-#include "Object.h"
+#include "Node.h"
 #include "PointLight.h"
 #include "Model.h"
 #include "Mesh.h"

@@ -17,7 +17,7 @@
 
 #include "Scene.h"
 #include "Camera.h"
-#include "Object.h"
+#include "Node.h"
 #include "Model.h"
 #include "PointLight.h"
 
@@ -30,7 +30,7 @@ public:
 
   void set_scene(Scene *scene, const char *name="Scene");
   void set_camera(Camera *camera, const char *name="Camera");
-  void set_object(Object *object, const char *name="Object");
+  void set_object(Node *object, const char *name="Node");
   void set_point_light(PointLight *point_light, const char *name="Point Light");
 
   template <class T>

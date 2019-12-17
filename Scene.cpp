@@ -12,6 +12,8 @@ Scene::Scene(QObject *parent) : QObject(parent),
 Scene::~Scene() {
   delete camera;
   delete sunlight;
+  for (auto m: materials)
+    delete m;
 }
 
 void Scene::initialize_scene() {
@@ -34,7 +36,7 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
 void Scene::set_sunlight_settings(std::string name, Shader *shader) {
   shader->use();
 
-  shader->setVec3((name+".direction").c_str(), sunlight->get_position());
+  shader->setVec3((name+".direction").c_str(), sunlight->position);
 
   shader->setVec3((name+".ambient").c_str(), sunlight->get_color()*sunlight->get_ambient());
   shader->setVec3((name+".diffuse").c_str(), sunlight->get_color()*sunlight->get_diffuse());

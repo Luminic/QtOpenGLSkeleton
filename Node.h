@@ -10,21 +10,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Mesh.h"
 #include "Shader.h"
 
-class Object : public QObject, protected QOpenGLFunctions_4_2_Core {
+class Node : public QObject, protected QOpenGLFunctions_4_2_Core {
   Q_OBJECT
 
 public:
-  Object(glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f));
-  ~Object();
+  Node(glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::mat4 transformation=glm::mat4(1.0f));
+  ~Node();
+
+  void draw(Shader *shader, glm::mat4 model);
 
   // Getters
   glm::mat4 get_model_matrix();
   glm::vec3 get_position();
   glm::vec3 get_scale();
-  unsigned int get_VBO();
-  unsigned int get_EBO();
+
+  std::vector<Mesh*> meshes;
+  std::vector<Node*> child_nodes;
+
+  glm::mat4 transformation;
+  glm::vec3 position;
+  glm::vec3 scale;
 
 public slots:
   // Setters
@@ -36,14 +44,6 @@ public slots:
   void set_x_scale(float x);
   void set_y_scale(float y);
   void set_z_scale(float z);
-
-protected:
-  glm::vec3 position;
-  glm::vec3 scale;
-
-  unsigned int VAO;
-  unsigned int VBO;
-  unsigned int EBO;
 };
 
 #endif

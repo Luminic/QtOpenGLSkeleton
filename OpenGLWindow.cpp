@@ -48,11 +48,13 @@ void OpenGLWindow::initializeGL() {
   scene = new Scene(this);
   scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
   settings->set_camera(scene->camera);
+  settings->set_point_light(scene->sunlight, "Sunlight");
 
   cube = new Mesh();
 
   light = new PointLight(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
   light->set_falloff(1.0f, 0.09f, 0.032f);
+  settings->set_point_light(light, "Pointlight");
 
   object_shader = new Shader();
   light_shader = new Shader();
@@ -60,7 +62,6 @@ void OpenGLWindow::initializeGL() {
   object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
 
-  //cube.initialize_buffers();
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
@@ -110,7 +111,7 @@ void OpenGLWindow::paintGL() {
   light_shader->setMat4("view", view);
 
   for (int i=0; i<4; i++) {
-    light->set_position(point_light_positions[i]);
+    light->position = point_light_positions[i];
     light->draw(light_shader);
     light->set_object_settings(("light["+std::to_string(i)+"]").c_str(), object_shader);
   }
@@ -138,7 +139,7 @@ void OpenGLWindow::paintGL() {
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, cube_positions[i]+glm::vec3(0.0f,0.0f,2.0f));
     model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
-    model = glm::scale(model, cube->get_scale());
+    model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
     //object_shader->setMat4("model", model);
     cube->draw(object_shader, model);
   }
@@ -148,7 +149,7 @@ void OpenGLWindow::paintGL() {
   //object_shader->use();
   glm::mat4 model = nanosuit->get_model_matrix();
   //object_shader->setMat4("model", model);
-
+  //model = glm::mat4(1.0f);
   nanosuit->draw(object_shader, model);
 
   //glBindVertexArray(0);

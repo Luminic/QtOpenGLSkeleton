@@ -4,12 +4,15 @@
 #include <QObject>
 #include <QOpenGLFunctions_4_2_Core>
 
+#include <vector>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 #include "Camera.h"
+#include "Material.h"
 #include "PointLight.h"
 
 class Scene : public QObject {
@@ -27,6 +30,7 @@ public:
 
   Camera *camera;
   PointLight *sunlight; // Display it like a pointlight but have its lighting be sunlight
+  std::vector<Material*> materials;
 
   glm::vec3 background_color;
 

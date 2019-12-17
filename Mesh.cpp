@@ -22,6 +22,7 @@ Mesh::~Mesh() {
 }
 
 void Mesh::draw(Shader *shader, glm::mat4 model) {
+  shader->use();
   shader->setMat4("model", model*transformation);
 
   material->set_materials(shader);

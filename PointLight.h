@@ -21,7 +21,11 @@ public:
 
   void draw(Shader *shader);
 
+  glm::vec3 position;
+  glm::vec3 scale;
+
   // Getters
+  glm::mat4 get_model_matrix();
   glm::vec3 get_color();
   float get_ambient();
   float get_diffuse();

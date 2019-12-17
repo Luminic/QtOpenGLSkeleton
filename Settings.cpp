@@ -25,13 +25,13 @@ void Settings::set_camera(Camera *camera, const char *name) {
   addTab(Camera_widget, tr(name));
 }
 
-void Settings::set_object(Object *object, const char *name) {
-  QWidget *Object_widget = new QWidget(this);
+void Settings::set_object(Node *object, const char *name) {
+  /*QWidget *Object_widget = new QWidget(this);
   QGridLayout *Object_layout = new QGridLayout(Object_widget);
 
   QGroupBox *Scale_box = create_3_option_group("Scale", "X:", "Y:", "Z:",
     object,
-    &Object::set_x_scale, &Object::set_y_scale, &Object::set_z_scale,
+    &Node::set_x_scale, &Node::set_y_scale, &Node::set_z_scale,
     object->get_scale(), 0.0, 1.0, 0.1, 3
   );
 
@@ -39,7 +39,7 @@ void Settings::set_object(Object *object, const char *name) {
 
   QGroupBox *Position_box = create_3_option_group("Position", "X:", "Y:", "Z:",
     object,
-    &Object::set_x_position, &Object::set_y_position, &Object::set_z_position,
+    &Node::set_x_position, &Node::set_y_position, &Node::set_z_position,
     object->get_position(), -100.0, 100.0, 0.3, 3
   );
 
@@ -49,11 +49,11 @@ void Settings::set_object(Object *object, const char *name) {
   Scrolling->setWidget(Object_widget);
   Scrolling->setWidgetResizable(true);
 
-  addTab(Scrolling, tr(name));
+  addTab(Scrolling, tr(name));*/
 }
 
 void Settings::set_point_light(PointLight *point_light, const char *name) {
-  QWidget *Light_widget = new QWidget(this);
+  /*QWidget *Light_widget = new QWidget(this);
   QGridLayout *Light_layout = new QGridLayout(Light_widget);
 
 
@@ -65,8 +65,8 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
   Light_layout->addWidget(Color_box, 0, 0);
 
   QGroupBox *Position_box = create_3_option_group("Position", "X:", "Y:", "Z:",
-    static_cast<Object*>(point_light),
-    &Object::set_x_position, &Object::set_y_position, &Object::set_z_position,
+    static_cast<Node*>(point_light),
+    &Node::set_x_position, &Node::set_y_position, &Node::set_z_position,
     point_light->get_position(), -100.0, 100.0, 0.3, 3
   );
   Light_layout->addWidget(Position_box, 1, 0);
@@ -75,7 +75,7 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
   Scrolling->setWidget(Light_widget);
   Scrolling->setWidgetResizable(true);
 
-  addTab(Scrolling, tr(name));
+  addTab(Scrolling, tr(name));*/
 }
 
 template <class T>

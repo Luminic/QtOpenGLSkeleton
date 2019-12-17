@@ -21,13 +21,13 @@ Model::Model(const char *path) {
 }
 
 Model::~Model() {
-  for (auto m : meshes)
-    delete m;
+  //for (auto m : meshes)
+  //  delete m;
 }
 
 void Model::load_model(std::string path) {
   Assimp::Importer importer;
-  const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+  const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_RemoveRedundantMaterials);
   // Check if the model loaded correctly
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
     qDebug() << "ERROR::ASSIMP::" << importer.GetErrorString();
@@ -35,27 +35,26 @@ void Model::load_model(std::string path) {
   }
 
   directory = path.substr(0, path.find_last_of('/'));
-  process_node(scene->mRootNode, scene, glm::mat4(1.0f));
+  child_nodes.push_back(process_node(scene->mRootNode, scene, glm::mat4(1.0f)));
 }
 
-void Model::draw(Shader *shader, glm::mat4 &model) {
-  for (unsigned int i=0; i<meshes.size(); i++) {
-    meshes[i]->draw(shader, model);
-  }
-}
-
-void Model::process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation) {
+Node * Model::process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation) {
   glm::mat4 transform = transformation*aiMat_to_glmMat(&node->mTransformation);
+
+  Node *my_node = new Node();
+  my_node->transformation = transform;
+
   // Process the node's mesh (might be none)
   for (unsigned int i=0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes.push_back(process_mesh(mesh, scene, transform));
+    my_node->meshes.push_back(process_mesh(mesh, scene, transform));
   }
 
   // Process the node's children (might be none)
   for (unsigned int i=0; i < node->mNumChildren; i++) {
-    process_node(node->mChildren[i], scene, transform);
+    my_node->child_nodes.push_back(process_node(node->mChildren[i], scene, transform));
   }
+  return my_node;
 }
 
 Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transformation) {
@@ -99,17 +98,9 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &
   // Load material
   Material *mesh_colors = new Material();
   aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-  // Load textures
-  std::vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "albedo_map");
-  textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
-  mesh_colors->albedo_maps = diffuse_maps;
-  std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "specular_map");
-  textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
-  if (specular_maps.size() > 0) {
-    mesh_colors->specular_map = specular_maps.front();
-  } else {
-    mesh_colors->specular_map = Texture({0,"",""});
-  }
+
+  load_material_textures(material, mesh_colors);
+
   // Load colors
   aiColor3D color(0.0f,0.0f,0.0f);
   float shininess;
@@ -132,53 +123,24 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &
   qDebug() << "shininess" << mesh_colors.shininess;
   qDebug() << "shininess strength" << shininess << '\n';*/
 
-  return new Mesh(vertices, indices, mesh_colors, transformation);
+  return new Mesh(vertices, indices, mesh_colors, glm::mat4(1.0f));
 }
 
-std::vector<Texture> Model::load_material_textures(aiMaterial *mat, aiTextureType type, std::string type_name) {
-  std::vector<Texture> textures;
-  for (unsigned int i=0; i < mat->GetTextureCount(type); i++) {
-    aiString str;
-    mat->GetTexture(type, i, &str);
-    bool skip = false;
+void Model::load_material_textures(aiMaterial *mat, Material *mesh_material) {
+  aiString str;
+  // Load diffuse maps
+  for (unsigned int i=0; i < mat->GetTextureCount(aiTextureType_DIFFUSE); i++) {
+    mat->GetTexture(aiTextureType_DIFFUSE, i, &str);
+    std::string path = std::string(directory) + '/' + str.C_Str();
 
-    // Check if the texture is already loaded
-    for (unsigned int j=0; j < textures_loaded.size(); j++) {
-      if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0) {
-        textures.push_back(textures_loaded[j]);
-        skip = true;
-        break;
-      }
-    }
-
-    if (!skip) {
-      Texture texture;
-      texture.id = load_texture(str.C_Str(), directory);
-      texture.type = type_name;
-      texture.path = str.C_Str();
-
-      textures.push_back(texture);
-      textures_loaded.push_back(texture);
-    }
+    mesh_material->load_texture(path.c_str(), ALBEDO_MAP);
   }
-  return textures;
-}
+  // Load specular maps (can only load one atm--otherwise it should be the same as albedo maps)
+  if (mat->GetTextureCount(aiTextureType_SPECULAR) >= 1) {
+    mat->GetTexture(aiTextureType_SPECULAR, 0, &str);
+    std::string path = std::string(directory) + '/' + str.C_Str();
 
-unsigned int Model::load_texture(const char *path, std::string directory) {
-  std::string filename = directory + '/' + path;
-
-  unsigned int textureID;
-  glGenTextures(1, &textureID);
-  glBindTexture(GL_TEXTURE_2D, textureID);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  QImage img = QImage(filename.c_str()).convertToFormat(QImage::Format_RGB888);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  return textureID;
+    mesh_material->load_texture(path.c_str(), SPECULAR_MAP);
+  }
+  // Cannot load any other type of map atm
 }

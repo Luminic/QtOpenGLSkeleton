@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_4_2_Core>
 
+#include <string>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -35,6 +36,11 @@ public:
   void set_materials(Shader *shader);
 
   void load_texture(const char *path, Image_Type type);
+
+  static std::vector<Texture> loaded_textures;
+  static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
+
+  bool operator==(const Material& other_material);
 
   // Defaults to 0 (non-metallic)
   float metalness;
