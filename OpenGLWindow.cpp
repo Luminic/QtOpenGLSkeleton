@@ -66,12 +66,14 @@ void OpenGLWindow::initializeGL() {
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
   cube->material->load_texture("textures/container2_specular.png", SPECULAR_MAP);
-  cube->material->metalness = 1.0f;
+  cube->material->metalness = 0.0f;
+  cube->material = Scene::is_material_loaded(cube->material);
 
-  //nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
+  nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/material_test.fbx");
   //nanosuit = new Model("models/mouse/mouse.fbx");
-  nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  //nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->set_scale(glm::vec3(0.2f));
   settings->set_object(nanosuit, "Nanosuit");
 
@@ -140,8 +142,8 @@ void OpenGLWindow::paintGL() {
     model = glm::translate(model, cube_positions[i]+glm::vec3(0.0f,0.0f,2.0f));
     model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
     model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
-    //object_shader->setMat4("model", model);
-    cube->draw(object_shader, model);
+    object_shader->setMat4("model", model);
+    cube->draw(object_shader);
   }
 
   // Render the Nanosuit

@@ -15,9 +15,9 @@
 #include "Shader.h"
 
 enum Image_Type {
-  ALBEDO_MAP,
-  AMBIENT_OCCLUSION_MAP,
-  SPECULAR_MAP
+  ALBEDO_MAP, // Should be in gamma space (will be converted into linear space)
+  AMBIENT_OCCLUSION_MAP, // Should be in linear space
+  SPECULAR_MAP // Should be in linear space
 };
 
 struct Texture {
@@ -36,9 +36,6 @@ public:
   void set_materials(Shader *shader);
 
   void load_texture(const char *path, Image_Type type);
-
-  static std::vector<Texture> loaded_textures;
-  static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
 
   bool operator==(const Material& other_material);
 

@@ -27,8 +27,8 @@ public:
 
 protected:
   void load_model(std::string path);
-  Node * process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation);
-  Mesh * process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transformation);
+  Node * process_node(aiNode *node, const aiScene *scene);
+  Mesh * process_mesh(aiMesh *mesh, const aiScene *scene);
 
   void load_material_textures(aiMaterial *mat, Material *mesh_material);
 

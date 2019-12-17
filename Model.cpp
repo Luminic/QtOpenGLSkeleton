@@ -2,6 +2,7 @@
 #include <QDebug>
 
 #include "Model.h"
+#include "Scene.h"
 
 
 glm::mat4 aiMat_to_glmMat(const aiMatrix4x4* from) {
@@ -35,29 +36,27 @@ void Model::load_model(std::string path) {
   }
 
   directory = path.substr(0, path.find_last_of('/'));
-  child_nodes.push_back(process_node(scene->mRootNode, scene, glm::mat4(1.0f)));
+  child_nodes.push_back(process_node(scene->mRootNode, scene));
 }
 
-Node * Model::process_node(aiNode *node, const aiScene *scene, const glm::mat4 &transformation) {
-  glm::mat4 transform = transformation*aiMat_to_glmMat(&node->mTransformation);
-
+Node * Model::process_node(aiNode *node, const aiScene *scene) {
   Node *my_node = new Node();
-  my_node->transformation = transform;
+  my_node->transformation = aiMat_to_glmMat(&node->mTransformation);;
 
   // Process the node's mesh (might be none)
   for (unsigned int i=0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    my_node->meshes.push_back(process_mesh(mesh, scene, transform));
+    my_node->meshes.push_back(process_mesh(mesh, scene));
   }
 
   // Process the node's children (might be none)
   for (unsigned int i=0; i < node->mNumChildren; i++) {
-    my_node->child_nodes.push_back(process_node(node->mChildren[i], scene, transform));
+    my_node->child_nodes.push_back(process_node(node->mChildren[i], scene));
   }
   return my_node;
 }
 
-Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &transformation) {
+Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   std::vector<Texture> textures;
@@ -113,8 +112,10 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &
   material->Get(AI_MATKEY_SHININESS, shininess);
   mesh_colors->shininess = shininess;
   material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
-  mesh_colors->metalness = 0.0f;
+  mesh_colors->metalness = 1.0f;
   //mesh_colors.specular /= shininess;
+
+  mesh_colors = Scene::is_material_loaded(mesh_colors);
 
   /*qDebug() << mesh->mName.C_Str();
   qDebug() << "ambient:" << mesh_colors.ambient.x << mesh_colors.ambient.y << mesh_colors.ambient.z;
@@ -123,7 +124,7 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene, const glm::mat4 &
   qDebug() << "shininess" << mesh_colors.shininess;
   qDebug() << "shininess strength" << shininess << '\n';*/
 
-  return new Mesh(vertices, indices, mesh_colors, glm::mat4(1.0f));
+  return new Mesh(vertices, indices, mesh_colors);
 }
 
 void Model::load_material_textures(aiMaterial *mat, Material *mesh_material) {

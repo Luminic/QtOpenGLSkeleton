@@ -1,11 +1,12 @@
 #include <QDebug>
 
 #include "Material.h"
-
-std::vector<Texture> Material::loaded_textures;
+#include "Scene.h"
 
 Material::Material() :
   metalness(0.0f),
+  ambient_occlusion_map({0,"",""}),
+  specular_map({0,"",""}),
   albedo(glm::vec3(1.0f)),
   ambient(glm::vec3(0.2f)),
   specularity(1.0f),
@@ -14,7 +15,8 @@ Material::Material() :
   initializeOpenGLFunctions();
 }
 
-Material::~Material() {}
+Material::~Material() {
+}
 
 void Material::set_materials(Shader *shader) {
   shader->use();
@@ -43,7 +45,7 @@ void Material::set_materials(Shader *shader) {
 }
 
 void Material::load_texture(const char *path, Image_Type type) {
-  Texture texture = Material::is_texture_loaded(path);
+  Texture texture = Scene::is_texture_loaded(path);
 
   if (texture.id == 0) {
     texture.path = path;
@@ -57,10 +59,14 @@ void Material::load_texture(const char *path, Image_Type type) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     QImage img = QImage(path).convertToFormat(QImage::Format_RGB888);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+    if (type == ALBEDO_MAP) { // Convert gamma (SRGB) space into linear (RGB) space
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+    } else { // Non-albedo maps should already be in linear space
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+    }
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    Material::loaded_textures.push_back(texture);
+    Scene::loaded_textures.push_back(texture);
   }
 
   switch (type) {
@@ -77,15 +83,6 @@ void Material::load_texture(const char *path, Image_Type type) {
       specular_map = texture;
       break;
   }
-}
-
-Texture Material::is_texture_loaded(std::string image_path) {
-  for (unsigned int i=0; i<loaded_textures.size(); i++) {
-    if (image_path == Material::loaded_textures[i].path) {
-      return Material::loaded_textures[i];
-    }
-  }
-  return Texture();
 }
 
 inline bool compare_floats(float a, float b, float error=0.001) {

@@ -12,6 +12,7 @@
 
 #include "Shader.h"
 #include "Camera.h"
+#include "Model.h"
 #include "Material.h"
 #include "PointLight.h"
 
@@ -30,7 +31,12 @@ public:
 
   Camera *camera;
   PointLight *sunlight; // Display it like a pointlight but have its lighting be sunlight
-  std::vector<Material*> materials;
+
+  static std::vector<Texture> loaded_textures;
+  static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
+
+  static std::vector<Material*> loaded_materials;
+  static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
   glm::vec3 background_color;
 

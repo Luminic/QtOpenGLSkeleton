@@ -25,14 +25,14 @@ class Mesh : public QObject, protected QOpenGLFunctions_4_2_Core {
   Q_OBJECT
 
 public:
-  Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material, glm::mat4 transformation=glm::mat4(1.0f));
+  Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material);
   Mesh();
   ~Mesh();
 
   void initialize_cube();
   void initialize_buffers();
 
-  void draw(Shader *shader, glm::mat4 model);
+  void draw(Shader *shader);
 
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;

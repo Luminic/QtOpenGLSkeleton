@@ -2,29 +2,24 @@
 
 #include "Mesh.h"
 
-Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material, glm::mat4 transformation) :
+Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material) :
   vertices(vertices),
   indices(indices),
-  material(material),
-  transformation(transformation)
+  material(material)
 {
   initialize_buffers();
 }
 
 Mesh::Mesh() :
-material(nullptr), // Declare as null bc compiler doesn't
-transformation(glm::mat4(1.0f))
+material(nullptr) // Declare as null bc compiler doesn't
 {}
 
 Mesh::~Mesh() {
-  if (material != nullptr)
-    delete material;
+  //if (material != nullptr)
+    //delete material;
 }
 
-void Mesh::draw(Shader *shader, glm::mat4 model) {
-  shader->use();
-  shader->setMat4("model", model*transformation);
-
+void Mesh::draw(Shader *shader) {
   material->set_materials(shader);
 
   // Draw Mesh
