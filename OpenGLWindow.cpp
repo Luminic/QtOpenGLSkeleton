@@ -31,6 +31,7 @@ void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mou
 }
 
 OpenGLWindow::~OpenGLWindow() {
+  delete settings;
   delete cube;
   delete light;
   delete nanosuit;
@@ -43,7 +44,7 @@ void OpenGLWindow::initializeGL() {
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
 
-  settings = new Settings(this);
+  settings = new Settings();
 
   scene = new Scene(this);
   scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
@@ -53,7 +54,6 @@ void OpenGLWindow::initializeGL() {
   cube = new Mesh();
 
   light = new PointLight(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
-  light->set_falloff(1.0f, 0.09f, 0.032f);
   settings->set_point_light(light, "Pointlight");
 
   object_shader = new Shader();
@@ -74,8 +74,8 @@ void OpenGLWindow::initializeGL() {
   //nanosuit = new Model("models/material_test/material_test.fbx");
   //nanosuit = new Model("models/mouse/mouse.fbx");
   //nanosuit = new Model("models/nanosuit/nanosuit.obj");
-  nanosuit->set_scale(glm::vec3(0.2f));
-  settings->set_object(nanosuit, "Nanosuit");
+  nanosuit->scale = glm::vec3(0.2f);
+  settings->set_node(nanosuit, "Nanosuit");
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
   //glEnable(GL_CULL_FACE);
@@ -120,7 +120,7 @@ void OpenGLWindow::paintGL() {
 
   // Render the cube
   object_shader->use();
-  object_shader->setVec3("camera_position", scene->camera->get_position());
+  object_shader->setVec3("camera_position", scene->camera->position);
   object_shader->setMat4("view", view);
 
   scene->set_sunlight_settings("sunlight", object_shader);

@@ -5,15 +5,20 @@
 
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 position, float yaw) {
-  this->position = position;
+Camera::Camera(glm::vec3 position, float yaw, float pitch) :
+  position(position),
+  yaw(yaw),
+  pitch(pitch)
+{
+  mouse_sensitivity = 0.05f;
+  max_movement_speed = 0.5f;
+  acceleration = 0.15f;
+  deceleration = 0.08f;
+
   world_up = glm::vec3(0.0f, 1.0f, 0.0f);
   up = world_up;
 
   velocity = glm::vec3(0.0f,0.0f,0.0f);
-
-  this->yaw = yaw;
-  pitch = 0.0f;
 
   update_vectors();
 }
@@ -102,21 +107,5 @@ void Camera::update_vectors() {
   up = glm::normalize(glm::cross(right, front));
 }
 
-// Getters
-glm::vec3 Camera::get_position() {return position;}
 glm::vec3 Camera::get_front() {return front;}
 glm::vec3 Camera::get_up() {return up;}
-glm::vec3 Camera::get_velocity() {return velocity;}
-float Camera::get_yaw() {return yaw;}
-float Camera::get_pitch() {return pitch;}
-float Camera::get_max_movement_speed() {return max_movement_speed;}
-float Camera::get_acceleration() {return acceleration;}
-float Camera::get_deceleration() {return deceleration;}
-float Camera::get_mouse_sensitivity() {return mouse_sensitivity;}
-
-// Setters (which are slots)
-void Camera::set_velocity(glm::vec3 new_velocity) {velocity = new_velocity;}
-void Camera::set_max_movement_speed(float speed) {max_movement_speed=speed;}
-void Camera::set_acceleration(float acceleration) {this->acceleration=acceleration;}
-void Camera::set_deceleration(float deceleration) {this->deceleration=deceleration;}
-void Camera::set_mouse_sensitivity(float sensitivity) {mouse_sensitivity=sensitivity;}

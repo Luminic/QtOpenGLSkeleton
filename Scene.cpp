@@ -41,9 +41,9 @@ void Scene::set_sunlight_settings(std::string name, Shader *shader) {
 
   shader->setVec3((name+".direction").c_str(), sunlight->position);
 
-  shader->setVec3((name+".ambient").c_str(), sunlight->get_color()*sunlight->get_ambient());
-  shader->setVec3((name+".diffuse").c_str(), sunlight->get_color()*sunlight->get_diffuse());
-  shader->setVec3((name+".specular").c_str(), sunlight->get_color()*sunlight->get_specular());
+  shader->setVec3((name+".ambient").c_str(), (sunlight->color)*(sunlight->ambient));
+  shader->setVec3((name+".diffuse").c_str(), (sunlight->color)*(sunlight->diffuse));
+  shader->setVec3((name+".specular").c_str(), (sunlight->color)*(sunlight->specular));
 }
 
 Texture Scene::is_texture_loaded(std::string image_path) {

@@ -10,6 +10,11 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, flo
 {
   this->position = position;
   this->scale = scale;
+
+  constant = 1.0f;
+  linear = 0.09f;
+  quadratic = 0.032f;
+
   initialize_cube();
 }
 
@@ -44,29 +49,3 @@ glm::mat4 PointLight::get_model_matrix() {
   model = glm::scale(model, glm::vec3(scale));
   return model;
 }
-
-glm::vec3 PointLight::get_color() {return color;}
-float PointLight::get_ambient() {return ambient;}
-float PointLight::get_diffuse() {return diffuse;}
-float PointLight::get_specular() {return specular;}
-float PointLight::get_constant() {return constant;}
-float PointLight::get_linear() {return linear;}
-float PointLight::get_quadratic() {return quadratic;}
-
-//Setters
-void PointLight::set_falloff(float constant, float linear, float quadratic) {
-  this->constant = constant;
-  this->linear = linear;
-  this->quadratic = quadratic;
-}
-
-void PointLight::set_color(glm::vec3 color) {this->color = color;}
-void PointLight::set_red(float red) {color.r = red;}
-void PointLight::set_green(float green) {color.g = green;}
-void PointLight::set_blue(float blue) {color.b = blue;}
-void PointLight::set_ambient(float ambient) {this->ambient = ambient;}
-void PointLight::set_diffuse(float diffuse) {this->diffuse = diffuse;}
-void PointLight::set_specular(float specular) {this->specular = specular;}
-void PointLight::set_constant(float constant) {this->constant = constant;}
-void PointLight::set_linear(float linear) {this->linear = linear;}
-void PointLight::set_quadratic(float quadratic) {this->quadratic = quadratic;}

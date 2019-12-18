@@ -25,27 +25,21 @@ class Settings : public QTabWidget {
   Q_OBJECT
 
 public:
-  Settings(QWidget *parent=nullptr);
+  Settings();
   ~Settings();
 
   void set_scene(Scene *scene, const char *name="Scene");
   void set_camera(Camera *camera, const char *name="Camera");
-  void set_object(Node *object, const char *name="Node");
+  void set_node(Node *node, const char *name="Node");
   void set_point_light(PointLight *point_light, const char *name="Point Light");
 
-  template <class T>
-  QGroupBox * create_3_option_group(const char *name,
-    const char* label1, const char* label2, const char* label3,
-    T *context, void (T::*setting1)(float), void (T::*setting2)(float), void (T::*setting3)(float),
-    glm::vec3 default_val, double min_val, double max_val, double step, int decimals
-  );
-
-  template <class T, typename Y>
+  template <typename T>
   QWidget * create_option_group(
-    const char *name, T *context, void (T::*setting)(Y),
-    double default_val, double min_val, double max_val, double step, int decimals,
+    const char *name, T *option,
+    double min_val, double max_val, double step, int decimals,
     QWidget *options_box=nullptr, QGridLayout *options_layout=nullptr, int y_pos=0
   );
+
 };
 
 #endif

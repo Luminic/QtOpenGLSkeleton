@@ -24,31 +24,6 @@ public:
   glm::vec3 position;
   glm::vec3 scale;
 
-  // Getters
-  glm::mat4 get_model_matrix();
-  glm::vec3 get_color();
-  float get_ambient();
-  float get_diffuse();
-  float get_specular();
-  float get_constant();
-  float get_linear();
-  float get_quadratic();
-
-public slots:
-  // Setters
-  void set_falloff(float constant, float linear, float quadratic);
-  void set_color(glm::vec3 color);
-  void set_red(float red);
-  void set_green(float green);
-  void set_blue(float blue);
-  void set_ambient(float ambient);
-  void set_diffuse(float diffuse);
-  void set_specular(float specular);
-  void set_constant(float constant);
-  void set_linear(float linear);
-  void set_quadratic(float quadratic);
-
-private:
   glm::vec3 color;
   float ambient;
   float diffuse;
@@ -58,6 +33,9 @@ private:
   float constant;
   float linear;
   float quadratic;
+
+  // Getters
+  glm::mat4 get_model_matrix();
 };
 
 #endif
