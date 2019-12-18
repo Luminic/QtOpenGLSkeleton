@@ -158,7 +158,8 @@ void OpenGLWindow::paintGL() {
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
 
   // Draw the scene to this framebuffer (instead of the screen)
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -223,7 +224,8 @@ void OpenGLWindow::paintGL() {
   nanosuit->draw(object_shader, model);
 
   // Draw the framebuffer to the screen
-  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glDisable(GL_DEPTH_TEST);
 
@@ -240,6 +242,12 @@ void OpenGLWindow::paintGL() {
 }
 
 void OpenGLWindow::resizeGL(int w, int h) {
+  // Update framebuffer textures
+  glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+  // Update perspective matrices
   projection = glm::perspective(glm::radians(45.0f), width()/float(height()), 0.1f, 100.0f);
   object_shader->use();
   object_shader->setMat4("projection", projection);
