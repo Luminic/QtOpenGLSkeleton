@@ -20,7 +20,8 @@ Mesh::~Mesh() {
 }
 
 void Mesh::draw(Shader *shader) {
-  material->set_materials(shader);
+  if (material != nullptr)
+    material->set_materials(shader);
 
   // Draw Mesh
   glBindVertexArray(VAO);

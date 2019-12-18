@@ -39,8 +39,14 @@ void Settings::set_node(Node *node, const char *name) {
   create_option_group("X:", &node->position.x, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 0);
   create_option_group("Y:", &node->position.y, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 2);
   create_option_group("Z:", &node->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 4);
-
   Node_layout->addWidget(Position_box, 0, 0);
+
+  QGroupBox *Scale_box = new QGroupBox(this);
+  QGridLayout *Scale_layout = new QGridLayout(Scale_box);
+  create_option_group("X:", &node->scale.x, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 0);
+  create_option_group("Y:", &node->scale.y, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 2);
+  create_option_group("Z:", &node->scale.z, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 4);
+  Node_layout->addWidget(Scale_box, 1, 0);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Node_widget);

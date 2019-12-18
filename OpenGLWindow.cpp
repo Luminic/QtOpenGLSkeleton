@@ -37,6 +37,7 @@ OpenGLWindow::~OpenGLWindow() {
   delete nanosuit;
   delete object_shader;
   delete light_shader;
+  delete framebuffer_shader;
 }
 
 void OpenGLWindow::initializeGL() {
@@ -58,9 +59,11 @@ void OpenGLWindow::initializeGL() {
 
   object_shader = new Shader();
   light_shader = new Shader();
+  framebuffer_shader = new Shader();
 
   object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
+  framebuffer_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
 
   cube->initialize_cube();
   cube->material = new Material();
@@ -70,12 +73,67 @@ void OpenGLWindow::initializeGL() {
   cube->material = Scene::is_material_loaded(cube->material);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
-  nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/material_test.fbx");
   //nanosuit = new Model("models/mouse/mouse.fbx");
-  //nanosuit = new Model("models/nanosuit/nanosuit.obj");
-  nanosuit->scale = glm::vec3(0.2f);
+  nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit->scale = glm::vec3(0.4f);
   settings->set_node(nanosuit, "Nanosuit");
+
+  // Create a quad for the framebuffer texture so the framebuffer can be drawn to the screen
+  float quad_vertices[] = {
+    // positions  // texture coordinates
+    -1.0f,  1.0f, 0.0f, 1.0f, // left top
+     1.0f,  1.0f, 1.0f, 1.0f, // right top
+    -1.0f, -1.0f, 0.0f, 0.0f, // left bottom
+     1.0f, -1.0f, 1.0f, 0.0f //  right bottom
+  };
+  unsigned int quad_indices[] = {
+    0, 1, 2,
+    1, 3, 2
+  };
+
+  glGenVertexArrays(1, &quad_VAO);
+  glGenBuffers(1, &quad_VBO);
+  glGenBuffers(1, &quad_EBO);
+
+  glBindVertexArray(quad_VAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, quad_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), &quad_vertices, GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quad_indices), &quad_indices, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
+
+  // Create the framebuffer object
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  // Create the texture attachment (for the framebuffer)
+  glGenTextures(1, &texture_colorbuffer);
+  glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_colorbuffer, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  // Create the renderbuffer (for the framebuffer)
+  glGenRenderbuffers(1, &renderbuffer);
+  glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  // Check if the framebuffer is complete
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
   //glEnable(GL_CULL_FACE);
@@ -94,7 +152,17 @@ void OpenGLWindow::update_scene() {
 
 void OpenGLWindow::paintGL() {
   // Note: never call this function directly--call update() instead.
+
+  // Get QT's default framebuffer binding
+  int qt_framebuffer;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
+
+  // Draw the scene to this framebuffer (instead of the screen)
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
 
   glm::mat4 view = scene->camera->view_matrix();
 
@@ -153,6 +221,20 @@ void OpenGLWindow::paintGL() {
   //object_shader->setMat4("model", model);
   //model = glm::mat4(1.0f);
   nanosuit->draw(object_shader, model);
+
+  // Draw the framebuffer to the screen
+  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glDisable(GL_DEPTH_TEST);
+
+  framebuffer_shader->use();
+
+  glActiveTexture(GL_TEXTURE0);
+  framebuffer_shader->setInt("screen_texture", 0);
+  glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);
+
+  glBindVertexArray(quad_VAO);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
   //glBindVertexArray(0);
 }

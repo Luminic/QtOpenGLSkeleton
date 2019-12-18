@@ -43,11 +43,20 @@ protected:
   void resizeGL(int w, int h) override;
 
 private:
+  unsigned int framebuffer;
+  unsigned int texture_colorbuffer;
+  unsigned int renderbuffer;
+
+  unsigned int quad_VAO;
+  unsigned int quad_VBO;
+  unsigned int quad_EBO;
+
   float angle;
   glm::mat4 projection;
 
   Shader *object_shader;
   Shader *light_shader;
+  Shader *framebuffer_shader;
 
   std::unordered_set<int> *keys_pressed;
   int *delta_time;

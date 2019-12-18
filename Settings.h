@@ -18,7 +18,6 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Node.h"
-#include "Model.h"
 #include "PointLight.h"
 
 class Settings : public QTabWidget {

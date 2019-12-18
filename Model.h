@@ -17,6 +17,7 @@
 #include "Shader.h"
 #include "Node.h"
 #include "Material.h"
+#include "Settings.h"
 
 class Model : public Node {
   Q_OBJECT

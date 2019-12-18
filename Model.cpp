@@ -53,6 +53,7 @@ Node * Model::process_node(aiNode *node, const aiScene *scene) {
   for (unsigned int i=0; i < node->mNumChildren; i++) {
     my_node->child_nodes.push_back(process_node(node->mChildren[i], scene));
   }
+
   return my_node;
 }
 

@@ -18,6 +18,8 @@ Node::~Node() {
 
 void Node::draw(Shader *shader, glm::mat4 model) {
   model *= transformation;
+  model = glm::translate(model, position);
+  model = glm::scale(model, scale);
   shader->use();
   shader->setMat4("model", model);
   for (unsigned int i=0; i<meshes.size(); i++) {

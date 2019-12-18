@@ -12,7 +12,6 @@
 
 #include "Shader.h"
 #include "Camera.h"
-#include "Model.h"
 #include "Material.h"
 #include "PointLight.h"
 
