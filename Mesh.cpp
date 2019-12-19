@@ -19,7 +19,7 @@ Mesh::~Mesh() {
     //delete material;
 }
 
-void Mesh::draw(Shader *shader) {
+void Mesh::draw(Shader *shader, int material_index_offset) {
   if (material != nullptr)
     material->set_materials(shader);
 

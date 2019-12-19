@@ -64,8 +64,14 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
   create_option_group("R:", &point_light->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
   create_option_group("G:", &point_light->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
   create_option_group("B:", &point_light->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
-
   Light_layout->addWidget(Color_Box, 0, 0);
+
+  QGroupBox *Position_box = new QGroupBox(this);
+  QGridLayout *Position_layout = new QGridLayout(Position_box);
+  create_option_group("X:", &point_light->position.x, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 0);
+  create_option_group("Y:", &point_light->position.y, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 2);
+  create_option_group("Z:", &point_light->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 4);
+  Light_layout->addWidget(Position_box, 0, 2);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Light_widget);

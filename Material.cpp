@@ -16,30 +16,15 @@ Material::Material() :
 Material::~Material() {
 }
 
-void Material::set_materials(Shader *shader) {
+void Material::set_materials(Shader *shader, int material_index_offset) {
   shader->use();
   shader->setFloat("material.metalness", metalness);
-
-  /*shader->setInt("material.number_albedo_maps", albedo_maps.size());
-  shader->setBool("material.use_specular_map", specular_map.id!=0);
-  shader->setBool("material.use_ambient_occlusion_map", false);*/
-
-  /*for (unsigned int i=0; i<albedo_maps.size(); i++) {
-    glActiveTexture(GL_TEXTURE0+i);
-    shader->setInt(("material.albedo_map["+std::to_string(i)+"]").c_str(), i);
-    glBindTexture(GL_TEXTURE_2D, albedo_maps[i].id);
-  }
-  if (specular_map.id != 0) {
-    glActiveTexture(GL_TEXTURE0+albedo_maps.size());
-    shader->setInt("material.specular_map",albedo_maps.size());
-    glBindTexture(GL_TEXTURE_2D, specular_map.id);
-  }*/
 
   int number_albedo_maps = 0;
   int number_ambient_occlusion_maps = 0;
   int number_specular_maps = 0;
 
-  for (unsigned int i=0; i<textures.size(); i++) {
+  for (unsigned int i=material_index_offset; i<textures.size()+material_index_offset; i++) {
     glActiveTexture(GL_TEXTURE0+i);
     switch (textures[i].type) {
       case ALBEDO_MAP:

@@ -32,7 +32,7 @@ public:
   void initialize_cube();
   void initialize_buffers();
 
-  void draw(Shader *shader);
+  void draw(Shader *shader, int material_index_offset=0);
 
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;

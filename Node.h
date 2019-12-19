@@ -20,7 +20,7 @@ public:
   Node(glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::mat4 transformation=glm::mat4(1.0f));
   ~Node();
 
-  void draw(Shader *shader, glm::mat4 model);
+  void draw(Shader *shader, glm::mat4 model, int material_index_offset=0);
 
   // Getters
   glm::mat4 get_model_matrix();

@@ -35,7 +35,7 @@ public:
   Material();
   ~Material();
 
-  void set_materials(Shader *shader);
+  void set_materials(Shader *shader, int material_index_offset=0);
 
   unsigned int load_texture(const char *path, Image_Type type, bool add_to_material=true);
   unsigned int load_cubemap(std::vector<std::string> faces);

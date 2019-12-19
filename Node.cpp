@@ -16,17 +16,17 @@ Node::~Node() {
     delete c;
 }
 
-void Node::draw(Shader *shader, glm::mat4 model) {
+void Node::draw(Shader *shader, glm::mat4 model, int material_index_offset) {
   model *= transformation;
   model = glm::translate(model, position);
   model = glm::scale(model, scale);
   shader->use();
   shader->setMat4("model", model);
   for (unsigned int i=0; i<meshes.size(); i++) {
-    meshes[i]->draw(shader);
+    meshes[i]->draw(shader, material_index_offset);
   }
   for (unsigned int i=0; i<child_nodes.size(); i++) {
-    child_nodes[i]->draw(shader, model);
+    child_nodes[i]->draw(shader, model, material_index_offset);
   }
 }
 

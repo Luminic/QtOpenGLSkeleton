@@ -47,6 +47,8 @@ struct Light {
 	float quadratic;
 };
 
+uniform samplerCube skybox;
+
 uniform Material material;
 uniform Sunlight sunlight;
 uniform Light light[4];
@@ -148,4 +150,7 @@ void main() {
   //frag_color = vec4(vec3(max(dot(fragment_normal,camera_direction),0.0f)),1.0f); // Use to check face orientation
   //frag_color = vec4(vec3(result*(1-linear_depth(gl_FragCoord.z))+linear_depth(gl_FragCoord.z)), 1.0f); // Use to check linear depth
   frag_color = vec4(result,1.0f);
+
+  /*vec3 R = reflect(-camera_direction, fragment_normal);
+  frag_color = texture(skybox, R);*/
 }

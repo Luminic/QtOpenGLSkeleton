@@ -184,6 +184,8 @@ void OpenGLWindow::paintGL() {
   glm::mat4 view = scene->camera->view_matrix();
 
   glDepthMask(GL_FALSE);
+
+  // Draw the skybox (Where nothing else has been rendered)
   skybox_shader->use();
   skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
   glActiveTexture(GL_TEXTURE0);
@@ -191,7 +193,9 @@ void OpenGLWindow::paintGL() {
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
   skybox->draw(skybox_shader);
 
+  // Draw the sun
   scene->draw_sun(light_shader);
+
   glDepthMask(GL_TRUE);
 
   // Render the light
@@ -217,6 +221,10 @@ void OpenGLWindow::paintGL() {
   object_shader->setVec3("camera_position", scene->camera->position);
   object_shader->setMat4("view", view);
 
+  glActiveTexture(GL_TEXTURE0);
+  object_shader->setInt("skybox", 0);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+
   scene->set_sunlight_settings("sunlight", object_shader);
 
   glm::vec3 cube_positions[] = {
@@ -237,16 +245,12 @@ void OpenGLWindow::paintGL() {
     model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
     model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
     object_shader->setMat4("model", model);
-    cube->draw(object_shader);
+    cube->draw(object_shader, 1);
   }
 
   // Render the Nanosuit
-
-  //object_shader->use();
   glm::mat4 model = nanosuit->get_model_matrix();
-  //object_shader->setMat4("model", model);
-  //model = glm::mat4(1.0f);
-  nanosuit->draw(object_shader, model);
+  nanosuit->draw(object_shader, model, 1);
 
   // Draw the framebuffer to the screen
   //glBindFramebuffer(GL_FRAMEBUFFER, 0);
