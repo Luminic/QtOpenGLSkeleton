@@ -33,6 +33,8 @@ public:
   Settings *settings;
   Scene *scene;
   Mesh *cube;
+  Mesh *skybox;
+  unsigned int skybox_cubemap;
   PointLight *light;
 
   Model *nanosuit;
@@ -56,6 +58,7 @@ private:
 
   Shader *object_shader;
   Shader *light_shader;
+  Shader *skybox_shader;
   Shader *framebuffer_shader;
 
   std::unordered_set<int> *keys_pressed;

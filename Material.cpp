@@ -5,8 +5,6 @@
 
 Material::Material() :
   metalness(0.0f),
-  ambient_occlusion_map({0,"",""}),
-  specular_map({0,"",""}),
   albedo(glm::vec3(1.0f)),
   ambient(glm::vec3(0.2f)),
   specularity(1.0f),
@@ -22,11 +20,11 @@ void Material::set_materials(Shader *shader) {
   shader->use();
   shader->setFloat("material.metalness", metalness);
 
-  shader->setInt("material.number_albedo_maps", albedo_maps.size());
+  /*shader->setInt("material.number_albedo_maps", albedo_maps.size());
   shader->setBool("material.use_specular_map", specular_map.id!=0);
-  shader->setBool("material.use_ambient_occlusion_map", false);
+  shader->setBool("material.use_ambient_occlusion_map", false);*/
 
-  for (unsigned int i=0; i<albedo_maps.size(); i++) {
+  /*for (unsigned int i=0; i<albedo_maps.size(); i++) {
     glActiveTexture(GL_TEXTURE0+i);
     shader->setInt(("material.albedo_map["+std::to_string(i)+"]").c_str(), i);
     glBindTexture(GL_TEXTURE_2D, albedo_maps[i].id);
@@ -35,7 +33,35 @@ void Material::set_materials(Shader *shader) {
     glActiveTexture(GL_TEXTURE0+albedo_maps.size());
     shader->setInt("material.specular_map",albedo_maps.size());
     glBindTexture(GL_TEXTURE_2D, specular_map.id);
+  }*/
+
+  int number_albedo_maps = 0;
+  int number_ambient_occlusion_maps = 0;
+  int number_specular_maps = 0;
+
+  for (unsigned int i=0; i<textures.size(); i++) {
+    glActiveTexture(GL_TEXTURE0+i);
+    switch (textures[i].type) {
+      case ALBEDO_MAP:
+        shader->setInt(("material.albedo_map["+std::to_string(i)+"]").c_str(), i);
+        number_albedo_maps++;
+        break;
+      case AMBIENT_OCCLUSION_MAP: // AO maps are non-functional at the moment
+        number_ambient_occlusion_maps++;
+        break;
+      case SPECULAR_MAP:
+        shader->setInt("material.specular_map", i);
+        number_specular_maps++;
+        break;
+      default:
+        break;
+    }
+    glBindTexture(GL_TEXTURE_2D, textures[i].id);
   }
+
+  shader->setInt("material.number_albedo_maps", number_albedo_maps);
+  shader->setBool("material.use_specular_map", (number_specular_maps>=1));
+  shader->setBool("material.use_ambient_occlusion_map", (number_ambient_occlusion_maps>=1));
 
   shader->setVec3("material.albedo", albedo);
   shader->setVec3("material.ambient", ambient);
@@ -44,11 +70,12 @@ void Material::set_materials(Shader *shader) {
   shader->setFloat("material.shininess", shininess);
 }
 
-void Material::load_texture(const char *path, Image_Type type) {
+unsigned int Material::load_texture(const char *path, Image_Type type, bool add_to_material) {
   Texture texture = Scene::is_texture_loaded(path);
 
   if (texture.id == 0) {
     texture.path = path;
+    texture.type = type;
 
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);
@@ -69,20 +96,31 @@ void Material::load_texture(const char *path, Image_Type type) {
     Scene::loaded_textures.push_back(texture);
   }
 
-  switch (type) {
-    case ALBEDO_MAP:
-      texture.type = "albedo_map";
-      albedo_maps.push_back(texture);
-      break;
-    case AMBIENT_OCCLUSION_MAP:
-      texture.type = "ambient_occlusion_map";
-      ambient_occlusion_map = texture;
-      break;
-    case SPECULAR_MAP:
-      texture.type = "specular_map";
-      specular_map = texture;
-      break;
+  if (add_to_material)
+    textures.push_back(texture);
+
+  return texture.id;
+}
+
+unsigned int Material::load_cubemap(std::vector<std::string> faces) {
+  Texture texture;
+
+  glGenTextures(1, &texture.id);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, texture.id);
+
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  for (unsigned int i=0; i<faces.size(); i++) {
+    QImage img = QImage(faces[i].c_str()).convertToFormat(QImage::Format_RGB888);
+    if (img.isNull()) qDebug() << "Could not load cubemap texture:" << faces[i].c_str();
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
   }
+
+  return texture.id;
 }
 
 inline bool compare_floats(float a, float b, float error=0.001) {
@@ -102,17 +140,18 @@ bool Material::operator==(const Material& other_material) {
     compare_vec3(ambient, other_material.ambient) &&
     compare_floats(specularity, other_material.specularity) &&
     compare_floats(shininess, other_material.shininess)) {
-    // Check if there are the same # of albedo maps
-    // Also check if specular maps and ambient maps match
-    if (albedo_maps.size() == other_material.albedo_maps.size() &&
-      specular_map.path == other_material.specular_map.path &&
-      ambient_occlusion_map.path == other_material.ambient_occlusion_map.path) {
-      // Check if all the albedo maps match
-      for (unsigned int i=0; i<albedo_maps.size(); i++) {
-        // Check if each albedo map matches (must be same order)
-        if (albedo_maps[i].path != other_material.albedo_maps[i].path) {
-          return false;
+    // Check if there are the same # of textures
+    if (textures.size() == other_material.textures.size()) {
+      // Check if all the textures match
+      for (unsigned int i=0; i<textures.size(); i++) {
+        bool other_material_has_texture_i = false;
+        for (unsigned int j=0; j<textures.size(); j++) {
+          if (textures[i].path == other_material.textures[j].path) {
+            other_material_has_texture_i = true;
+            break;
+          }
         }
+        if (other_material_has_texture_i == false) return false;
       }
       return true;
     }

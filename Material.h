@@ -15,14 +15,16 @@
 #include "Shader.h"
 
 enum Image_Type {
+  UNKNOWN,
   ALBEDO_MAP, // Should be in gamma space (will be converted into linear space)
   AMBIENT_OCCLUSION_MAP, // Should be in linear space
-  SPECULAR_MAP // Should be in linear space
+  SPECULAR_MAP, // Should be in linear space
+  CUBE_MAP // Should be in gamma space (will not be converted into linear space)
 };
 
 struct Texture {
   unsigned int id;
-  std::string type;
+  Image_Type type;
   std::string path;
 };
 
@@ -35,17 +37,15 @@ public:
 
   void set_materials(Shader *shader);
 
-  void load_texture(const char *path, Image_Type type);
+  unsigned int load_texture(const char *path, Image_Type type, bool add_to_material=true);
+  unsigned int load_cubemap(std::vector<std::string> faces);
 
   bool operator==(const Material& other_material);
 
   // Defaults to 0 (non-metallic)
   float metalness;
 
-  // Defaults will be empty (id=0,path="")
-  std::vector<Texture> albedo_maps;
-  Texture ambient_occlusion_map;
-  Texture specular_map;
+  std::vector<Texture> textures;
 
   // All values default to 1.0f
   glm::vec3 albedo;

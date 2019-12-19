@@ -60,7 +60,6 @@ Node * Model::process_node(aiNode *node, const aiScene *scene) {
 Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
-  std::vector<Texture> textures;
 
   // Load vertices
   for (unsigned int i=0; i < mesh->mNumVertices; i++) {
@@ -113,7 +112,7 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
   material->Get(AI_MATKEY_SHININESS, shininess);
   mesh_colors->shininess = shininess;
   material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
-  mesh_colors->metalness = 1.0f;
+  mesh_colors->metalness = 0.0f;
   //mesh_colors.specular /= shininess;
 
   mesh_colors = Scene::is_material_loaded(mesh_colors);

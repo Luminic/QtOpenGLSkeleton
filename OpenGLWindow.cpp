@@ -33,10 +33,12 @@ void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mou
 OpenGLWindow::~OpenGLWindow() {
   delete settings;
   delete cube;
+  delete skybox;
   delete light;
   delete nanosuit;
   delete object_shader;
   delete light_shader;
+  delete skybox_shader;
   delete framebuffer_shader;
 }
 
@@ -47,30 +49,45 @@ void OpenGLWindow::initializeGL() {
 
   settings = new Settings();
 
+  object_shader = new Shader();
+  light_shader = new Shader();
+  skybox_shader = new Shader();
+  framebuffer_shader = new Shader();
+
+  object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
+  light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
+  skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
+  framebuffer_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
+
   scene = new Scene(this);
   scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
   settings->set_camera(scene->camera);
   settings->set_point_light(scene->sunlight, "Sunlight");
 
-  cube = new Mesh();
-
   light = new PointLight(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
   settings->set_point_light(light, "Pointlight");
 
-  object_shader = new Shader();
-  light_shader = new Shader();
-  framebuffer_shader = new Shader();
-
-  object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
-  light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
-  framebuffer_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
-
+  cube = new Mesh();
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
   cube->material->load_texture("textures/container2_specular.png", SPECULAR_MAP);
   cube->material->metalness = 0.0f;
   cube->material = Scene::is_material_loaded(cube->material);
+
+  skybox = new Mesh();
+  skybox->initialize_cube();
+  //skybox->material = new Material();
+  std::vector<std::string> faces {
+    "skyboxes/right.jpg",
+    "skyboxes/left.jpg",
+    "skyboxes/top.jpg",
+    "skyboxes/bottom.jpg",
+    "skyboxes/front.jpg",
+    "skyboxes/back.jpg"
+  };
+  skybox_cubemap = cube->material->load_cubemap(faces);
+  //skybox->material = Scene::is_material_loaded(skybox->material);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   //nanosuit = new Model("models/raygun/raygun.fbx");
@@ -158,16 +175,24 @@ void OpenGLWindow::paintGL() {
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
 
   // Draw the scene to this framebuffer (instead of the screen)
-  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
-  //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
 
   glm::mat4 view = scene->camera->view_matrix();
 
+  glDepthMask(GL_FALSE);
+  skybox_shader->use();
+  skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
+  glActiveTexture(GL_TEXTURE0);
+  skybox_shader->setInt("skybox", 0);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  skybox->draw(skybox_shader);
+
   scene->draw_sun(light_shader);
+  glDepthMask(GL_TRUE);
 
   // Render the light
   glm::vec3 point_light_positions[] = {
@@ -224,8 +249,8 @@ void OpenGLWindow::paintGL() {
   nanosuit->draw(object_shader, model);
 
   // Draw the framebuffer to the screen
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glDisable(GL_DEPTH_TEST);
 
@@ -253,5 +278,7 @@ void OpenGLWindow::resizeGL(int w, int h) {
   object_shader->setMat4("projection", projection);
   light_shader->use();
   light_shader->setMat4("projection", projection);
+  skybox_shader->use();
+  skybox_shader->setMat4("projection", projection);
   glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 }

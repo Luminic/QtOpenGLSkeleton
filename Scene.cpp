@@ -31,9 +31,7 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
   shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
   shader->setMat4("model", sunlight->get_model_matrix());
 
-  glDepthMask(GL_FALSE);
   sunlight->draw(shader);
-  glDepthMask(GL_TRUE);
 }
 
 void Scene::set_sunlight_settings(std::string name, Shader *shader) {
