@@ -18,7 +18,8 @@ enum Image_Type {
   UNKNOWN,
   ALBEDO_MAP, // Should be in gamma space (will be converted into linear space)
   AMBIENT_OCCLUSION_MAP, // Should be in linear space
-  SPECULAR_MAP, // Should be in linear space
+  ROUGHNESS_MAP, // Should be in linear space
+  METALNESS_MAP, // Should be in linear space
   CUBE_MAP // Should be in gamma space (will not be converted into linear space)
 };
 
@@ -37,23 +38,18 @@ public:
 
   void set_materials(Shader *shader, int material_index_offset=0);
 
-  unsigned int load_texture(const char *path, Image_Type type, bool add_to_material=true);
-  unsigned int load_cubemap(std::vector<std::string> faces);
+  Texture load_texture(const char *path, Image_Type type, bool add_to_material=true);
+  Texture load_cubemap(std::vector<std::string> faces, bool add_to_material=true);
 
   bool operator==(const Material& other_material);
 
-  // Defaults to 0 (non-metallic)
-  float metalness;
-
   std::vector<Texture> textures;
 
-  // All values default to 1.0f
-  glm::vec3 albedo;
-  glm::vec3 ambient;
-  float specularity;
-
-  // Defaults to 64.0f
-  float shininess;
+  // Defaults are in comments
+  glm::vec3 albedo; // 1.0f
+  glm::vec3 ambient; // 1.0f
+  float roughness; // 1.0f
+  float metalness; // 0.0
 };
 
 #endif

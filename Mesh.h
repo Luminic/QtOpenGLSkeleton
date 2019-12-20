@@ -39,6 +39,8 @@ public:
 
   Material *material;
 
+  std::string name;
+
 protected:
   glm::mat4 transformation;
 

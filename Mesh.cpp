@@ -21,7 +21,7 @@ Mesh::~Mesh() {
 
 void Mesh::draw(Shader *shader, int material_index_offset) {
   if (material != nullptr)
-    material->set_materials(shader);
+    material->set_materials(shader, material_index_offset);
 
   // Draw Mesh
   glBindVertexArray(VAO);

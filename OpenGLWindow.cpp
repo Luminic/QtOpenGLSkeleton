@@ -71,8 +71,9 @@ void OpenGLWindow::initializeGL() {
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
-  cube->material->load_texture("textures/container2_specular.png", SPECULAR_MAP);
-  cube->material->metalness = 0.0f;
+  cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
+  cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
+  cube->material->metalness = 1.0f;
   cube->material = Scene::is_material_loaded(cube->material);
 
   skybox = new Mesh();
@@ -86,16 +87,20 @@ void OpenGLWindow::initializeGL() {
     "skyboxes/front.jpg",
     "skyboxes/back.jpg"
   };
-  skybox_cubemap = cube->material->load_cubemap(faces);
+  skybox_cubemap = cube->material->load_cubemap(faces, false).id;
   //skybox->material = Scene::is_material_loaded(skybox->material);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
-  //nanosuit = new Model("models/raygun/raygun.fbx");
-  //nanosuit = new Model("models/material_test/material_test.fbx");
+  nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/material_test/sphere.fbx");
   //nanosuit = new Model("models/mouse/mouse.fbx");
-  nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  //nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.4f);
   settings->set_node(nanosuit, "Nanosuit");
+
+  for (auto m : Scene::loaded_materials) {
+    settings->set_material(m);
+  }
 
   // Create a quad for the framebuffer texture so the framebuffer can be drawn to the screen
   float quad_vertices[] = {
@@ -222,8 +227,9 @@ void OpenGLWindow::paintGL() {
   object_shader->setMat4("view", view);
 
   glActiveTexture(GL_TEXTURE0);
-  object_shader->setInt("skybox", 0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  object_shader->setInt("skybox", 0);
+  object_shader->setInt("test", 2);
 
   scene->set_sunlight_settings("sunlight", object_shader);
 

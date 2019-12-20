@@ -80,6 +80,27 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
   addTab(Scrolling, tr(name));
 }
 
+void Settings::set_material(Material *material, const char *name) {
+  QWidget *Material_widget = new QWidget(this);
+  QGridLayout *Material_layout = new QGridLayout(Material_widget);
+
+  QGroupBox *Albedo_Box = new QGroupBox(this);
+  QGridLayout *Albedo_Layout = new QGridLayout(Albedo_Box);
+  create_option_group("R:", &material->albedo.r, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 0);
+  create_option_group("G:", &material->albedo.g, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 2);
+  create_option_group("B:", &material->albedo.b, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 4);
+  Material_layout->addWidget(Albedo_Box, 0, 0);
+
+  create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Material_widget, Material_layout, 2);
+  create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Material_widget, Material_layout, 4);
+
+  QScrollArea *Scrolling = new QScrollArea(this);
+  Scrolling->setWidget(Material_widget);
+  Scrolling->setWidgetResizable(true);
+
+  addTab(Scrolling, tr(name));
+}
+
 template <typename T>
 QWidget * Settings::create_option_group(
   const char *name, T *option,

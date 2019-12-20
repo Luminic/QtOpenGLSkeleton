@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_4_2_Core>
 #include <vector>
+#include <string>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -31,6 +32,8 @@ public:
   glm::vec3 position;
   glm::vec3 scale;
   glm::mat4 transformation;
+
+  std::string name;
 };
 
 #endif

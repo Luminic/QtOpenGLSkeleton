@@ -4,11 +4,10 @@
 #include "Scene.h"
 
 Material::Material() :
-  metalness(0.0f),
   albedo(glm::vec3(1.0f)),
   ambient(glm::vec3(0.2f)),
-  specularity(1.0f),
-  shininess(64.0f)
+  roughness(1.0f),
+  metalness(0.0f)
 {
   initializeOpenGLFunctions();
 }
@@ -18,25 +17,29 @@ Material::~Material() {
 
 void Material::set_materials(Shader *shader, int material_index_offset) {
   shader->use();
-  shader->setFloat("material.metalness", metalness);
 
   int number_albedo_maps = 0;
   int number_ambient_occlusion_maps = 0;
-  int number_specular_maps = 0;
+  int number_roughness_maps = 0;
+  int number_metalness_maps = 0;
 
-  for (unsigned int i=material_index_offset; i<textures.size()+material_index_offset; i++) {
-    glActiveTexture(GL_TEXTURE0+i);
+  for (unsigned int i=0; i<textures.size(); i++) {
+    glActiveTexture(GL_TEXTURE0+i+material_index_offset);
     switch (textures[i].type) {
       case ALBEDO_MAP:
-        shader->setInt(("material.albedo_map["+std::to_string(i)+"]").c_str(), i);
+        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), i+material_index_offset);
         number_albedo_maps++;
         break;
       case AMBIENT_OCCLUSION_MAP: // AO maps are non-functional at the moment
         number_ambient_occlusion_maps++;
         break;
-      case SPECULAR_MAP:
-        shader->setInt("material.specular_map", i);
-        number_specular_maps++;
+      case ROUGHNESS_MAP:
+        shader->setInt("material.roughness_map", i+material_index_offset);
+        number_roughness_maps++;
+        break;
+      case METALNESS_MAP:
+        shader->setInt("material.metalness_map", i+material_index_offset);
+        number_metalness_maps++;
         break;
       default:
         break;
@@ -45,22 +48,22 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
   }
 
   shader->setInt("material.number_albedo_maps", number_albedo_maps);
-  shader->setBool("material.use_specular_map", (number_specular_maps>=1));
   shader->setBool("material.use_ambient_occlusion_map", (number_ambient_occlusion_maps>=1));
+  shader->setBool("material.use_roughness_map", (number_roughness_maps>=1));
+  shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
 
   shader->setVec3("material.albedo", albedo);
   shader->setVec3("material.ambient", ambient);
-  shader->setFloat("material.specularity", specularity);
-
-  shader->setFloat("material.shininess", shininess);
+  shader->setFloat("material.roughness", roughness);
+  shader->setFloat("material.metalness", metalness);
 }
 
-unsigned int Material::load_texture(const char *path, Image_Type type, bool add_to_material) {
+Texture Material::load_texture(const char *path, Image_Type type, bool add_to_material) {
   Texture texture = Scene::is_texture_loaded(path);
+  texture.type = type;
 
   if (texture.id == 0) {
     texture.path = path;
-    texture.type = type;
 
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);
@@ -84,11 +87,13 @@ unsigned int Material::load_texture(const char *path, Image_Type type, bool add_
   if (add_to_material)
     textures.push_back(texture);
 
-  return texture.id;
+  return texture;
 }
 
-unsigned int Material::load_cubemap(std::vector<std::string> faces) {
+Texture Material::load_cubemap(std::vector<std::string> faces, bool add_to_material) {
   Texture texture;
+  texture.path = faces[0];
+  texture.type = CUBE_MAP;
 
   glGenTextures(1, &texture.id);
   glBindTexture(GL_TEXTURE_CUBE_MAP, texture.id);
@@ -105,7 +110,10 @@ unsigned int Material::load_cubemap(std::vector<std::string> faces) {
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
   }
 
-  return texture.id;
+  if (add_to_material)
+    textures.push_back(texture);
+
+  return texture;
 }
 
 inline bool compare_floats(float a, float b, float error=0.001) {
@@ -120,18 +128,18 @@ inline bool compare_vec3(glm::vec3 a, glm::vec3 b, float error=0.001) {
 
 bool Material::operator==(const Material& other_material) {
   // Check if values match
-  if (compare_floats(metalness, other_material.metalness) &&
-    compare_vec3(albedo, other_material.albedo) &&
+  if (compare_vec3(albedo, other_material.albedo) &&
     compare_vec3(ambient, other_material.ambient) &&
-    compare_floats(specularity, other_material.specularity) &&
-    compare_floats(shininess, other_material.shininess)) {
+    compare_floats(roughness, other_material.roughness) &&
+    compare_floats(metalness, other_material.metalness)) {
     // Check if there are the same # of textures
     if (textures.size() == other_material.textures.size()) {
       // Check if all the textures match
       for (unsigned int i=0; i<textures.size(); i++) {
         bool other_material_has_texture_i = false;
         for (unsigned int j=0; j<textures.size(); j++) {
-          if (textures[i].path == other_material.textures[j].path) {
+          if (textures[i].path == other_material.textures[j].path &&
+          textures[i].type == other_material.textures[j].type) {
             other_material_has_texture_i = true;
             break;
           }

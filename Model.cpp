@@ -41,6 +41,7 @@ void Model::load_model(std::string path) {
 
 Node * Model::process_node(aiNode *node, const aiScene *scene) {
   Node *my_node = new Node();
+  my_node->name = node->mName.C_Str();
   my_node->transformation = aiMat_to_glmMat(&node->mTransformation);;
 
   // Process the node's mesh (might be none)
@@ -102,18 +103,13 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
 
   // Load colors
   aiColor3D color(0.0f,0.0f,0.0f);
-  float shininess;
   material->Get(AI_MATKEY_COLOR_AMBIENT, color);
   mesh_colors->ambient = glm::vec3(color.r,color.g,color.b);
   material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
   mesh_colors->albedo = glm::vec3(color.r,color.g,color.b);
-  material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-  mesh_colors->specularity = 1.0f;//glm::normalize(glm::vec3(color.r,color.g,color.b));
-  material->Get(AI_MATKEY_SHININESS, shininess);
-  mesh_colors->shininess = shininess;
-  material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess);
-  mesh_colors->metalness = 0.0f;
-  //mesh_colors.specular /= shininess;
+
+  //mesh_colors->roughness = 0.8f;
+  mesh_colors->metalness = 1.0f;
 
   mesh_colors = Scene::is_material_loaded(mesh_colors);
 
@@ -123,8 +119,9 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
   qDebug() << "specular" << mesh_colors.specular.x << mesh_colors.specular.y << mesh_colors.specular.z;
   qDebug() << "shininess" << mesh_colors.shininess;
   qDebug() << "shininess strength" << shininess << '\n';*/
-
-  return new Mesh(vertices, indices, mesh_colors);
+  Mesh *my_mesh = new Mesh(vertices, indices, mesh_colors);
+  my_mesh->name = mesh->mName.C_Str();
+  return my_mesh;
 }
 
 void Model::load_material_textures(aiMaterial *mat, Material *mesh_material) {
@@ -141,7 +138,7 @@ void Model::load_material_textures(aiMaterial *mat, Material *mesh_material) {
     mat->GetTexture(aiTextureType_SPECULAR, 0, &str);
     std::string path = std::string(directory) + '/' + str.C_Str();
 
-    mesh_material->load_texture(path.c_str(), SPECULAR_MAP);
+    mesh_material->load_texture(path.c_str(), ROUGHNESS_MAP);
   }
   // Cannot load any other type of map atm
 }
