@@ -13,10 +13,15 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent),
   settings(nullptr),
   scene(nullptr),
   cube(nullptr),
-  light(nullptr),
+  floor(nullptr),
   nanosuit(nullptr),
+  light(nullptr),
+  skybox(nullptr),
+  framebuffer_quad(nullptr),
   object_shader(nullptr),
   light_shader(nullptr),
+  skybox_shader(nullptr),
+  framebuffer_shader(nullptr),
   keys_pressed(nullptr),
   delta_time(nullptr),
   mouse_movement(nullptr)
@@ -33,9 +38,11 @@ void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mou
 OpenGLWindow::~OpenGLWindow() {
   delete settings;
   delete cube;
-  delete skybox;
-  delete light;
+  delete floor;
   delete nanosuit;
+  delete light;
+  delete skybox;
+  delete framebuffer_quad;
   delete object_shader;
   delete light_shader;
   delete skybox_shader;
@@ -76,19 +83,15 @@ void OpenGLWindow::initializeGL() {
   cube->material->metalness = 1.0f;
   cube->material = Scene::is_material_loaded(cube->material);
 
-  skybox = new Mesh();
-  skybox->initialize_cube();
-  //skybox->material = new Material();
-  std::vector<std::string> faces {
-    "skyboxes/right.jpg",
-    "skyboxes/left.jpg",
-    "skyboxes/top.jpg",
-    "skyboxes/bottom.jpg",
-    "skyboxes/front.jpg",
-    "skyboxes/back.jpg"
-  };
-  skybox_cubemap = cube->material->load_cubemap(faces, false).id;
-  //skybox->material = Scene::is_material_loaded(skybox->material);
+  floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
+  Mesh *floor_mesh = new Mesh();
+  floor_mesh->initialize_plane(true, 3.0f);
+  floor_mesh->material = new Material();
+  floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
+  floor_mesh->material->roughness = 0.65f;
+  floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
+  floor->meshes.push_back(floor_mesh);
+  settings->set_node(floor, "Floor");
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   nanosuit = new Model("models/raygun/raygun.fbx");
@@ -98,41 +101,24 @@ void OpenGLWindow::initializeGL() {
   nanosuit->scale = glm::vec3(0.4f);
   settings->set_node(nanosuit, "Nanosuit");
 
+  skybox = new Mesh();
+  skybox->initialize_cube();
+  std::vector<std::string> faces {
+    "skyboxes/right.jpg",
+    "skyboxes/left.jpg",
+    "skyboxes/top.jpg",
+    "skyboxes/bottom.jpg",
+    "skyboxes/front.jpg",
+    "skyboxes/back.jpg"
+  };
+  skybox_cubemap = cube->material->load_cubemap(faces, false).id;
+
+  framebuffer_quad = new Mesh();
+  framebuffer_quad->initialize_plane(false);
+
   for (auto m : Scene::loaded_materials) {
     settings->set_material(m);
   }
-
-  // Create a quad for the framebuffer texture so the framebuffer can be drawn to the screen
-  float quad_vertices[] = {
-    // positions  // texture coordinates
-    -1.0f,  1.0f, 0.0f, 1.0f, // left top
-     1.0f,  1.0f, 1.0f, 1.0f, // right top
-    -1.0f, -1.0f, 0.0f, 0.0f, // left bottom
-     1.0f, -1.0f, 1.0f, 0.0f //  right bottom
-  };
-  unsigned int quad_indices[] = {
-    0, 1, 2,
-    1, 3, 2
-  };
-
-  glGenVertexArrays(1, &quad_VAO);
-  glGenBuffers(1, &quad_VBO);
-  glGenBuffers(1, &quad_EBO);
-
-  glBindVertexArray(quad_VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, quad_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), &quad_vertices, GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quad_indices), &quad_indices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-  glBindVertexArray(0);
 
   // Create the framebuffer object
   glGenFramebuffers(1, &framebuffer);
@@ -254,6 +240,9 @@ void OpenGLWindow::paintGL() {
     cube->draw(object_shader, 1);
   }
 
+  // Render the floor
+  floor->draw(object_shader, glm::mat4(1.0f), 1);
+
   // Render the Nanosuit
   glm::mat4 model = nanosuit->get_model_matrix();
   nanosuit->draw(object_shader, model, 1);
@@ -270,8 +259,7 @@ void OpenGLWindow::paintGL() {
   framebuffer_shader->setInt("screen_texture", 0);
   glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);
 
-  glBindVertexArray(quad_VAO);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+  framebuffer_quad->draw(framebuffer_shader);
 
   //glBindVertexArray(0);
 }

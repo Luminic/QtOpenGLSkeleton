@@ -10,15 +10,18 @@ void main() {
   frag_color = texture(screen_texture, texture_coordinate);
 }
 
-/*
-void main() {
+/*void main() {
+  frag_color = vec4(texture_coordinate.xyx, 1.0f);
+}*/
+
+/*void main() {
   vec3 col = texture(screen_texture, texture_coordinate).rgb;
   float tr = 0.393*col.r + 0.769*col.g + 0.189*col.b;
   float tg = 0.349*col.r + 0.686*col.g + 0.168*col.b;
   float tb = 0.272*col.r + 0.534*col.g + 0.131*col.b;
   frag_color = vec4(tr, tg, tb, 1.0f);
-}
-*/
+}*/
+
 
 /*
 const float offset = 1.0f / 300.0f;

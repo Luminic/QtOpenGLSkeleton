@@ -25,6 +25,7 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
 
   for (unsigned int i=0; i<textures.size(); i++) {
     glActiveTexture(GL_TEXTURE0+i+material_index_offset);
+    glBindTexture(GL_TEXTURE_2D, textures[i].id);
     switch (textures[i].type) {
       case ALBEDO_MAP:
         shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), i+material_index_offset);
@@ -44,7 +45,6 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
       default:
         break;
     }
-    glBindTexture(GL_TEXTURE_2D, textures[i].id);
   }
 
   shader->setInt("material.number_albedo_maps", number_albedo_maps);
@@ -74,6 +74,7 @@ Texture Material::load_texture(const char *path, Image_Type type, bool add_to_ma
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     QImage img = QImage(path).convertToFormat(QImage::Format_RGB888);
+    if (img.isNull()) qDebug() << "ERROR: COULD NOT LOAD IMAGE:" << path;
     if (type == ALBEDO_MAP) { // Convert gamma (SRGB) space into linear (RGB) space
       glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
     } else { // Non-albedo maps should already be in linear space

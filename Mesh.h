@@ -29,7 +29,8 @@ public:
   Mesh();
   ~Mesh();
 
-  void initialize_cube();
+  void initialize_cube(float texture_scale=1.0f);
+  void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
   void initialize_buffers();
 
   void draw(Shader *shader, int material_index_offset=0);

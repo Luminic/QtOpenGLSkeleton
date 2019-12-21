@@ -33,11 +33,11 @@ public:
   Settings *settings;
   Scene *scene;
   Mesh *cube;
-  Mesh *skybox;
-  unsigned int skybox_cubemap;
-  PointLight *light;
+  Node *floor;
 
   Model *nanosuit;
+
+  PointLight *light;
 
 protected:
   void initializeGL() override;
@@ -49,9 +49,9 @@ private:
   unsigned int texture_colorbuffer;
   unsigned int renderbuffer;
 
-  unsigned int quad_VAO;
-  unsigned int quad_VBO;
-  unsigned int quad_EBO;
+  Mesh *skybox;
+  unsigned int skybox_cubemap;
+  Mesh *framebuffer_quad;
 
   float angle;
   glm::mat4 projection;

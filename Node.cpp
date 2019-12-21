@@ -2,10 +2,11 @@
 
 #include "Node.h"
 
-Node::Node(glm::vec3 position, glm::vec3 scale, glm::mat4 transformation) :
+Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation) :
+  transformation(transformation),
   position(position),
   scale(scale),
-  transformation(transformation)
+  rotation(rotation)
 {}
 
 Node::~Node() {
@@ -20,6 +21,9 @@ void Node::draw(Shader *shader, glm::mat4 model, int material_index_offset) {
   model *= transformation;
   model = glm::translate(model, position);
   model = glm::scale(model, scale);
+  model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(0.0f,1.0f,0.0f));
+  model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(1.0f,0.0f,0.0f));
+  model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f,0.0f,1.0f));
   shader->use();
   shader->setMat4("model", model);
   for (unsigned int i=0; i<meshes.size(); i++) {
