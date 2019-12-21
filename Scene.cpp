@@ -7,7 +7,7 @@ std::vector<Material*> Scene::loaded_materials;
 
 Scene::Scene(QObject *parent) : QObject(parent),
   camera(new Camera()),
-  sunlight(new PointLight(glm::vec3(-0.85f, 0.7f, -1.5f), glm::vec3(0.06f))),
+  sunlight(new Light(glm::vec3(-0.85f, 0.7f, -1.5f), glm::vec3(0.06f))),
   background_color(0.1, 0.1, 0.2)
 {
   sunlight->ambient = 0.5f;

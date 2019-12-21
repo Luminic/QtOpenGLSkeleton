@@ -1,8 +1,8 @@
 #include <QDebug>
 
-#include "PointLight.h"
+#include "Light.h"
 
-PointLight::PointLight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, float ambient, float diffuse, float specular) :
+Light::Light(glm::vec3 position, glm::vec3 scale, glm::vec3 color, float ambient, float diffuse, float specular) :
   color(color),
   ambient(ambient),
   diffuse(diffuse),
@@ -18,10 +18,10 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, flo
   initialize_cube();
 }
 
-PointLight::~PointLight() {
+Light::~Light() {
 }
 
-void PointLight::set_object_settings(std::string name, Shader *shader) {
+void Light::set_object_settings(std::string name, Shader *shader) {
   shader->use();
 
   shader->setVec3((name+".position").c_str(), position);
@@ -35,7 +35,7 @@ void PointLight::set_object_settings(std::string name, Shader *shader) {
   shader->setFloat((name+".quadratic").c_str(), quadratic);
 }
 
-void PointLight::draw(Shader *shader) {
+void Light::draw(Shader *shader) {
   shader->use();
   shader->setVec3("color", color);
   shader->setMat4("model", get_model_matrix());
@@ -44,7 +44,7 @@ void PointLight::draw(Shader *shader) {
 }
 
 // Getters
-glm::mat4 PointLight::get_model_matrix() {
+glm::mat4 Light::get_model_matrix() {
   glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
   model = glm::scale(model, glm::vec3(scale));
   return model;

@@ -14,7 +14,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Node.h"
-#include "PointLight.h"
+#include "Light.h"
 #include "Model.h"
 #include "Mesh.h"
 #include "Scene.h"
@@ -37,7 +37,7 @@ public:
 
   Model *nanosuit;
 
-  PointLight *light;
+  Light *light;
 
 protected:
   void initializeGL() override;

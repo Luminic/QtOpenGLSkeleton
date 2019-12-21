@@ -18,7 +18,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Node.h"
-#include "PointLight.h"
+#include "Light.h"
 #include "Material.h"
 
 class Settings : public QTabWidget {
@@ -31,7 +31,7 @@ public:
   void set_scene(Scene *scene, const char *name="Scene");
   void set_camera(Camera *camera, const char *name="Camera");
   void set_node(Node *node, const char *name="Node");
-  void set_point_light(PointLight *point_light, const char *name="Point Light");
+  void set_point_light(Light *point_light, const char *name="Point Light");
   void set_material(Material *material, const char *name="Material");
 
   template <typename T>

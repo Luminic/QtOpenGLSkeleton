@@ -13,7 +13,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Material.h"
-#include "PointLight.h"
+#include "Light.h"
 
 class Scene : public QObject {
   Q_OBJECT
@@ -29,7 +29,7 @@ public:
   void set_sunlight_settings(std::string name, Shader *shader);
 
   Camera *camera;
-  PointLight *sunlight; // Display it like a pointlight but have its lighting be sunlight
+  Light *sunlight; // Display it like a pointlight but have its lighting be sunlight
 
   static std::vector<Texture> loaded_textures;
   static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise

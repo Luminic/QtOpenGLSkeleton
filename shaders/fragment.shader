@@ -1,8 +1,10 @@
 #version 420
 
-in vec2 texture_coordinate;
-in vec3 normal;
-in vec3 fragment_position;
+in VS_to_FS {
+	vec3 fragment_position;
+	vec2 texture_coordinate;
+	vec3 normal;
+} fs_in;
 
 out vec4 frag_color;
 
@@ -72,9 +74,9 @@ vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color
 	return ambient + diffuse + specular;
 }
 
-vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 fragment_position, vec3 camera_direction) {
+vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
 
-	vec3 light_direction = normalize(light.position-fragment_position);
+	vec3 light_direction = normalize(light.position-fs_in.fragment_position);
   vec3 halfway_direction = normalize(light_direction+camera_direction);
 
 	// Ambient lighting
@@ -87,7 +89,7 @@ vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, ve
 	vec3 specular = spec * specular_color * light.specular;
 
 	// Falloff
-	float distance = length(fragment_position-light.position);
+	float distance = length(fs_in.fragment_position-light.position);
 	float falloff = 1.0f / (light.constant + light.linear*distance + light.quadratic*distance*distance);
 
 	// Total Point Lighting
@@ -102,34 +104,34 @@ float linear_depth(float depth) {
 }
 
 void main() {
-	vec3 fragment_normal = normalize(normal);
-	vec3 camera_direction = normalize(camera_position - fragment_position);
+	vec3 fragment_normal = normalize(fs_in.normal);
+	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
 
   // Get the colors for everything
 
   float roughness = material.roughness;
   if (material.use_roughness_map)
-    roughness *= length(texture(material.roughness_map, texture_coordinate).rgb)/1.73f;
+    roughness *= length(texture(material.roughness_map, fs_in.texture_coordinate).rgb)/1.73f;
 
   float shininess = pow(2,(roughness)*10);
 
   float metalness = material.metalness;
   if (material.use_metalness_map)
-    metalness *= length(texture(material.metalness_map, texture_coordinate).rgb)/1.73f;
+    metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
 
   vec3 albedo = vec3(0.0f);
   if (material.number_albedo_maps == 0) {
   albedo = material.albedo;
   } else {
     for (int i=0; i<material.number_albedo_maps; i++) {
-      albedo += texture(material.albedo_map[i], texture_coordinate).rgb;
+      albedo += texture(material.albedo_map[i], fs_in.texture_coordinate).rgb;
     }
     albedo *= material.albedo;
   }
 
   vec3 ambient = albedo * material.ambient;
   if (material.use_ambient_occlusion_map) {
-    //ambient *= texture(material.ambient_occlusion_map, texture_coordinate).rgb;
+    //ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
 
   vec3 specular = vec3(1.0f);
@@ -143,7 +145,7 @@ void main() {
 
 	vec3 lighting_color = calculate_sunlight(sunlight, ambient, albedo, specular, shininess, fragment_normal, camera_direction);
 	for (int i=0; i<4; i++) {
-		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, fragment_position, camera_direction);
+		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, camera_direction);
 	}
 
   // Gamma Correction

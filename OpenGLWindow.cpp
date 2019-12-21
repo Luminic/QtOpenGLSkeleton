@@ -71,7 +71,7 @@ void OpenGLWindow::initializeGL() {
   settings->set_camera(scene->camera);
   settings->set_point_light(scene->sunlight, "Sunlight");
 
-  light = new PointLight(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
+  light = new Light(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
   settings->set_point_light(light, "Pointlight");
 
   cube = new Mesh();
@@ -165,7 +165,7 @@ void OpenGLWindow::paintGL() {
   int qt_framebuffer;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
 
-  // Draw the scene to this framebuffer (instead of the screen)
+  // Draw the scene to our framebuffer (instead of the screen)
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
@@ -180,14 +180,15 @@ void OpenGLWindow::paintGL() {
   skybox_shader->use();
   skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
   glActiveTexture(GL_TEXTURE0);
-  skybox_shader->setInt("skybox", 0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  skybox_shader->setInt("skybox", 0);
   skybox->draw(skybox_shader);
 
   // Draw the sun
   scene->draw_sun(light_shader);
-
+  
   glDepthMask(GL_TRUE);
+
 
   // Render the light
   glm::vec3 point_light_positions[] = {
