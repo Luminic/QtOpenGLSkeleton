@@ -58,6 +58,7 @@ private:
 
   Shader *object_shader;
   Shader *light_shader;
+  Shader *depth_shader;
   Shader *skybox_shader;
   Shader *framebuffer_shader;
 

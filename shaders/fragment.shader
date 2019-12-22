@@ -4,6 +4,7 @@ in VS_to_FS {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
 	vec3 normal;
+	vec4 fragment_light_space;
 } fs_in;
 
 out vec4 frag_color;
@@ -48,13 +49,22 @@ struct Light {
 };
 
 uniform samplerCube skybox;
-uniform int test;
+uniform sampler2D shadow_map;
 
 uniform Material material;
 uniform Sunlight sunlight;
 uniform Light light[4];
 
 uniform vec3 camera_position;
+
+float in_shadow() {
+	float bias = 0.001;
+	vec3 projected_coordinates = fs_in.fragment_light_space.xyz / fs_in.fragment_light_space.w;
+	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
+	float closest_depth = texture(shadow_map, projected_coordinates.xy).r;
+	float current_depth = projected_coordinates.z;
+	return current_depth-bias > closest_depth ? 1.0f : 0.0f;
+}
 
 vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
 
@@ -71,7 +81,7 @@ vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color
 	vec3 specular = spec * specular_color * sunlight.specular;
 
 	// Total Sunlight
-	return ambient + diffuse + specular;
+	return ambient + (1.0f-in_shadow())*(diffuse + specular);
 }
 
 vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
@@ -144,9 +154,9 @@ void main() {
   }
 
 	vec3 lighting_color = calculate_sunlight(sunlight, ambient, albedo, specular, shininess, fragment_normal, camera_direction);
-	for (int i=0; i<4; i++) {
+	/*for (int i=0; i<4; i++) {
 		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, camera_direction);
-	}
+	}*/
 
   // Gamma Correction
   float gamma = 2.2;

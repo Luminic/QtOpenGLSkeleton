@@ -20,6 +20,7 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent),
   framebuffer_quad(nullptr),
   object_shader(nullptr),
   light_shader(nullptr),
+  depth_shader(nullptr),
   skybox_shader(nullptr),
   framebuffer_shader(nullptr),
   keys_pressed(nullptr),
@@ -45,6 +46,7 @@ OpenGLWindow::~OpenGLWindow() {
   delete framebuffer_quad;
   delete object_shader;
   delete light_shader;
+  delete depth_shader;
   delete skybox_shader;
   delete framebuffer_shader;
 }
@@ -58,11 +60,13 @@ void OpenGLWindow::initializeGL() {
 
   object_shader = new Shader();
   light_shader = new Shader();
+  depth_shader = new Shader();
   skybox_shader = new Shader();
   framebuffer_shader = new Shader();
 
   object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
+  depth_shader->loadShaders("shaders/depth_vertex.shader", "shaders/depth_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
   framebuffer_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
 
@@ -94,10 +98,10 @@ void OpenGLWindow::initializeGL() {
   settings->set_node(floor, "Floor");
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
-  nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
   //nanosuit = new Model("models/mouse/mouse.fbx");
-  //nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.4f);
   settings->set_node(nanosuit, "Nanosuit");
 
@@ -144,8 +148,9 @@ void OpenGLWindow::initializeGL() {
 
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
-  //glEnable(GL_CULL_FACE);
+
   //glEnable(GL_FRAMEBUFFER_SRGB);
+  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glClearColor(0.1, 0.1, 0.2, 1.0);
@@ -165,12 +170,62 @@ void OpenGLWindow::paintGL() {
   int qt_framebuffer;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
 
+  glEnable(GL_DEPTH_TEST);
+
+  // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
+  glViewport(0, 0, scene->sunlight->depth_map_width, scene->sunlight->depth_map_height);
+  glBindFramebuffer(GL_FRAMEBUFFER, scene->sunlight->depth_framebuffer);
+
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glCullFace(GL_FRONT);
+
+  depth_shader->use();
+  glm::mat4 sunlight_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+  glm::mat4 sunlight_view = glm::lookAt(
+    scene->sunlight->position*2.0f,
+    glm::vec3(0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+  );
+
+  depth_shader->setMat4("light_space", sunlight_projection*sunlight_view);
+
+
+  // Render the cube
+  glm::vec3 cube_positions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f,  15.0f),
+    glm::vec3(-1.5f, -2.2f,  2.5f),
+    glm::vec3(-3.8f, -2.0f,  12.3f),
+    glm::vec3( 2.4f, -0.4f,  3.5f),
+    glm::vec3(-1.7f,  3.0f,  7.5f),
+    glm::vec3( 1.3f, -2.0f,  2.5f),
+    glm::vec3( 1.5f,  2.0f,  2.5f),
+    glm::vec3( 1.5f,  0.2f,  1.5f),
+    glm::vec3(-1.3f,  1.0f,  1.5f)
+  };
+  for (int i=0; i<10; i++) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, cube_positions[i]+glm::vec3(0.0f,0.0f,2.0f));
+    model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
+    model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
+    depth_shader->setMat4("model", model);
+    cube->draw(depth_shader, false);
+  }
+
+  // Render the floor
+  floor->draw(depth_shader, glm::mat4(1.0f), false);
+
+  // Render the Nanosuit
+  glm::mat4 model = nanosuit->get_model_matrix();
+  nanosuit->draw(depth_shader, model, false);
+
+
   // Draw the scene to our framebuffer (instead of the screen)
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  glEnable(GL_DEPTH_TEST);
 
   glm::mat4 view = scene->camera->view_matrix();
 
@@ -183,10 +238,12 @@ void OpenGLWindow::paintGL() {
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
   skybox_shader->setInt("skybox", 0);
   skybox->draw(skybox_shader);
+  // Wait to set faceculling to back until after the cubemap is drawn because we are looking at the back faces of the cubemap
+  glCullFace(GL_BACK);
 
   // Draw the sun
   scene->draw_sun(light_shader);
-  
+
   glDepthMask(GL_TRUE);
 
 
@@ -216,11 +273,15 @@ void OpenGLWindow::paintGL() {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
   object_shader->setInt("skybox", 0);
-  object_shader->setInt("test", 2);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, scene->sunlight->depth_map);
+  object_shader->setInt("shadow_map", 1);
+  object_shader->setMat4("light_space", sunlight_projection*sunlight_view);
 
   scene->set_sunlight_settings("sunlight", object_shader);
 
-  glm::vec3 cube_positions[] = {
+  /*glm::vec3 cube_positions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
     glm::vec3( 2.0f,  5.0f,  15.0f),
     glm::vec3(-1.5f, -2.2f,  2.5f),
@@ -231,22 +292,22 @@ void OpenGLWindow::paintGL() {
     glm::vec3( 1.5f,  2.0f,  2.5f),
     glm::vec3( 1.5f,  0.2f,  1.5f),
     glm::vec3(-1.3f,  1.0f,  1.5f)
-  };
+  };*/
   for (int i=0; i<10; i++) {
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, cube_positions[i]+glm::vec3(0.0f,0.0f,2.0f));
     model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
     model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
     object_shader->setMat4("model", model);
-    cube->draw(object_shader, 1);
+    cube->draw(object_shader, true, 2);
   }
 
   // Render the floor
-  floor->draw(object_shader, glm::mat4(1.0f), 1);
+  floor->draw(object_shader, glm::mat4(1.0f), true, 2);
 
   // Render the Nanosuit
-  glm::mat4 model = nanosuit->get_model_matrix();
-  nanosuit->draw(object_shader, model, 1);
+  /*glm::mat4 */model = nanosuit->get_model_matrix();
+  nanosuit->draw(object_shader, model, true, 2);
 
   // Draw the framebuffer to the screen
   //glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -258,7 +319,7 @@ void OpenGLWindow::paintGL() {
 
   glActiveTexture(GL_TEXTURE0);
   framebuffer_shader->setInt("screen_texture", 0);
-  glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);
+  glBindTexture(GL_TEXTURE_2D, texture_colorbuffer);//scene->sunlight->depth_map);
 
   framebuffer_quad->draw(framebuffer_shader);
 
