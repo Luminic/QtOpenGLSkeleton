@@ -58,12 +58,24 @@ uniform Light light[4];
 uniform vec3 camera_position;
 
 float in_shadow() {
-	float bias = 0.001;
 	vec3 projected_coordinates = fs_in.fragment_light_space.xyz / fs_in.fragment_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
+	if (projected_coordinates.z > 1.0f) return 0.0f;
+
 	float closest_depth = texture(shadow_map, projected_coordinates.xy).r;
 	float current_depth = projected_coordinates.z;
-	return current_depth-bias > closest_depth ? 1.0f : 0.0f;
+
+	float shadow = 0.0f;
+	vec2 texel_size = 1.0f / textureSize(shadow_map, 0);
+	for (int x=-1; x<=1; x++) {
+		for (int y=-1; y<=1; y++) {
+			float pcf_depth = texture(shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
+			shadow += current_depth > pcf_depth ? 1.0f : 0.0f;
+		}
+	}
+	shadow /= 9.0f;
+
+	return shadow;
 }
 
 vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {

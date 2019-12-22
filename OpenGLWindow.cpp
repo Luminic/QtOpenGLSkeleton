@@ -150,7 +150,7 @@ void OpenGLWindow::initializeGL() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
 
   //glEnable(GL_FRAMEBUFFER_SRGB);
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glClearColor(0.1, 0.1, 0.2, 1.0);
@@ -177,7 +177,7 @@ void OpenGLWindow::paintGL() {
   glBindFramebuffer(GL_FRAMEBUFFER, scene->sunlight->depth_framebuffer);
 
   glClear(GL_DEPTH_BUFFER_BIT);
-  glCullFace(GL_FRONT);
+  //glCullFace(GL_FRONT);
 
   depth_shader->use();
   glm::mat4 sunlight_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
@@ -239,7 +239,7 @@ void OpenGLWindow::paintGL() {
   skybox_shader->setInt("skybox", 0);
   skybox->draw(skybox_shader);
   // Wait to set faceculling to back until after the cubemap is drawn because we are looking at the back faces of the cubemap
-  glCullFace(GL_BACK);
+  //glCullFace(GL_BACK);
 
   // Draw the sun
   scene->draw_sun(light_shader);
