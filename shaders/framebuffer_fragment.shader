@@ -6,8 +6,18 @@ in vec2 texture_coordinate;
 
 uniform sampler2D screen_texture;
 
+uniform int display_type;
+
 void main() {
-  frag_color = texture(screen_texture, texture_coordinate);
+  switch (display_type) {
+    case 1:
+      frag_color = vec4(texture(screen_texture, texture_coordinate).rrr, 1.0f);
+      break;
+    default:
+      frag_color = texture(screen_texture, texture_coordinate);
+      break;
+  }
+  //frag_color = vec4(vec3(display_type), 1.0f);
   //frag_color = vec4(vec3(texture(screen_texture, texture_coordinate).r), 1.0f);
 }
 

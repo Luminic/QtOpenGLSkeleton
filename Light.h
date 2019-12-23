@@ -35,7 +35,7 @@ public:
   float quadratic;
 
   // Getters
-  glm::mat4 get_model_matrix();
+  virtual glm::mat4 get_model_matrix();
 };
 
 #endif

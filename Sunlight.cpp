@@ -2,9 +2,15 @@
 
 #include "Sunlight.h"
 
-Sunlight::Sunlight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, float ambient, float diffuse, float specular) :
-  Light(position, scale, color, ambient, diffuse, specular)
+Sunlight::Sunlight(glm::vec3 polar_position, glm::vec3 scale, glm::vec3 color, float ambient, float diffuse, float specular) :
+  Light(glm::vec3(0.0f), scale, color, ambient, diffuse, specular),
+  polar_position(polar_position)
 {
+
+  x_view_size = 52.0f;
+  y_view_size = 35.0f;
+  near_plane = 0.1f;
+  far_plane = 45.0f;
 }
 
 Sunlight::~Sunlight() {}
@@ -34,4 +40,19 @@ void Sunlight::initialize_depth_framebuffer(unsigned int depth_map_width, unsign
     qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+glm::vec3 Sunlight::get_position() {
+  glm::vec3 pos = glm::vec3(
+    glm::sin(glm::radians(polar_position.x))*glm::cos(glm::radians(polar_position.y)),
+    glm::sin(glm::radians(polar_position.y)),
+    glm::cos(glm::radians(polar_position.x))*glm::cos(glm::radians(polar_position.y))
+  );
+  return pos * polar_position.z;
+}
+
+glm::mat4 Sunlight::get_model_matrix() {
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), get_position());
+  model = glm::scale(model, glm::vec3(scale));
+  return model;
 }

@@ -50,7 +50,7 @@ void Camera::update_direction() {
 void Camera::update_position() {
   // Deceleration
     // x-z deceleration
-  if (glm::length(glm::vec2(velocity.x,velocity.z)) >= deceleration*(*delta_time)/1000.0f) {
+  if (glm::length(glm::vec2(velocity.x,velocity.z)) > deceleration*(*delta_time)/1000.0f) {
     glm::vec2 norm = glm::normalize(glm::vec2(velocity.x,velocity.z));
     velocity.x -= norm.x*deceleration*(*delta_time)/1000.0f;
     velocity.z -= norm.y*deceleration*(*delta_time)/1000.0f;
@@ -58,7 +58,7 @@ void Camera::update_position() {
     velocity.x = 0;
     velocity.z = 0;
   }
-    // y deceleration (separated becase I said so)
+  //   // y deceleration (separated becase I said so)
   if (glm::abs(velocity.y) >= deceleration*(*delta_time)/1000.0f) velocity.y -=
                 velocity.y>0 ? deceleration*(*delta_time)/1000.0f :
                               -deceleration*(*delta_time)/1000.0f;

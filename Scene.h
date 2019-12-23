@@ -39,6 +39,13 @@ public:
 
   glm::vec3 background_color;
 
+  bool use_volumetric_lighting;
+  float volumetric_lighting_multiplier;
+  int volumetric_lighting_steps;
+  float henyey_greenstein_G_value;
+
+  int display_type;
+
 private:
   float angle;
 };

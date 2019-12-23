@@ -23,6 +23,15 @@ enum Image_Type {
   CUBE_MAP // Should be in gamma space (will not be converted into linear space)
 };
 
+static const char *Image_Type_String[] = {
+  "Unknown",
+  "Albedo Map",
+  "Ambient Occlusion Map",
+  "Roughness Map",
+  "Metalness Map",
+  "Cube Map"
+};
+
 struct Texture {
   unsigned int id;
   Image_Type type;

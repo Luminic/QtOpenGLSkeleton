@@ -1,5 +1,6 @@
 #include <QGridLayout>
 #include <QScrollArea>
+#include <QPixmap>
 #include <QDebug>
 
 #include "Settings.h"
@@ -12,7 +13,30 @@ Settings::Settings() {
 Settings::~Settings() {}
 
 void Settings::set_scene(Scene *scene, const char *name) {
+  QWidget *Scene_widget = new QWidget(this);
+  QGridLayout *Scene_layout = new QGridLayout(Scene_widget);
 
+  QGroupBox *Volumetric_box = new QGroupBox(tr("Volumetrics"), this);
+  Volumetric_box->setCheckable(true);
+  Volumetric_box->setChecked(scene->use_volumetric_lighting);
+  connect(Volumetric_box, &QGroupBox::toggled, this, [=](bool on){scene->use_volumetric_lighting=on;});
+
+  QGridLayout *Volumetric_layout = new QGridLayout(Volumetric_box);
+  create_option_group("Volumetric Lighting Multiplier:", &scene->volumetric_lighting_multiplier, 0.0, 5.0, 0.2, 2, Volumetric_box, Volumetric_layout, 0);
+  create_option_group("Volumetric Lighting Steps:", &scene->volumetric_lighting_steps, 0.0, 500.0, 10, 0, Volumetric_box, Volumetric_layout, 2);
+  create_option_group("Henyey Greenstein G Value:", &scene->henyey_greenstein_G_value, -1.0, 1.0, 0.1, 2, Volumetric_box, Volumetric_layout, 4);
+  Scene_layout->addWidget(Volumetric_box, 0, 0);
+
+  QGroupBox *Misc_box = new QGroupBox(this);
+  QGridLayout *Misc_layout = new QGridLayout(Misc_box);
+  create_option_group("Display Type:", &scene->display_type, 0.0, 5.0, 1.0, 0, Misc_box, Misc_layout, 0);
+  Scene_layout->addWidget(Misc_box, 0, 1);
+
+  QScrollArea *Scrolling = new QScrollArea(this);
+  Scrolling->setWidget(Scene_widget);
+  Scrolling->setWidgetResizable(true);
+
+  addTab(Scrolling, tr(name));
 }
 
 void Settings::set_camera(Camera *camera, const char *name) {
@@ -91,6 +115,39 @@ void Settings::set_point_light(Light *point_light, const char *name) {
   addTab(Scrolling, tr(name));
 }
 
+void Settings::set_sunlight(Sunlight *sunlight, const char *name) {
+  QWidget *Light_widget = new QWidget(this);
+  QGridLayout *Light_layout = new QGridLayout(Light_widget);
+
+  QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
+  QGridLayout *Color_Layout = new QGridLayout(Color_Box);
+  create_option_group("R:", &sunlight->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &sunlight->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("B:", &sunlight->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
+  Light_layout->addWidget(Color_Box, 0, 0);
+
+  QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
+  QGridLayout *Position_layout = new QGridLayout(Position_box);
+  create_option_group("Yaw:", &sunlight->polar_position.x, 0.0, 360.0, 1, 1, Position_box, Position_layout, 0);
+  create_option_group("Pitch:", &sunlight->polar_position.y, 0.0, 360.0, 1, 1, Position_box, Position_layout, 2);
+  create_option_group("Distance:", &sunlight->polar_position.z, 1.0, 100.0, 1, 1, Position_box, Position_layout, 4);
+  Light_layout->addWidget(Position_box, 0, 1);
+
+  QGroupBox *View_box = new QGroupBox(tr("View"), this);
+  QGridLayout *View_layout = new QGridLayout(View_box);
+  create_option_group("X View Size:", &sunlight->x_view_size, 5.0, 100.0, 1.0, 0, View_box, View_layout, 0);
+  create_option_group("Y View Size:", &sunlight->y_view_size, 5.0, 100.0, 1.0, 0, View_box, View_layout, 2);
+  create_option_group("Near Plane:", &sunlight->near_plane, 0.01, 10.0, 0.1, 2, View_box, View_layout, 4);
+  create_option_group("Far Plane:", &sunlight->far_plane, 0.1, 500.0, 1.0, 2, View_box, View_layout, 6);
+  Light_layout->addWidget(View_box, 1, 0);
+
+  QScrollArea *Scrolling = new QScrollArea(this);
+  Scrolling->setWidget(Light_widget);
+  Scrolling->setWidgetResizable(true);
+
+  addTab(Scrolling, tr(name));
+}
+
 void Settings::set_material(Material *material, const char *name) {
   QWidget *Material_widget = new QWidget(this);
   QGridLayout *Material_layout = new QGridLayout(Material_widget);
@@ -107,6 +164,15 @@ void Settings::set_material(Material *material, const char *name) {
   create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 0);
   create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 2);
   Material_layout->addWidget(Misc_box, 0, 1);
+
+  QTabWidget *Image_container = new QTabWidget(this);
+  for (auto texture : material->textures) {
+    QLabel *texture_label = new QLabel(Image_container);
+    QPixmap texture_image(texture.path.c_str());
+    texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
+    Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
+  }
+  Material_layout->addWidget(Image_container, 1, 0, 1, -1);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Material_widget);

@@ -27,7 +27,6 @@ public:
 
 
   glm::vec3 position;
-  // Initialization of these is handled by the settings class
   float mouse_sensitivity;
   float max_movement_speed;
   float acceleration;

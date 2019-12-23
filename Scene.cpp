@@ -7,11 +7,17 @@ std::vector<Material*> Scene::loaded_materials;
 
 Scene::Scene(QObject *parent) : QObject(parent),
   camera(new Camera()),
-  sunlight(new Sunlight(glm::vec3(-0.85f, 0.7f, -1.5f), glm::vec3(0.06f))),
+  sunlight(new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f))),
   background_color(0.1, 0.1, 0.2)
 {
+  display_type = 0;
   sunlight->initialize_depth_framebuffer(2048,2048);
   sunlight->ambient = 0.5f;
+
+  use_volumetric_lighting = false;
+  volumetric_lighting_multiplier = 1.0f;
+  volumetric_lighting_steps = 30;
+  henyey_greenstein_G_value = 0.4f;
 }
 
 Scene::~Scene() {
@@ -31,7 +37,7 @@ void Scene::update_scene() {
 void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
   shader->use();
   shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
-  shader->setMat4("model", sunlight->get_model_matrix());
+  //shader->setMat4("model", glm::mat4(1.0f));//sunlight->get_model_matrix());
 
   sunlight->draw(shader);
 }
@@ -39,7 +45,7 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
 void Scene::set_sunlight_settings(std::string name, Shader *shader) {
   shader->use();
 
-  shader->setVec3((name+".direction").c_str(), sunlight->position);
+  shader->setVec3((name+".direction").c_str(), sunlight->get_position());
 
   shader->setVec3((name+".ambient").c_str(), (sunlight->color)*(sunlight->ambient));
   shader->setVec3((name+".diffuse").c_str(), (sunlight->color)*(sunlight->diffuse));

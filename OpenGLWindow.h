@@ -29,6 +29,7 @@ public:
 
   void set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time);
   void update_scene();
+  void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);
 
   Settings *settings;
   Scene *scene;
