@@ -58,6 +58,7 @@ public:
 
   bool use_volumetric_lighting;
   float volumetric_lighting_multiplier;
+  float volumetric_lighting_offset;
   int volumetric_lighting_steps;
   float henyey_greenstein_G_value;
 

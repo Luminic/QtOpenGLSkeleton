@@ -23,8 +23,9 @@ void Settings::set_scene(Scene *scene, const char *name) {
 
   QGridLayout *Volumetric_layout = new QGridLayout(Volumetric_box);
   create_option_group("Volumetric Lighting Multiplier:", &scene->volumetric_lighting_multiplier, 0.0, 5.0, 0.2, 2, Volumetric_box, Volumetric_layout, 0);
-  create_option_group("Volumetric Lighting Steps:", &scene->volumetric_lighting_steps, 0.0, 500.0, 10, 0, Volumetric_box, Volumetric_layout, 2);
-  create_option_group("Henyey Greenstein G Value:", &scene->henyey_greenstein_G_value, -1.0, 1.0, 0.1, 2, Volumetric_box, Volumetric_layout, 4);
+  create_option_group("Volumetric Lighting Offset:", &scene->volumetric_lighting_offset, -1.0, 1.0, 0.01, 2, Volumetric_box, Volumetric_layout, 2);
+  create_option_group("Volumetric Lighting Steps:", &scene->volumetric_lighting_steps, 0.0, 500.0, 10, 0, Volumetric_box, Volumetric_layout, 4);
+  create_option_group("Henyey Greenstein G Value:", &scene->henyey_greenstein_G_value, -1.0, 1.0, 0.1, 2, Volumetric_box, Volumetric_layout, 6);
   Scene_layout->addWidget(Volumetric_box, 0, 0);
 
   QGroupBox *Misc_box = new QGroupBox(this);
@@ -101,12 +102,19 @@ void Settings::set_point_light(Light *point_light, const char *name) {
   create_option_group("B:", &point_light->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
   Light_layout->addWidget(Color_Box, 0, 0);
 
+  QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);
+  QGridLayout *Lighting_Layout = new QGridLayout(Lighting_Box);
+  create_option_group("Ambient:", &point_light->ambient, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
+  create_option_group("Diffuse:", &point_light->diffuse, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
+  create_option_group("Specular:", &point_light->specular, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 4);
+  Light_layout->addWidget(Lighting_Box, 0, 1);
+
   QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
   QGridLayout *Position_layout = new QGridLayout(Position_box);
   create_option_group("X:", &point_light->position.x, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 0);
   create_option_group("Y:", &point_light->position.y, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 2);
   create_option_group("Z:", &point_light->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 4);
-  Light_layout->addWidget(Position_box, 0, 2);
+  Light_layout->addWidget(Position_box, 1, 0);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Light_widget);
@@ -126,12 +134,19 @@ void Settings::set_sunlight(Sunlight *sunlight, const char *name) {
   create_option_group("B:", &sunlight->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
   Light_layout->addWidget(Color_Box, 0, 0);
 
+  QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);
+  QGridLayout *Lighting_Layout = new QGridLayout(Lighting_Box);
+  create_option_group("Ambient:", &sunlight->ambient, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
+  create_option_group("Diffuse:", &sunlight->diffuse, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
+  create_option_group("Specular:", &sunlight->specular, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 4);
+  Light_layout->addWidget(Lighting_Box, 0, 1);
+
   QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
   QGridLayout *Position_layout = new QGridLayout(Position_box);
   create_option_group("Yaw:", &sunlight->polar_position.x, 0.0, 360.0, 1, 1, Position_box, Position_layout, 0);
   create_option_group("Pitch:", &sunlight->polar_position.y, 0.0, 360.0, 1, 1, Position_box, Position_layout, 2);
   create_option_group("Distance:", &sunlight->polar_position.z, 1.0, 100.0, 1, 1, Position_box, Position_layout, 4);
-  Light_layout->addWidget(Position_box, 0, 1);
+  Light_layout->addWidget(Position_box, 1, 0);
 
   QGroupBox *View_box = new QGroupBox(tr("View"), this);
   QGridLayout *View_layout = new QGridLayout(View_box);
@@ -139,7 +154,7 @@ void Settings::set_sunlight(Sunlight *sunlight, const char *name) {
   create_option_group("Y View Size:", &sunlight->y_view_size, 5.0, 100.0, 1.0, 0, View_box, View_layout, 2);
   create_option_group("Near Plane:", &sunlight->near_plane, 0.01, 10.0, 0.1, 2, View_box, View_layout, 4);
   create_option_group("Far Plane:", &sunlight->far_plane, 0.1, 500.0, 1.0, 2, View_box, View_layout, 6);
-  Light_layout->addWidget(View_box, 1, 0);
+  Light_layout->addWidget(View_box, 1, 1);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Light_widget);

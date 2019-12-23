@@ -1,27 +1,38 @@
 #include <QDebug>
 #include <QCursor>
+#include <QString>
+#include <QVBoxLayout>
 
 #include "MainWindow.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
-  GLWindow(new OpenGLWindow(this)),
-  frame_time(new QTime()),
-  timer(new QTimer(this)),
-  mouse_grabbed(false),
-  first_mouse(true)
-{
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
+  // Set up the window
   setWindowTitle("QtGL");
   resize(800, 600);
+
+  GLWindow = new OpenGLWindow(this);
+  window_layout = new QGridLayout(GLWindow);
+  window_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
   setCentralWidget(GLWindow);
 
-  //GLWindow->scene->camera->initialize_camera(&keys_pressed, &mouse_movement, &delta_time);
+  mouse_grabbed = false;
+  first_mouse = true;
   GLWindow->set_inputs(&keys_pressed, &mouse_movement, &delta_time);
 
+  // Set up the status box
+  status_box = new QGroupBox(tr("Status Box"), this);
+  status_box->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+  QVBoxLayout *status_layout = new QVBoxLayout(status_box);
+  fps_label = new QLabel(tr("Frame time:"), status_box);
+  status_layout->addWidget(fps_label);
+  window_layout->addWidget(status_box, 0, 0);
+  status_box->hide();
+
   // Set up mainloop
+  timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &MainWindow::mainLoop);
   timer->start(16);
-
-  // Start timer for each frame
+  frame_time = new QTime();
   frame_time->start();
 
   // Show the main window (also shows child widget: GLWindow)
@@ -30,11 +41,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
 MainWindow::~MainWindow() {
   delete frame_time;
+  delete status_box;
 }
 
 void MainWindow::mainLoop() {
   delta_time = frame_time->elapsed();
   frame_time->start();
+  fps_label->setText(QString("Frame time:")+QString::number(delta_time));
   //qDebug() << delta_time;
   handleMouseMovement();
   GLWindow->update_scene();
@@ -98,6 +111,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         QCursor cursor(Qt::ArrowCursor);
         QApplication::restoreOverrideCursor();
       }
+      break;
+    case Qt::Key_F3:
+      if (status_box->isHidden())
+        status_box->show();
+      else
+        status_box->hide();
       break;
     default:
       keys_pressed.insert(event->key());

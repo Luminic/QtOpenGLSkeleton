@@ -12,12 +12,13 @@ Scene::Scene(QObject *parent) : QObject(parent),
 {
   display_type = 0;
   sunlight->initialize_depth_framebuffer(2048,2048);
-  sunlight->ambient = 0.5f;
+  sunlight->ambient = 1.0f;
 
   use_volumetric_lighting = false;
   volumetric_lighting_multiplier = 1.0f;
+  volumetric_lighting_offset = 0.0f;
   volumetric_lighting_steps = 30;
-  henyey_greenstein_G_value = 0.4f;
+  henyey_greenstein_G_value = 0.6f;
 
   light = new Light(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
 

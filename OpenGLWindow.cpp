@@ -181,6 +181,7 @@ void OpenGLWindow::paintGL() {
 
   object_shader->setBool("use_volumetric_lighting", scene->use_volumetric_lighting);
   object_shader->setFloat("volumetric_multiplier", scene->volumetric_lighting_multiplier);
+  object_shader->setFloat("volumetric_offset", scene->volumetric_lighting_offset);
   object_shader->setInt("steps", scene->volumetric_lighting_steps);
   object_shader->setFloat("henyey_greenstein_G_value", scene->henyey_greenstein_G_value);
 

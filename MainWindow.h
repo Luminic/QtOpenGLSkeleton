@@ -3,6 +3,8 @@
 #include <QTime>
 #include <QTimer>
 #include <QEvent>
+#include <QGroupBox>
+#include <QGridLayout>
 #include <unordered_set>
 
 #include "OpenGLWindow.h"
@@ -13,6 +15,11 @@ class MainWindow : public QMainWindow {
 public:
   MainWindow(QWidget *parent=nullptr);
   ~MainWindow();
+
+  QGridLayout *window_layout;
+
+  QGroupBox *status_box;
+  QLabel *fps_label;
 
   std::unordered_set<int> keys_pressed;
   int delta_time;

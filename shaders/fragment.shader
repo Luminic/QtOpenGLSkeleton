@@ -60,6 +60,7 @@ uniform mat4 light_space;
 
 uniform bool use_volumetric_lighting;
 uniform float volumetric_multiplier;
+uniform float volumetric_offset;
 uniform int steps;
 uniform float henyey_greenstein_G_value;
 
@@ -226,7 +227,7 @@ void main() {
 			scattering *= compute_scattering(dot(-camera_direction, normalize(sunlight.direction)), henyey_greenstein_G_value);
 			total_scattering += scattering;
 		}
-		total_scattering = total_scattering/steps*volumetric_multiplier;
+		total_scattering = max(total_scattering/steps*volumetric_multiplier*pow(distance, 1/2) + volumetric_offset, 0.0f);
 	}
 
 	//frag_color = vec4(vec3(total_scattering), 1.0f);
