@@ -34,6 +34,7 @@ struct Sunlight {
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+	sampler2D shadow_map;
 };
 
 struct Light {
@@ -49,7 +50,6 @@ struct Light {
 };
 
 uniform samplerCube skybox;
-uniform sampler2D shadow_map;
 
 uniform Material material;
 uniform Sunlight sunlight;
@@ -63,7 +63,7 @@ uniform float volumetric_multiplier;
 uniform int steps;
 uniform float henyey_greenstein_G_value;
 
-float in_shadow(bool use_pcf) {
+float in_shadow(sampler2D shadow_map, bool use_pcf) {
 	vec3 projected_coordinates = fs_in.fragment_light_space.xyz / fs_in.fragment_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
 	if (projected_coordinates.z > 1.0f) return 0.0f;
@@ -72,7 +72,7 @@ float in_shadow(bool use_pcf) {
 
 	if (use_pcf) {
 		float shadow = 0.0f;
-		vec2 texel_size = 1.0f / textureSize(shadow_map, 0);
+		vec2 texel_size = 1.0f / textureSize(sunlight.shadow_map, 0);
 		for (int x=-1; x<=1; x++) {
 			for (int y=-1; y<=1; y++) {
 				float pcf_depth = texture(shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
@@ -88,7 +88,7 @@ float in_shadow(bool use_pcf) {
 	}
 }
 
-float in_shadow_fp(vec3 position_world_space, bool use_pcf) {
+float in_shadow_fp(sampler2D shadow_map, vec3 position_world_space, bool use_pcf) {
 	vec4 position_light_space = light_space * vec4(position_world_space, 1.0f);
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
@@ -98,7 +98,7 @@ float in_shadow_fp(vec3 position_world_space, bool use_pcf) {
 
 	if (use_pcf) {
 		float shadow = 0.0f;
-		vec2 texel_size = 1.0f / textureSize(shadow_map, 0);
+		vec2 texel_size = 1.0f / textureSize(sunlight.shadow_map, 0);
 		for (int x=-1; x<=1; x++) {
 			for (int y=-1; y<=1; y++) {
 				float pcf_depth = texture(shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
@@ -137,7 +137,7 @@ vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color
 	vec3 specular = spec * specular_color * sunlight.specular;
 
 	// Total Sunlight
-	return ambient + (1.0f-in_shadow(true))*(diffuse + specular);
+	return ambient + (1.0f-in_shadow(sunlight.shadow_map, true))*(diffuse + specular);
 }
 
 vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
@@ -222,7 +222,7 @@ void main() {
 		vec3 current_pos = camera_position;
 		for (int i=0; i<steps; i++) {
 			current_pos += difference/float(steps+1);
-			float scattering = 1.0f-in_shadow_fp(current_pos, true);
+			float scattering = 1.0f-in_shadow_fp(sunlight.shadow_map, current_pos, true);
 			scattering *= compute_scattering(dot(-camera_direction, normalize(sunlight.direction)), henyey_greenstein_G_value);
 			total_scattering += scattering;
 		}

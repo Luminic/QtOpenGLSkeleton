@@ -10,9 +10,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Node.h"
+#include "Mesh.h"
+#include "Model.h"
 #include "Shader.h"
 #include "Camera.h"
 #include "Material.h"
+#include "Light.h"
 #include "Sunlight.h"
 
 class Scene : public QObject {
@@ -26,10 +30,23 @@ public:
   void update_scene();
 
   void draw_sun(Shader *shader);
-  void set_sunlight_settings(std::string name, Shader *shader);
+  void set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0);
+  void draw_light(Shader *shader);
+  void set_light_settings(std::string name, Shader *shader);
+  void draw_skybox(Shader *shader);
+  void set_skybox_settings(std::string name, Shader *shader, int texture_unit=0);
+  void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);
 
   Camera *camera;
   Sunlight *sunlight; // Display it like a pointlight but have its lighting be sunlight
+  Light *light;
+
+  Mesh *cube;
+  Node *floor;
+  Model *nanosuit;
+
+  Mesh *skybox;
+  unsigned int skybox_cubemap;
 
   static std::vector<Texture> loaded_textures;
   static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
