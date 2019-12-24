@@ -5,14 +5,9 @@
 std::vector<Texture> Scene::loaded_textures;
 std::vector<Material*> Scene::loaded_materials;
 
-Scene::Scene(QObject *parent) : QObject(parent),
-  camera(new Camera()),
-  sunlight(new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f))),
-  background_color(0.1, 0.1, 0.2)
-{
+Scene::Scene(QObject *parent) : QObject(parent) {
+  background_color = glm::vec3(0.1, 0.1, 0.2);
   display_type = 0;
-  sunlight->initialize_depth_framebuffer(2048,2048);
-  sunlight->ambient = 1.0f;
 
   use_volumetric_lighting = false;
   volumetric_lighting_multiplier = 1.0f;
@@ -20,7 +15,13 @@ Scene::Scene(QObject *parent) : QObject(parent),
   volumetric_lighting_steps = 30;
   henyey_greenstein_G_value = 0.6f;
 
-  light = new Light(glm::vec3(1.2f, 0.6, 1.5f), glm::vec3(0.2f));
+  camera = new Camera();
+
+  sunlight = new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f));
+  sunlight->initialize_depth_framebuffer(2048,2048);
+  sunlight->ambient = 1.0f;
+
+  light = new PointLight(glm::vec3(0.4f, 1.6, 2.3f), glm::vec3(0.2f));
 
   cube = new Mesh();
   cube->initialize_cube();
@@ -91,43 +92,19 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
 }
 
 void Scene::set_sunlight_settings(std::string name, Shader *shader, int texture_unit) {
-  shader->setVec3((name+".direction").c_str(), sunlight->get_position());
-
-  shader->setVec3((name+".ambient").c_str(), (sunlight->color)*(sunlight->ambient));
-  shader->setVec3((name+".diffuse").c_str(), (sunlight->color)*(sunlight->diffuse));
-  shader->setVec3((name+".specular").c_str(), (sunlight->color)*(sunlight->specular));
-
+  sunlight->set_object_settings(name, shader);
+  
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_2D, sunlight->depth_map);
   shader->setInt((name+".shadow_map").c_str(), texture_unit);
 }
 
 void Scene::draw_light(Shader *shader) {
-  glm::vec3 point_light_positions[] = {
-  	glm::vec3( 0.7f,  0.2f, -2.0f),
-  	glm::vec3( 2.3f, -3.3f,  4.0f),
-  	glm::vec3(-4.0f,  2.0f,  12.0f),
-  	glm::vec3( 0.0f,  0.0f,  3.0f)
-  };
-
-  for (int i=0; i<4; i++) {
-    light->position = point_light_positions[i];
-    light->draw(shader);
-  }
+  light->draw(shader);
 }
 
 void Scene::set_light_settings(std::string name, Shader *shader) {
-  glm::vec3 point_light_positions[] = {
-    glm::vec3( 0.7f,  0.2f, -2.0f),
-    glm::vec3( 2.3f, -3.3f,  4.0f),
-    glm::vec3(-4.0f,  2.0f,  12.0f),
-    glm::vec3( 0.0f,  0.0f,  3.0f)
-  };
-
-  for (int i=0; i<4; i++) {
-    light->position = point_light_positions[i];
-    light->set_object_settings((name+"["+std::to_string(i)+"]").c_str(), shader);
-  }
+  light->set_object_settings((name+"["+std::to_string(0)+"]").c_str(), shader);
 }
 
 void Scene::draw_skybox(Shader *shader) {

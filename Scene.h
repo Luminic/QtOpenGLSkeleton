@@ -17,6 +17,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Light.h"
+#include "PointLight.h"
 #include "Sunlight.h"
 
 class Scene : public QObject {
@@ -39,7 +40,7 @@ public:
 
   Camera *camera;
   Sunlight *sunlight; // Display it like a pointlight but have its lighting be sunlight
-  Light *light;
+  PointLight *light;
 
   Mesh *cube;
   Node *floor;

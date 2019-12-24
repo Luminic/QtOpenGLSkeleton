@@ -14,11 +14,14 @@ Shader::Shader() {}
 
 Shader::~Shader() {}
 
-void Shader::loadShaders(const char* vertex_path, const char* fragment_path) {
+void Shader::loadShaders(const char* vertex_path, const char* fragment_path, const char *geometry_path) {
   initializeOpenGLFunctions();
   unsigned int vert_shader, frag_shader;
   int success;
   char infoLog[512];
+
+  // Create the shader program
+  ID = glCreateProgram();
 
   // Load vertex shader
   std::string vertex_shader_str = textContent(vertex_path);
@@ -33,6 +36,8 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path) {
     glGetShaderInfoLog(vert_shader, 512, NULL, infoLog);
     qDebug() << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog;
   }
+  glAttachShader(ID, vert_shader);
+  glDeleteShader(vert_shader);
 
   // Load fragment shader
   std::string fragment_shader_str = textContent(fragment_path);
@@ -47,21 +52,35 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path) {
     glGetShaderInfoLog(frag_shader, 512, NULL, infoLog);
     qDebug() << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog;
   }
-  // Create the shader program
-  ID = glCreateProgram();
   glAttachShader(ID, frag_shader);
-  glAttachShader(ID, vert_shader);
+  glDeleteShader(frag_shader);
+
+  if (geometry_path[0] != '\0') {
+    // Load geometry shader
+    std::string geometry_shader_str = textContent(geometry_path);
+    const char *fragment_shader_code = geometry_shader_str.data();
+    // Compile geometry shader
+    unsigned int geom_shader = glCreateShader(GL_GEOMETRY_SHADER);
+    glShaderSource(geom_shader, 1, &fragment_shader_code, NULL);
+    glCompileShader(geom_shader);
+    // Check for errors
+    glGetShaderiv(geom_shader, GL_COMPILE_STATUS, &success);
+    if(!success) {
+      glGetShaderInfoLog(geom_shader, 512, NULL, infoLog);
+      qDebug() << "ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n" << infoLog;
+    }
+    glAttachShader(ID, geom_shader);
+    glDeleteShader(geom_shader);
+  }
+
+
   glLinkProgram(ID);
   // Check for errors
   glGetProgramiv(ID, GL_LINK_STATUS, &success);
   if(!success) {
-      glGetProgramInfoLog(ID, 512, NULL, infoLog);
-      qDebug() << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
+    glGetProgramInfoLog(ID, 512, NULL, infoLog);
+    qDebug() << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
   }
-
-  // Delete the shaders (they are already linked so they are no longer needed)
-  glDeleteShader(vert_shader);
-  glDeleteShader(frag_shader);
 }
 
 void Shader::use() {

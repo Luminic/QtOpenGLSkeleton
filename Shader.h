@@ -18,7 +18,7 @@ public:
   Shader();
   ~Shader();
 
-  void loadShaders(const char *vertex_path, const char *fragment_path);
+  void loadShaders(const char *vertex_path, const char *fragment_path, const char *geometry_path="");
   void use();
 
   void setBool(const char *name, bool value);

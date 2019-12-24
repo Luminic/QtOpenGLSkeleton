@@ -1,6 +1,6 @@
 #version 420
 
-in VS_to_FS {
+in VS_OUT {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
 	vec3 normal;
@@ -211,9 +211,9 @@ void main() {
   }
 
 	vec3 lighting_color = calculate_sunlight(sunlight, ambient, albedo, specular, shininess, fragment_normal, camera_direction);
-	/*for (int i=0; i<4; i++) {
+	for (int i=0; i<1; i++) {
 		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, camera_direction);
-	}*/
+	}
 
 	float total_scattering = 0.0f;
 	if (use_volumetric_lighting) {
@@ -248,8 +248,9 @@ void main() {
 	vec3 total_color = vec3(lighting_color+reflection_color);
 
 	// Final result
-  //frag_color = vec4(vec3(max(dot(fragment_normal,camera_direction),0.0f)),1.0f); // Use to check face orientation
-  //frag_color = vec4(vec3(result*(1-linear_depth(gl_FragCoord.z))+linear_depth(gl_FragCoord.z)), 1.0f); // Use to check linear depth
+  // frag_color = vec4(vec3(max(dot(fragment_normal,camera_direction),0.0f)),1.0f); // Use to check face orientation
+  // frag_color = vec4(vec3(result*(1-linear_depth(gl_FragCoord.z))+linear_depth(gl_FragCoord.z)), 1.0f); // Use to check linear depth
+	// frag_color = vec4(vec3(linear_depth(gl_FragCoord.z)), 1.0f);
   frag_color = vec4(mix(total_color,vec3(1.0f),total_scattering), 1.0f);
-	//frag_color = vec4(vec3(distance/10.0f), 1.0f);
+	// frag_color = vec4(vec3(distance/10.0f), 1.0f);
 }

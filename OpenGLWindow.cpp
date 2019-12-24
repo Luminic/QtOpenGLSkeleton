@@ -54,7 +54,7 @@ void OpenGLWindow::initializeGL() {
   skybox_shader = new Shader();
   framebuffer_shader = new Shader();
 
-  object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");
+  object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");//, "shaders/geometry.shader");
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
   depth_shader->loadShaders("shaders/depth_vertex.shader", "shaders/depth_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");

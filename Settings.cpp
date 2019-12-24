@@ -91,7 +91,7 @@ void Settings::set_node(Node *node, const char *name) {
   addTab(Scrolling, tr(name));
 }
 
-void Settings::set_point_light(Light *point_light, const char *name) {
+void Settings::set_point_light(PointLight *point_light, const char *name) {
   QWidget *Light_widget = new QWidget(this);
   QGridLayout *Light_layout = new QGridLayout(Light_widget);
 

@@ -15,6 +15,12 @@ Sunlight::Sunlight(glm::vec3 polar_position, glm::vec3 scale, glm::vec3 color, f
 
 Sunlight::~Sunlight() {}
 
+void Sunlight::set_object_settings(std::string name, Shader *shader) {
+  Light::set_object_settings(name, shader);
+
+  shader->setVec3((name+".direction").c_str(), get_position());
+}
+
 void Sunlight::initialize_depth_framebuffer(unsigned int depth_map_width, unsigned int depth_map_height) {
   this->depth_map_width = depth_map_width;
   this->depth_map_height = depth_map_height;

@@ -11,10 +11,6 @@ Light::Light(glm::vec3 position, glm::vec3 scale, glm::vec3 color, float ambient
   this->position = position;
   this->scale = scale;
 
-  constant = 1.0f;
-  linear = 0.09f;
-  quadratic = 0.032f;
-
   initialize_cube();
 }
 
@@ -22,17 +18,9 @@ Light::~Light() {
 }
 
 void Light::set_object_settings(std::string name, Shader *shader) {
-  shader->use();
-
-  shader->setVec3((name+".position").c_str(), position);
-
   shader->setVec3((name+".ambient").c_str(), color*ambient);
   shader->setVec3((name+".diffuse").c_str(), color*diffuse);
   shader->setVec3((name+".specular").c_str(), color*specular);
-
-  shader->setFloat((name+".constant").c_str(), constant);
-  shader->setFloat((name+".linear").c_str(), linear);
-  shader->setFloat((name+".quadratic").c_str(), quadratic);
 }
 
 void Light::draw(Shader *shader) {
