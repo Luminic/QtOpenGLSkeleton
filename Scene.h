@@ -33,7 +33,7 @@ public:
   void draw_sun(Shader *shader);
   void set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0);
   void draw_light(Shader *shader);
-  void set_light_settings(std::string name, Shader *shader);
+  void set_light_settings(std::string name, Shader *shader, int texture_unit=0);
   void draw_skybox(Shader *shader);
   void set_skybox_settings(std::string name, Shader *shader, int texture_unit=0);
   void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);

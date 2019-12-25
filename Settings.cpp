@@ -116,6 +116,12 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
   create_option_group("Z:", &point_light->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 4);
   Light_layout->addWidget(Position_box, 1, 0);
 
+  QGroupBox *Samples_Box = new QGroupBox(tr("Samples"), this);
+  QGridLayout *Samples_Layout = new QGridLayout(Samples_Box);
+  create_option_group("Samples:", &point_light->samples, 1.0, 26.0, 1.0, 0, Samples_Box, Samples_Layout, 0);
+  create_option_group("Sample Radius:", &point_light->sample_radius, 0.0, 1.0, 0.01, 2, Samples_Box, Samples_Layout, 2);
+  Light_layout->addWidget(Samples_Box, 1, 1);
+
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Light_widget);
   Scrolling->setWidgetResizable(true);

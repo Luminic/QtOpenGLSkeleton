@@ -5,7 +5,9 @@ out vec4 frag_color;
 in vec3 texture_coordinate;
 
 uniform samplerCube skybox;
+uniform int mode;
 
 void main() {
-  frag_color = texture(skybox, texture_coordinate);
+  if (mode == 1) frag_color = vec4(texture(skybox, texture_coordinate).rrr, 1.0f);
+  else frag_color = texture(skybox, texture_coordinate);
 }

@@ -22,6 +22,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   sunlight->ambient = 1.0f;
 
   light = new PointLight(glm::vec3(0.4f, 1.6, 2.3f), glm::vec3(0.2f));
+  light->initialize_depth_framebuffer(1024,1024);
 
   cube = new Mesh();
   cube->initialize_cube();
@@ -93,7 +94,7 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
 
 void Scene::set_sunlight_settings(std::string name, Shader *shader, int texture_unit) {
   sunlight->set_object_settings(name, shader);
-  
+
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_2D, sunlight->depth_map);
   shader->setInt((name+".shadow_map").c_str(), texture_unit);
@@ -103,8 +104,12 @@ void Scene::draw_light(Shader *shader) {
   light->draw(shader);
 }
 
-void Scene::set_light_settings(std::string name, Shader *shader) {
+void Scene::set_light_settings(std::string name, Shader *shader, int texture_unit) {
   light->set_object_settings((name+"["+std::to_string(0)+"]").c_str(), shader);
+
+  glActiveTexture(GL_TEXTURE0+texture_unit);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, light->depth_cubemap);
+  shader->setInt((name+"["+std::to_string(0)+"]"+".shadow_cubemap").c_str(), texture_unit);
 }
 
 void Scene::draw_skybox(Shader *shader) {

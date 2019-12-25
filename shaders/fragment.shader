@@ -47,6 +47,11 @@ struct Light {
 	float constant;
 	float linear;
 	float quadratic;
+
+	int samples;
+	float sample_radius;
+
+	samplerCube shadow_cubemap;
 };
 
 uniform samplerCube skybox;
@@ -64,7 +69,7 @@ uniform float volumetric_offset;
 uniform int steps;
 uniform float henyey_greenstein_G_value;
 
-float in_shadow(sampler2D shadow_map, bool use_pcf) {
+float in_sun_shadow(sampler2D shadow_map, bool use_pcf) {
 	vec3 projected_coordinates = fs_in.fragment_light_space.xyz / fs_in.fragment_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
 	if (projected_coordinates.z > 1.0f) return 0.0f;
@@ -89,7 +94,7 @@ float in_shadow(sampler2D shadow_map, bool use_pcf) {
 	}
 }
 
-float in_shadow_fp(sampler2D shadow_map, vec3 position_world_space, bool use_pcf) {
+float in_sun_shadow(sampler2D shadow_map, vec3 position_world_space, bool use_pcf) {
 	vec4 position_light_space = light_space * vec4(position_world_space, 1.0f);
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
@@ -115,6 +120,31 @@ float in_shadow_fp(sampler2D shadow_map, vec3 position_world_space, bool use_pcf
 	}
 }
 
+vec3 sample_offset_directions[26] = vec3[](
+	vec3( 0,  0,  0), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1),
+	vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+	vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+	vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+	vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1),
+	vec3( 0,  0,  1), vec3( 0,  0, -1), vec3( 0,  1,  0), vec3( 1,  0,  0),
+	vec3( 0, -1,  0), vec3(-1,  0,  0)
+);
+
+float in_pointlight_shadow(Light pointlight, vec3 position, bool use_pcf) {
+	vec3 position_to_light = position - pointlight.position;
+	float current_depth = length(position_to_light);
+	float shadow = 0.0f;
+
+	for (int i=0; i<pointlight.samples; i++) {
+		float closest_depth = texture(pointlight.shadow_cubemap, position_to_light+sample_offset_directions[i]*pointlight.sample_radius).r;
+		closest_depth *= 45.0f;
+		shadow += current_depth > closest_depth ? 1.0f : 0.0f;
+	}
+	shadow /= pointlight.samples;
+
+	return shadow;
+}
+
 float compute_scattering(float cos_theta, float G) {
 	// This is the Henyey Greenstein Phase Function
 	// Equation from https://www.astro.umd.edu/~jph/HG_note.pdf
@@ -138,7 +168,7 @@ vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color
 	vec3 specular = spec * specular_color * sunlight.specular;
 
 	// Total Sunlight
-	return ambient + (1.0f-in_shadow(sunlight.shadow_map, true))*(diffuse + specular);
+	return ambient + (1.0f-in_sun_shadow(sunlight.shadow_map, true))*(diffuse + specular);
 }
 
 vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
@@ -160,7 +190,7 @@ vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, ve
 	float falloff = 1.0f / (light.constant + light.linear*distance + light.quadratic*distance*distance);
 
 	// Total Point Lighting
-	return (ambient + diffuse + specular) * falloff;
+	return (ambient + (1.0f-in_pointlight_shadow(light, fs_in.fragment_position, false))*(diffuse + specular)) * falloff;
 }
 
 float linear_depth(float depth) {
@@ -223,9 +253,14 @@ void main() {
 		vec3 current_pos = camera_position;
 		for (int i=0; i<steps; i++) {
 			current_pos += difference/float(steps+1);
-			float scattering = 1.0f-in_shadow_fp(sunlight.shadow_map, current_pos, true);
-			scattering *= compute_scattering(dot(-camera_direction, normalize(sunlight.direction)), henyey_greenstein_G_value);
-			total_scattering += scattering;
+			float sun_scattering = 1.0f-in_sun_shadow(sunlight.shadow_map, current_pos, true);
+			sun_scattering *= compute_scattering(dot(-camera_direction, normalize(sunlight.direction)), henyey_greenstein_G_value);
+			float point_scattering = 1.0f-in_pointlight_shadow(light[0], current_pos, true);
+			point_scattering *= compute_scattering(dot(-camera_direction, normalize(light[0].position)), henyey_greenstein_G_value);
+			float falloff = 1.0f / (light[0].constant + light[0].linear*distance + light[0].quadratic*distance*distance);
+			point_scattering *= falloff;
+			total_scattering += sun_scattering+point_scattering;
+
 		}
 		total_scattering = max(total_scattering/steps*volumetric_multiplier*pow(distance, 1/2) + volumetric_offset, 0.0f);
 	}
