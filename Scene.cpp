@@ -41,12 +41,13 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->material->roughness = 0.65f;
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
   floor->meshes.push_back(floor_mesh);
+  floor->scale = glm::vec3(14.0f,1.0f,7.0f);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   //nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
-  //nanosuit = new Model("models/lightray_test/wall2.fbx");
-  nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit = new Model("models/lightray_test/wall2.fbx");
+  // nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.6f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
   nanosuit->position = glm::vec3(0.0f,-2.2f,0.0f);

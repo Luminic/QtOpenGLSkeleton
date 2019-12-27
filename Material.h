@@ -20,7 +20,7 @@ enum Image_Type {
   AMBIENT_OCCLUSION_MAP, // Should be in linear space
   ROUGHNESS_MAP, // Should be in linear space
   METALNESS_MAP, // Should be in linear space
-  CUBE_MAP // Should be in gamma space (will not be converted into linear space)
+  CUBE_MAP // Should be in gamma space (will be converted into linear space)
 };
 
 static const char *Image_Type_String[] = {

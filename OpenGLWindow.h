@@ -40,8 +40,12 @@ protected:
 
 private:
   unsigned int framebuffer;
-  unsigned int texture_colorbuffer;
+  unsigned int texture_colorbuffers[2];
   unsigned int renderbuffer;
+
+  unsigned int ping_pong_framebuffer;
+  unsigned int ping_pong_colorbuffers[2];
+  unsigned int bloom_colorbuffer;
 
   Mesh *framebuffer_quad;
 
@@ -54,6 +58,8 @@ private:
   Shader *pointlight_depth_shader;
   Shader *skybox_shader;
   Shader *framebuffer_shader;
+
+  Shader *gaussian_blur_shader;
 
   std::unordered_set<int> *keys_pressed;
   int *delta_time;

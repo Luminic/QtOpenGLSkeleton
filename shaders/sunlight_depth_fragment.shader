@@ -1,5 +1,7 @@
 #version 420
 
+layout (depth_greater) out float gl_FragDepth;
+
 //out vec4 fragment_color;
 
 void main() {

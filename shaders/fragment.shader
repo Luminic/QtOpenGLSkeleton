@@ -1,5 +1,8 @@
 #version 420
 
+layout (location = 0) out vec4 frag_color;
+layout (location = 1) out vec4 volumetric_color;
+
 in VS_OUT {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
@@ -7,7 +10,7 @@ in VS_OUT {
 	vec4 fragment_light_space;
 } fs_in;
 
-out vec4 frag_color;
+//out vec4 frag_color;
 
 struct Material {
   // Should be 0 and false by default
@@ -31,18 +34,22 @@ struct Material {
 
 struct Sunlight {
 	vec3 direction;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+
+	vec3 color;
+	float ambient;
+	float diffuse;
+	float specular;
+
 	sampler2D shadow_map;
 };
 
 struct Light {
 	vec3 position;
 
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
+	float ambient;
+	float diffuse;
+	float specular;
 
 	float constant;
 	float linear;
@@ -159,13 +166,13 @@ vec3 calculate_sunlight(Sunlight sunlight, vec3 ambient_color, vec3 albedo_color
   vec3 sunlight_halfway_direction = normalize(sunlight_direction+camera_direction);
 
 	// Ambient lighting
-	vec3 ambient = ambient_color * sunlight.ambient;
+	vec3 ambient = ambient_color * sunlight.ambient * sunlight.color;
 	// Diffuse Lighting
 	float diff = max(dot(fragment_normal, sunlight_direction), 0.0f);
-	vec3 diffuse = diff * albedo_color * sunlight.diffuse;
+	vec3 diffuse = diff * albedo_color * sunlight.diffuse * sunlight.color;
 	// Specular Lighting
 	float spec = pow(max(dot(fragment_normal, sunlight_halfway_direction), 0.0), shininess);
-	vec3 specular = spec * specular_color * sunlight.specular;
+	vec3 specular = spec * specular_color * sunlight.specular * sunlight.color;
 
 	// Total Sunlight
 	return ambient + (1.0f-in_sun_shadow(sunlight.shadow_map, true))*(diffuse + specular);
@@ -177,13 +184,13 @@ vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, ve
   vec3 halfway_direction = normalize(light_direction+camera_direction);
 
 	// Ambient lighting
-	vec3 ambient = ambient_color * light.ambient;
+	vec3 ambient = ambient_color * light.ambient * light.color;
 	// Diffuse Lighting
 	float diff = max(dot(fragment_normal, light_direction), 0.0f);
-	vec3 diffuse = diff * albedo_color * light.diffuse;
+	vec3 diffuse = diff * albedo_color * light.diffuse * light.color;
 	// Specular Lighting
 	float spec = pow(max(dot(fragment_normal, halfway_direction), 0.0), shininess);
-	vec3 specular = spec * specular_color * light.specular;
+	vec3 specular = spec * specular_color * light.specular * light.color;
 
 	// Falloff
 	float distance = length(fs_in.fragment_position-light.position);
@@ -245,7 +252,8 @@ void main() {
 		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, camera_direction);
 	}
 
-	float total_scattering = 0.0f;
+	float total_sun_scattering = 0.0f;
+	float total_point_scattering = 0.0f;
 	if (use_volumetric_lighting) {
 		vec3 difference = fs_in.fragment_position-camera_position;
 		float distance = length(difference);
@@ -255,30 +263,30 @@ void main() {
 			current_pos += difference/float(steps+1);
 			float sun_scattering = 1.0f-in_sun_shadow(sunlight.shadow_map, current_pos, true);
 			sun_scattering *= compute_scattering(dot(-camera_direction, normalize(sunlight.direction)), henyey_greenstein_G_value);
+			total_sun_scattering += sun_scattering;
+
 			float point_scattering = 1.0f-in_pointlight_shadow(light[0], current_pos, true);
 			point_scattering *= compute_scattering(dot(-camera_direction, normalize(light[0].position)), henyey_greenstein_G_value);
 			float falloff = 1.0f / (light[0].constant + light[0].linear*distance + light[0].quadratic*distance*distance);
 			point_scattering *= falloff;
-			total_scattering += sun_scattering+point_scattering;
+			total_point_scattering += point_scattering;
 
 		}
-		total_scattering = max(total_scattering/steps*volumetric_multiplier*pow(distance, 1/2) + volumetric_offset, 0.0f);
+		total_sun_scattering = max(total_sun_scattering/steps*volumetric_multiplier*pow(distance, 1/2) + volumetric_offset, 0.0f);
+		total_point_scattering = max(total_point_scattering/steps*volumetric_multiplier*pow(distance, 1/2) + volumetric_offset, 0.0f);
 	}
+	vec4 total_scattering = vec4(
+		total_sun_scattering*sunlight.color + total_point_scattering*light[0].color,
+		max(1.0f-total_sun_scattering-total_point_scattering, 0.0f) // Invert alpha bc default alpha is 1.0f (for when framebuffer isn't drawn to by shaders)
+	);
 
 	//frag_color = vec4(vec3(total_scattering), 1.0f);
 
-
-  // Gamma Correction
-  float gamma = 2.2f;
-	total_scattering = pow(total_scattering, 1.0/gamma);
-  lighting_color = pow(lighting_color, vec3(1.0/gamma));
-  metal_tint = pow(metal_tint, vec3(1.0/gamma));
-
-  vec3 reflection_color = vec3(0.0f);
-  if (material.metalness >= 0.9f) {
-    vec3 R = reflect(-camera_direction, fragment_normal);
-    reflection_color = texture(skybox, R).rgb * roughness * metal_tint;
-  }
+	vec3 reflection_color = vec3(0.0f);
+	if (material.metalness >= 0.9f) {
+		vec3 R = reflect(-camera_direction, fragment_normal);
+		reflection_color = texture(skybox, R).rgb * roughness * metal_tint;
+	}
 
 	vec3 total_color = vec3(lighting_color+reflection_color);
 
@@ -286,6 +294,7 @@ void main() {
   // frag_color = vec4(vec3(max(dot(fragment_normal,camera_direction),0.0f)),1.0f); // Use to check face orientation
   // frag_color = vec4(vec3(result*(1-linear_depth(gl_FragCoord.z))+linear_depth(gl_FragCoord.z)), 1.0f); // Use to check linear depth
 	// frag_color = vec4(vec3(linear_depth(gl_FragCoord.z)), 1.0f);
-  frag_color = vec4(mix(total_color,vec3(1.0f),total_scattering), 1.0f);
+  frag_color = vec4(total_color, 1.0f);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);
+	volumetric_color = total_scattering;
 	// frag_color = vec4(vec3(distance/10.0f), 1.0f);
 }

@@ -50,6 +50,7 @@ void Settings::set_camera(Camera *camera, const char *name) {
   create_option_group("Maximum Speed:", &camera->max_movement_speed, 0.0, 10.0, 0.1, 1, Misc_box, Misc_layout, 2);
   create_option_group("Acceleration:", &camera->acceleration, 0.0, 10.0, 0.1, 2, Misc_box, Misc_layout, 4);
   create_option_group("Deceleration:", &camera->deceleration, 0.0, 10.0, 0.1, 2, Misc_box, Misc_layout, 6);
+  create_option_group("Exposure:", &camera->exposure, 0.0, 20.0, 0.1, 2, Misc_box, Misc_layout, 8);
   Camera_layout->addWidget(Misc_box, 0, 0);
 
   QScrollArea *Scrolling = new QScrollArea(this);
@@ -97,9 +98,9 @@ void Settings::set_point_light(PointLight *point_light, const char *name) {
 
   QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
   QGridLayout *Color_Layout = new QGridLayout(Color_Box);
-  create_option_group("R:", &point_light->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
-  create_option_group("G:", &point_light->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
-  create_option_group("B:", &point_light->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
+  create_option_group("R:", &point_light->color.r, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &point_light->color.g, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("B:", &point_light->color.b, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 4);
   Light_layout->addWidget(Color_Box, 0, 0);
 
   QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);
@@ -135,9 +136,9 @@ void Settings::set_sunlight(Sunlight *sunlight, const char *name) {
 
   QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
   QGridLayout *Color_Layout = new QGridLayout(Color_Box);
-  create_option_group("R:", &sunlight->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
-  create_option_group("G:", &sunlight->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
-  create_option_group("B:", &sunlight->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
+  create_option_group("R:", &sunlight->color.r, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &sunlight->color.g, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("B:", &sunlight->color.b, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 4);
   Light_layout->addWidget(Color_Box, 0, 0);
 
   QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);

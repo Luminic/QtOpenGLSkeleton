@@ -108,7 +108,7 @@ Texture Material::load_cubemap(std::vector<std::string> faces, bool add_to_mater
   for (unsigned int i=0; i<faces.size(); i++) {
     QImage img = QImage(faces[i].c_str()).convertToFormat(QImage::Format_RGB888);
     if (img.isNull()) qDebug() << "Could not load cubemap texture:" << faces[i].c_str();
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
   }
 
   if (add_to_material)

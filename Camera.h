@@ -25,12 +25,13 @@ public:
   glm::vec3 get_front();
   glm::vec3 get_up();
 
-
   glm::vec3 position;
   float mouse_sensitivity;
   float max_movement_speed;
   float acceleration;
   float deceleration;
+
+  float exposure;
 
 private:
   void update_direction();
