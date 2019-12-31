@@ -2,7 +2,7 @@
 #define SCENE_H
 
 #include <QObject>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
 

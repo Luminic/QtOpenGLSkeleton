@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
 #include <string>
@@ -21,7 +21,7 @@ struct Vertex {
   glm::vec2 texture_coordinate;
 };
 
-class Mesh : public QObject, protected QOpenGLFunctions_4_2_Core {
+class Mesh : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:

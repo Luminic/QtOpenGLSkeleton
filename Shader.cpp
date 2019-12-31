@@ -73,13 +73,20 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
     glDeleteShader(geom_shader);
   }
 
-
   glLinkProgram(ID);
   // Check for errors
   glGetProgramiv(ID, GL_LINK_STATUS, &success);
   if(!success) {
     glGetProgramInfoLog(ID, 512, NULL, infoLog);
     qDebug() << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
+  }
+
+  // Validate the program
+  glValidateProgram(ID);
+  glGetProgramiv(ID, GL_VALIDATE_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(ID, 512, NULL, infoLog);
+    qDebug() << "WARNING::SHADER::PROGRAM::VALIDATION_FAILED\n" << infoLog;
   }
 }
 

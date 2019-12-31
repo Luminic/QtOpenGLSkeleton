@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QImage>
 #include <QMatrix4x4>
+#include <QOpenGLContext>
+#include <QOpenGLDebugLogger>
 
 #include "OpenGLWindow.h"
 
@@ -47,6 +49,20 @@ OpenGLWindow::~OpenGLWindow() {
 }
 
 void OpenGLWindow::initializeGL() {
+  QOpenGLContext *ctx = QOpenGLContext::currentContext();
+  QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(this);
+  qDebug() << logger->initialize();
+  qDebug() << ctx->hasExtension(QByteArrayLiteral("GL_KHR_debug"));
+
+  connect(logger, &QOpenGLDebugLogger::messageLogged, this,
+    [](const QOpenGLDebugMessage &message){
+      if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
+        qDebug() << message;
+      }
+    }
+  );
+  logger->startLogging();
+
   initializeOpenGLFunctions();
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
@@ -140,7 +156,7 @@ void OpenGLWindow::initializeGL() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, ping_pong_framebuffer, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
 
@@ -148,6 +164,7 @@ void OpenGLWindow::initializeGL() {
   //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
+  glEnable(GL_DEBUG_OUTPUT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glClearColor(0.0, 0.0, 0.0, 1.0);
 }
@@ -272,8 +289,13 @@ void OpenGLWindow::paintGL() {
   }
 
   // Create bloom effect with gaussian blur
-  glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
   glDisable(GL_DEPTH_TEST);
+  glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[0], 0);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[1], 0);
+  glClearBufferfv(GL_COLOR, 0, glm::value_ptr(glm::vec4(0.0f,0.0f,0.0f,1.0f)));
+
 
   gaussian_blur_shader->use();
 
@@ -282,15 +304,14 @@ void OpenGLWindow::paintGL() {
   for (int i=0; i<gaussian_blur_applications; i++) {
     gaussian_blur_shader->setBool("horizontal", horizontal);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[horizontal], 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[i%2], 0);
 
     glActiveTexture(GL_TEXTURE0);
     if (i==0) {
       glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
       glBlendFunci(1, GL_ONE, GL_ZERO);
     } else {
-      glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[!horizontal]);
+      glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[(i+1)%2]);
       glBlendFunci(1, GL_ONE, GL_ONE);
     }
     gaussian_blur_shader->setInt("image", 0);
@@ -299,6 +320,14 @@ void OpenGLWindow::paintGL() {
 
     horizontal = !horizontal;
   }
+  // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+  // glClear(GL_COLOR_BUFFER_BIT);
+  // glActiveTexture(GL_TEXTURE0);
+  // glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[0]);//(i+1)%2]);
+  // gaussian_blur_shader->setBool("horizontal", horizontal);
+  // framebuffer_quad->draw(gaussian_blur_shader);
+
+
   glBlendFunc(GL_ONE, GL_ZERO);
 
   // Draw the framebuffer to the screen

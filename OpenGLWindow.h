@@ -2,7 +2,7 @@
 #define OPENGL_WINDOW_H
 
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLWidget>
 
 #include <unordered_set>
@@ -20,7 +20,7 @@
 #include "Scene.h"
 #include "Settings.h"
 
-class OpenGLWindow : public QOpenGLWidget, protected QOpenGLFunctions_4_2_Core {
+class OpenGLWindow : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:

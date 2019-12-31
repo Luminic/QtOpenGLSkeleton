@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 #include <string>
 #include <vector>
@@ -38,7 +38,7 @@ struct Texture {
   std::string path;
 };
 
-class Material : public QObject, protected QOpenGLFunctions_4_2_Core {
+class Material : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:

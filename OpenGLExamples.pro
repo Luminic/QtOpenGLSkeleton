@@ -4,6 +4,7 @@
 
 TEMPLATE = app
 TARGET = OpenGLExamples
+CONFIG += debug
 
 QT += core gui widgets
 

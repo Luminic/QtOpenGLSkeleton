@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <vector>
 #include <string>
 
@@ -14,7 +14,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 
-class Node : public QObject, protected QOpenGLFunctions_4_2_Core {
+class Node : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:
