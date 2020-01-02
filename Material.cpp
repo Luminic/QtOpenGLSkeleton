@@ -3,12 +3,15 @@
 #include "Material.h"
 #include "Scene.h"
 
-Material::Material() :
-  albedo(glm::vec3(1.0f)),
-  ambient(glm::vec3(0.2f)),
-  roughness(1.0f),
-  metalness(0.0f)
-{
+Material::Material() {
+  albedo = 1.0f;
+  ambient = 0.2f;
+  color = glm::vec3(1.0f);
+  roughness = 1.0f;
+  metalness = 0.0f;
+
+  index = 0;
+
   initializeOpenGLFunctions();
 }
 
@@ -52,8 +55,8 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
   shader->setBool("material.use_roughness_map", (number_roughness_maps>=1));
   shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
 
-  shader->setVec3("material.albedo", albedo);
-  shader->setVec3("material.ambient", ambient);
+  shader->setVec3("material.albedo", albedo*color);
+  shader->setVec3("material.ambient", ambient*color);
   shader->setFloat("material.roughness", roughness);
   shader->setFloat("material.metalness", metalness);
 }
@@ -129,8 +132,9 @@ inline bool compare_vec3(glm::vec3 a, glm::vec3 b, float error=0.001) {
 
 bool Material::operator==(const Material& other_material) {
   // Check if values match
-  if (compare_vec3(albedo, other_material.albedo) &&
-    compare_vec3(ambient, other_material.ambient) &&
+  if (compare_vec3(color, other_material.color) &&
+    compare_floats(albedo, other_material.albedo) &&
+    compare_floats(ambient, other_material.ambient) &&
     compare_floats(roughness, other_material.roughness) &&
     compare_floats(metalness, other_material.metalness)) {
     // Check if there are the same # of textures

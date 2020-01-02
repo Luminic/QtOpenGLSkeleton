@@ -1,7 +1,11 @@
 #include <QGridLayout>
+#include <QVBoxLayout>
 #include <QScrollArea>
+#include <QPushButton>
 #include <QPixmap>
 #include <QDebug>
+
+#include <algorithm>
 
 #include "Settings.h"
 
@@ -79,6 +83,24 @@ void Settings::set_camera(Camera *camera, const char *name) {
   addTab(Scrolling, tr(name));
 }
 
+std::vector<Material*> get_node_materials(Node *node) {
+  // Probably quite inefficient but it should only be used a couple of times at the beginning
+  std::vector<Material*> materials;
+  for (auto mesh_ptr : node->meshes) {
+    if (mesh_ptr->material != nullptr && std::find(materials.begin(), materials.end(), mesh_ptr->material) == materials.end())
+        materials.push_back(mesh_ptr->material);
+  }
+  for (auto node_ptr : node->child_nodes) {
+    std::vector<Material*> cn_mats = get_node_materials(node_ptr);
+    for (auto mat_ptr : cn_mats) {
+      if (mat_ptr != nullptr && std::find(materials.begin(), materials.end(), mat_ptr) == materials.end())
+        materials.push_back(mat_ptr);
+    }
+  }
+
+  return materials;
+}
+
 void Settings::set_node(Node *node, const char *name) {
   QWidget *Node_widget = new QWidget(this);
   QGridLayout *Node_layout = new QGridLayout(Node_widget);
@@ -103,6 +125,18 @@ void Settings::set_node(Node *node, const char *name) {
   create_option_group("Pitch:", &node->rotation.y, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 2);
   create_option_group("Roll:", &node->rotation.z, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 4);
   Node_layout->addWidget(Rotation_box, 1, 0);
+
+
+  QGroupBox *Material_box = new QGroupBox(tr("Materials"), this);
+  QVBoxLayout *Material_layout = new QVBoxLayout(Material_box);
+  for (auto material_ptr : get_node_materials(node)) {
+    QPushButton *material_jump = new QPushButton(Material_box);
+    if (material_ptr->textures.size() >= 1)
+      material_jump->setIcon(QIcon(material_ptr->textures[0].path.c_str()));
+    connect(material_jump, &QPushButton::clicked, this, [=](){setCurrentIndex(material_ptr->index);});
+    Material_layout->addWidget(material_jump);
+  }
+  Node_layout->addWidget(Material_box, 1, 1);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Node_widget);
@@ -195,9 +229,9 @@ void Settings::set_material(Material *material, const char *name) {
 
   QGroupBox *Albedo_Box = new QGroupBox(tr("Color"), this);
   QGridLayout *Albedo_Layout = new QGridLayout(Albedo_Box);
-  create_option_group("R:", &material->albedo.r, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 0);
-  create_option_group("G:", &material->albedo.g, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 2);
-  create_option_group("B:", &material->albedo.b, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 4);
+  create_option_group("R:", &material->color.r, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 0);
+  create_option_group("G:", &material->color.g, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 2);
+  create_option_group("B:", &material->color.b, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 4);
   Material_layout->addWidget(Albedo_Box, 0, 0);
 
   QGroupBox *Misc_box = new QGroupBox(this);
@@ -206,20 +240,22 @@ void Settings::set_material(Material *material, const char *name) {
   create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 2);
   Material_layout->addWidget(Misc_box, 0, 1);
 
-  QTabWidget *Image_container = new QTabWidget(this);
-  for (auto texture : material->textures) {
-    QLabel *texture_label = new QLabel(Image_container);
-    QPixmap texture_image(texture.path.c_str());
-    texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
-    Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
+  if (material->textures.size() >= 1) {
+    QTabWidget *Image_container = new QTabWidget(this);
+    for (auto texture : material->textures) {
+      QLabel *texture_label = new QLabel(Image_container);
+      QPixmap texture_image(texture.path.c_str());
+      texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
+      Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
+    }
+    Material_layout->addWidget(Image_container, 1, 0, 1, -1);
   }
-  Material_layout->addWidget(Image_container, 1, 0, 1, -1);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Material_widget);
   Scrolling->setWidgetResizable(true);
 
-  addTab(Scrolling, tr(name));
+  material->index = addTab(Scrolling, tr(name));
 }
 
 template <typename T>

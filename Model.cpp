@@ -103,10 +103,10 @@ Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
 
   // Load colors
   aiColor3D color(0.0f,0.0f,0.0f);
-  material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-  mesh_colors->ambient = glm::vec3(color.r,color.g,color.b);
+  // material->Get(AI_MATKEY_COLOR_AMBIENT, color);
+  // mesh_colors->ambient = glm::vec3(color.r,color.g,color.b);
   material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-  mesh_colors->albedo = glm::vec3(color.r,color.g,color.b);
+  mesh_colors->color = glm::vec3(color.r,color.g,color.b);
 
   //mesh_colors->roughness = 0.8f;
   mesh_colors->metalness = 1.0f;

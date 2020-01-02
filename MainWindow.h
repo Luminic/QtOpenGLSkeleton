@@ -34,7 +34,7 @@ private:
 
   QTime *frame_time;
   std::vector<int> previous_frame_times;
-  int current_pft_index;
+  unsigned int current_pft_index;
   QTimer *timer;
   bool mouse_grabbed;
   bool first_mouse;

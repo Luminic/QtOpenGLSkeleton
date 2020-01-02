@@ -195,6 +195,7 @@ void OpenGLWindow::initializeGL() {
   //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
   glEnable(GL_DEBUG_OUTPUT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   glClearColor(0.0, 0.0, 0.0, 1.0);

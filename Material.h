@@ -45,10 +45,14 @@ public:
   std::vector<Texture> textures;
 
   // Defaults are in comments
-  glm::vec3 albedo; // 1.0f
-  glm::vec3 ambient; // 1.0f
+  glm::vec3 color;
+  float albedo; // 1.0f
+  float ambient; // 1.0f
   float roughness; // 1.0f
   float metalness; // 0.0
+
+  // For use with settings class
+  int index;
 };
 
 #endif
