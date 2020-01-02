@@ -43,23 +43,28 @@ private:
   unsigned int texture_colorbuffers[2];
   unsigned int renderbuffer;
 
+  unsigned int scene_framebuffer;
+  unsigned int scene_colorbuffers[2];
+
   unsigned int ping_pong_framebuffer;
-  unsigned int ping_pong_colorbuffers[2];
-  unsigned int bloom_colorbuffer;
+  unsigned int ping_pong_colorbuffers[2]; // Half Resolution
+  unsigned int bloom_colorbuffer; // Half Resolution
 
   Mesh *framebuffer_quad;
 
   float angle;
   glm::mat4 projection;
 
-  Shader *object_shader;
-  Shader *light_shader;
   Shader *sunlight_depth_shader;
   Shader *pointlight_depth_shader;
+
+  Shader *object_shader;
+  Shader *light_shader;
   Shader *skybox_shader;
-  Shader *framebuffer_shader;
+  Shader *scene_shader;
 
   Shader *gaussian_blur_shader;
+  Shader *post_processing_shader;
 
   std::unordered_set<int> *keys_pressed;
   int *delta_time;

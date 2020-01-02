@@ -20,7 +20,7 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch) :
 
   velocity = glm::vec3(0.0f,0.0f,0.0f);
 
-  exposure = 1.6f;
+  exposure = 1.0f;
 
   update_vectors();
 }

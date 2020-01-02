@@ -6,8 +6,8 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, flo
   linear(linear),
   quadratic(quadratic)
 {
-  samples = 26;
-  sample_radius = 0.05f;
+  samples = 5;
+  sample_radius = 0.02f;
 
   near_plane = 0.1f;
   far_plane = 45.0f;

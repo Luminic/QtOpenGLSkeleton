@@ -5,6 +5,15 @@
 
 #include "Settings.h"
 
+const char *Image_Type_String[] = {
+  "Unknown",
+  "Albedo Map",
+  "Ambient Occlusion Map",
+  "Roughness Map",
+  "Metalness Map",
+  "Cube Map"
+};
+
 Settings::Settings() {
   resize(600,400);
   show();
@@ -28,10 +37,20 @@ void Settings::set_scene(Scene *scene, const char *name) {
   create_option_group("Henyey Greenstein G Value:", &scene->henyey_greenstein_G_value, -1.0, 1.0, 0.1, 2, Volumetric_box, Volumetric_layout, 6);
   Scene_layout->addWidget(Volumetric_box, 0, 0);
 
+  QGroupBox *Post_Processing_box = new QGroupBox(this);
+  QGridLayout *Post_Processing_layout = new QGridLayout(Post_Processing_box);
+  create_option_group("Bloom Threshold Lower:", &scene->bloom_threshold_lower, 0.0, 5.0, 0.05, 2, Post_Processing_box, Post_Processing_layout, 0);
+  create_option_group("Bloom Threshold Upper:", &scene->bloom_threshold_upper, 0.0, 5.0, 0.05, 2, Post_Processing_box, Post_Processing_layout, 2);
+  create_option_group("Bloom Interpolation:", &scene->bloom_interpolation, 0.0, 5.0, 1.0, 0, Post_Processing_box, Post_Processing_layout, 4);
+  create_option_group("Bloom Multiplier:", &scene->bloom_multiplier, 0.0, 5.0, 0.05, 2, Post_Processing_box, Post_Processing_layout, 6);
+  create_option_group("Bloom Offset:", &scene->bloom_offset, -2.0, 6.0, 0.1, 1, Post_Processing_box, Post_Processing_layout, 8);
+  create_option_group("Bloom Applications:", &scene->bloom_applications, 1.0, 10.0, 1.0, 0, Post_Processing_box, Post_Processing_layout, 10);
+  Scene_layout->addWidget(Post_Processing_box, 0, 1);
+
   QGroupBox *Misc_box = new QGroupBox(this);
   QGridLayout *Misc_layout = new QGridLayout(Misc_box);
   create_option_group("Display Type:", &scene->display_type, 0.0, 5.0, 1.0, 0, Misc_box, Misc_layout, 0);
-  Scene_layout->addWidget(Misc_box, 0, 1);
+  Scene_layout->addWidget(Misc_box, 1, 0);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Scene_widget);

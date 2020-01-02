@@ -10,7 +10,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 
@@ -21,15 +20,6 @@ enum Image_Type {
   ROUGHNESS_MAP, // Should be in linear space
   METALNESS_MAP, // Should be in linear space
   CUBE_MAP // Should be in gamma space (will be converted into linear space)
-};
-
-static const char *Image_Type_String[] = {
-  "Unknown",
-  "Albedo Map",
-  "Ambient Occlusion Map",
-  "Roughness Map",
-  "Metalness Map",
-  "Cube Map"
 };
 
 struct Texture {

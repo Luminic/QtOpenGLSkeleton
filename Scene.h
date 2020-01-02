@@ -8,7 +8,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Node.h"
 #include "Mesh.h"
@@ -63,6 +62,21 @@ public:
   int volumetric_lighting_steps;
   float henyey_greenstein_G_value;
 
+  float bloom_multiplier;
+  float bloom_offset;
+  float bloom_threshold_upper;
+  float bloom_threshold_lower;
+  int bloom_interpolation;
+  int bloom_applications;
+
+  /*
+  Display Types:
+    0: Default
+    1: Sunlight Depth
+    2: Pointlight Depth
+    3: Volumetrics
+    4: Bloom
+  */
   int display_type;
 
 private:

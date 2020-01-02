@@ -1,9 +1,6 @@
 #include <QApplication>
-//#include <QMainWindow>
 #include <QSurfaceFormat>
-//#include <QDebug>
 #include "MainWindow.h"
-//#include "OpenGLWindow.h"
 
 int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
@@ -11,6 +8,7 @@ int main(int argc, char *argv[]) {
   QSurfaceFormat format = QSurfaceFormat::defaultFormat();
   format.setProfile(QSurfaceFormat::CoreProfile);
   format.setVersion(4, 2);
+  format.setOption(QSurfaceFormat::DebugContext);
   QSurfaceFormat::setDefaultFormat(format);
 
   MainWindow window;

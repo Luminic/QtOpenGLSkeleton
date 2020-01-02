@@ -11,22 +11,25 @@
 
 #include "OpenGLWindow.h"
 
-OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent),
+OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   // Declare all pointers as null just in case
-  settings(nullptr),
-  scene(nullptr),
-  framebuffer_quad(nullptr),
-  object_shader(nullptr),
-  light_shader(nullptr),
-  sunlight_depth_shader(nullptr),
-  pointlight_depth_shader(nullptr),
-  skybox_shader(nullptr),
-  framebuffer_shader(nullptr),
-  gaussian_blur_shader(nullptr),
-  keys_pressed(nullptr),
-  delta_time(nullptr),
-  mouse_movement(nullptr)
-{
+  settings = nullptr;
+  scene = nullptr;
+  framebuffer_quad = nullptr;
+
+  sunlight_depth_shader = nullptr;
+  pointlight_depth_shader = nullptr;
+  object_shader = nullptr;
+  light_shader = nullptr;
+  skybox_shader = nullptr;
+  scene_shader = nullptr;
+  gaussian_blur_shader = nullptr;
+  post_processing_shader = nullptr;
+
+  keys_pressed = nullptr;
+  delta_time = nullptr;
+  mouse_movement = nullptr;
+
   angle = 0.0f;
 }
 
@@ -44,8 +47,9 @@ OpenGLWindow::~OpenGLWindow() {
   delete sunlight_depth_shader;
   delete pointlight_depth_shader;
   delete skybox_shader;
-  delete framebuffer_shader;
+  delete scene_shader;
   delete gaussian_blur_shader;
+  delete post_processing_shader;
 }
 
 void OpenGLWindow::initializeGL() {
@@ -58,6 +62,7 @@ void OpenGLWindow::initializeGL() {
     [](const QOpenGLDebugMessage &message){
       if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
         qDebug() << message;
+
       }
     }
   );
@@ -69,21 +74,25 @@ void OpenGLWindow::initializeGL() {
 
   settings = new Settings();
 
-  object_shader = new Shader();
-  light_shader = new Shader();
   sunlight_depth_shader = new Shader();
   pointlight_depth_shader = new Shader();
+  object_shader = new Shader();
+  light_shader = new Shader();
   skybox_shader = new Shader();
-  framebuffer_shader = new Shader();
+  scene_shader = new Shader();
   gaussian_blur_shader = new Shader();
+  post_processing_shader = new Shader();
+
+  sunlight_depth_shader->loadShaders("shaders/sunlight_depth_vertex.shader", "shaders/sunlight_depth_fragment.shader");
+  pointlight_depth_shader->loadShaders("shaders/pointlight_depth_vertex.shader", "shaders/pointlight_depth_fragment.shader", "shaders/pointlight_depth_geometry.shader");
 
   object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");//, "shaders/geometry.shader");
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
-  sunlight_depth_shader->loadShaders("shaders/sunlight_depth_vertex.shader", "shaders/sunlight_depth_fragment.shader");
-  pointlight_depth_shader->loadShaders("shaders/pointlight_depth_vertex.shader", "shaders/pointlight_depth_fragment.shader", "shaders/pointlight_depth_geometry.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
-  framebuffer_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
-  gaussian_blur_shader->loadShaders("shaders/gaussian_blur_vertex.shader", "shaders/gaussian_blur_fragment.shader");
+  scene_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/scene_fragment.shader");
+
+  gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
+  post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
 
   scene = new Scene(this);
   scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
@@ -116,7 +125,6 @@ void OpenGLWindow::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, texture_colorbuffers[i], 0);
   }
-  glBindTexture(GL_TEXTURE_2D, 0);
   unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
   glDrawBuffers(2, attachments);
   // Create the renderbuffer (for the framebuffer)
@@ -128,7 +136,26 @@ void OpenGLWindow::initializeGL() {
   // Check if the framebuffer is complete
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // Create the scene framebuffer
+  glGenFramebuffers(1, &scene_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
+
+  size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
+  glGenTextures(size, scene_colorbuffers);
+  for (int i=0; i<size; i++) {
+    glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, scene_colorbuffers[i], 0);
+  }
+  glDrawBuffers(2, attachments);
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
 
   // Create the ping-pong framebuffer
   glGenFramebuffers(1, &ping_pong_framebuffer);
@@ -139,7 +166,7 @@ void OpenGLWindow::initializeGL() {
   glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
   for (int i=0; i<2; i++) {
     glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 400, 300, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -151,12 +178,16 @@ void OpenGLWindow::initializeGL() {
   // This blur will add all the results of the ping-pong colorbuffers together
   glGenTextures(1, &bloom_colorbuffer);
   glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 400, 300, 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
+
+  // Unbind framebuffers and textures
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
 
@@ -190,7 +221,6 @@ void OpenGLWindow::paintGL() {
   glBindFramebuffer(GL_FRAMEBUFFER, scene->sunlight->depth_framebuffer);
 
   glClear(GL_DEPTH_BUFFER_BIT);
-  //glCullFace(GL_FRONT);
 
   sunlight_depth_shader->use();
   glm::mat4 sunlight_projection = glm::ortho(
@@ -254,7 +284,7 @@ void OpenGLWindow::paintGL() {
     skybox_shader->setInt("skybox", 0);
     scene->skybox->draw(skybox_shader);
 
-  } else if (scene->display_type != 1 && scene->display_type != 2) {
+  } else if (scene->display_type != 1) {
     skybox_shader->setInt("mode", 0);
     scene->draw_skybox(skybox_shader);
 
@@ -288,31 +318,88 @@ void OpenGLWindow::paintGL() {
     scene->draw_objects(object_shader, true, 3);
   }
 
-  // Create bloom effect with gaussian blur
+  // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
   glDisable(GL_DEPTH_TEST);
+  glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  scene_shader->use();
+  scene_shader->setInt("display_type", scene->display_type);
+  scene_shader->setFloat("exposure", scene->camera->exposure);
+  scene_shader->setFloat("bloom_threshold_upper", scene->bloom_threshold_upper);
+  scene_shader->setFloat("bloom_threshold_lower", scene->bloom_threshold_lower);
+  scene_shader->setInt("bloom_interpolation", scene->bloom_interpolation);
+
+  switch (scene->display_type) {
+    case 1:
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, scene->sunlight->depth_map);
+      scene_shader->setInt("screen_texture", 0);
+      break;
+    case 2:
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      scene_shader->setInt("screen_texture", 0);
+      break;
+    case 3:
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      scene_shader->setInt("screen_texture", 0);
+      break;
+    case 4:
+      scene_shader->setInt("display_type", 0);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      scene_shader->setInt("screen_texture", 0);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      scene_shader->setInt("other_textures[0]", 1);
+      break;
+    case 5:
+      scene_shader->setInt("display_type", 0);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      scene_shader->setInt("screen_texture", 0);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      scene_shader->setInt("other_textures[0]", 1);
+      break;
+    default:
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      scene_shader->setInt("screen_texture", 0);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      scene_shader->setInt("other_textures[0]", 1);
+      break;
+  }
+
+  framebuffer_quad->draw(scene_shader);
+
+  // Create bloom effect with gaussian blur
+  glViewport(0, 0, width()/2, height()/2);
+  // Clear the buffers (if they aren't cleared it causes problems when window is resized)
   glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[0], 0);
   glClear(GL_COLOR_BUFFER_BIT);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[1], 0);
-  glClearBufferfv(GL_COLOR, 0, glm::value_ptr(glm::vec4(0.0f,0.0f,0.0f,1.0f)));
-
+  glClearBufferfv(GL_COLOR, 0, glm::value_ptr(glm::vec4(0.0f,1.0f,0.0f,1.0f)));
 
   gaussian_blur_shader->use();
 
   bool horizontal=true;
-  int gaussian_blur_applications=10;
-  for (int i=0; i<gaussian_blur_applications; i++) {
+  for (int i=0; i<scene->bloom_applications; i++) {
     gaussian_blur_shader->setBool("horizontal", horizontal);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[i%2], 0);
 
     glActiveTexture(GL_TEXTURE0);
     if (i==0) {
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[1]);
       glBlendFunci(1, GL_ONE, GL_ZERO);
     } else {
       glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[(i+1)%2]);
-      glBlendFunci(1, GL_ONE, GL_ONE);
+      glBlendFunci(1, GL_ONE, GL_ONE); // Add the individual blurs together
     }
     gaussian_blur_shader->setInt("image", 0);
 
@@ -320,57 +407,45 @@ void OpenGLWindow::paintGL() {
 
     horizontal = !horizontal;
   }
-  // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-  // glClear(GL_COLOR_BUFFER_BIT);
-  // glActiveTexture(GL_TEXTURE0);
-  // glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[0]);//(i+1)%2]);
-  // gaussian_blur_shader->setBool("horizontal", horizontal);
-  // framebuffer_quad->draw(gaussian_blur_shader);
-
 
   glBlendFunc(GL_ONE, GL_ZERO);
 
-  // Draw the framebuffer to the screen
-  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  framebuffer_shader->use();
-  framebuffer_shader->setInt("display_type", scene->display_type);
-  framebuffer_shader->setFloat("exposure", scene->camera->exposure);
+  post_processing_shader->use();
+  post_processing_shader->setInt("display_type", scene->display_type);
 
   switch (scene->display_type) {
-    case 1:
+    case 0:
+      post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
+      post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene->sunlight->depth_map);
-      framebuffer_shader->setInt("screen_texture", 0);
-      break;
-    case 3:
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
-      framebuffer_shader->setInt("screen_texture", 0);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
+      post_processing_shader->setInt("screen_texture", 0);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
+      scene_shader->setInt("other_textures[0]", 1);
       break;
     case 4:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      framebuffer_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("other_textures[0]", 0);
       break;
     case 5:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[0]);
-      framebuffer_shader->setInt("screen_texture", 0);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[1]);
+      scene_shader->setInt("other_textures[0]", 0);
       break;
     default:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
-      framebuffer_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
-      framebuffer_shader->setInt("other_textures[0]", 1);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
+      post_processing_shader->setInt("screen_texture", 0);
       break;
   }
 
-  framebuffer_quad->draw(framebuffer_shader);
+  framebuffer_quad->draw(post_processing_shader);
 
   //glBindVertexArray(0);
 }
@@ -384,14 +459,20 @@ void OpenGLWindow::resizeGL(int w, int h) {
   }
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+  // Update scene texture
+  size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
+  for (int i=0; i<size; i++) {
+    glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+  }
   // Update ping-pong textures
   for (int i=0; i<2; i++) {
     glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
   }
   // Update bloom texture
   glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
   // Update perspective matrices
   projection = glm::perspective(glm::radians(45.0f), width()/float(height()), 0.1f, 100.0f);
   object_shader->use();

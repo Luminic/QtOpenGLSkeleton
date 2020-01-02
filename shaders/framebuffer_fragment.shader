@@ -8,42 +8,41 @@ uniform sampler2D screen_texture;
 uniform sampler2D other_textures[1];
 
 uniform int display_type;
-uniform float exposure;
+uniform float bloom_multiplier;
+uniform float bloom_offset;
 
 void main() {
   vec3 col;
   switch (display_type) {
-    case 0:{
-      vec3 scr_col = texture(screen_texture, texture_coordinate).rgb;
-      vec4 vol_col = texture(other_textures[0], texture_coordinate);
-      col = mix(scr_col, vol_col.rgb, 1.0f-vol_col.a);
-      // Exposure mapping
-      col = vec3(1.0f) - exp(-col * exposure);
+    case 0:
+      col = texture(screen_texture, texture_coordinate).rgb;
+      col += max(texture(other_textures[0], texture_coordinate).rgb * bloom_multiplier - bloom_offset, vec3(0.0f));
       // Gamma correction
       col = pow(col, vec3(1.0/2.2));
-      break;}
+      break;
     case 1:
-      col = texture(screen_texture, texture_coordinate).rrr;
+      col = texture(screen_texture, texture_coordinate).rgb;
+      break;
+    case 2:
+      col = texture(screen_texture, texture_coordinate).rgb;
+      break;
+    case 4:
+      col = texture(other_textures[0], texture_coordinate).rgb;
+      // Gamma correction
+      col = pow(col, vec3(1.0/2.2));
+      break;
+    case 5:
+      col = texture(other_textures[0], texture_coordinate).rgb;
+      // Gamma correction
+      col = pow(col, vec3(1.0/2.2));
       break;
     default:
-      // vec3 scr_col = texture(screen_texture, texture_coordinate).rgb;
-      // vec4 vol_col = texture(other_textures[0], texture_coordinate);
-      // col = mix(scr_col, vol_col.rgb, 1.0f-vol_col.a);
-      // // Exposure mapping
-      // col = vec3(1.0f) - exp(-col * exposure);
-      // // Gamma correction
-      // col = pow(col, vec3(1.0/2.2));
-      // break;}
       col = texture(screen_texture, texture_coordinate).rgb;
-      // Exposure mapping
-      col = vec3(1.0f) - exp(-col * exposure);
       // Gamma correction
       col = pow(col, vec3(1.0/2.2));
       break;
   }
   frag_color = vec4(col, 1.0f);
-  //frag_color = vec4(vec3(display_type), 1.0f);
-  //frag_color = vec4(vec3(texture(screen_texture, texture_coordinate).r), 1.0f);
 }
 
 /*void main() {

@@ -289,6 +289,8 @@ void main() {
 	}
 
 	vec3 total_color = vec3(lighting_color+reflection_color);
+	total_color = max(total_color, 0.0f.xxx);
+	total_color = min(total_color, 10.0f.xxx);
 
 	// Final result
   // frag_color = vec4(vec3(max(dot(fragment_normal,camera_direction),0.0f)),1.0f); // Use to check face orientation
