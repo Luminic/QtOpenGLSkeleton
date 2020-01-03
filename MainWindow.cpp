@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &MainWindow::mainLoop);
   timer->start(16);
-  frame_time = new QTime();
+  frame_time = new QElapsedTimer();
   previous_frame_times = {16,16,16,16,16,16,16};
   current_pft_index = 0;
   frame_time->start();

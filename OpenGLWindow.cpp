@@ -55,8 +55,12 @@ OpenGLWindow::~OpenGLWindow() {
 void OpenGLWindow::initializeGL() {
   QOpenGLContext *ctx = QOpenGLContext::currentContext();
   QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(this);
-  qDebug() << logger->initialize();
-  qDebug() << ctx->hasExtension(QByteArrayLiteral("GL_KHR_debug"));
+  if (!logger->initialize()) {
+    qDebug() << "QOpenGLDebugLogger failed to initialize.";
+  }
+  if (!ctx->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
+    qDebug() << "KHR Debug extension unavailable.";
+  }
 
   connect(logger, &QOpenGLDebugLogger::messageLogged, this,
     [](const QOpenGLDebugMessage &message){
@@ -74,6 +78,41 @@ void OpenGLWindow::initializeGL() {
 
   settings = new Settings();
 
+  load_shaders();
+
+  scene = new Scene(this);
+  scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
+  settings->set_scene(scene);
+  settings->set_camera(scene->camera);
+  settings->set_sunlight(scene->sunlight);
+  settings->set_node(scene->floor, "Floor");
+  settings->set_node(scene->nanosuit, "Nanosuit");
+  settings->set_point_light(scene->light, "Pointlight");
+
+  framebuffer_quad = new Mesh();
+  framebuffer_quad->initialize_plane(false);
+
+  for (auto m : Scene::loaded_materials) {
+    settings->set_material(m);
+  }
+
+  create_framebuffer();
+  create_scene_framebuffer();
+  create_ping_pong_framebuffer();
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
+
+  //glEnable(GL_FRAMEBUFFER_SRGB);
+  //glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  glEnable(GL_DEBUG_OUTPUT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+}
+
+void OpenGLWindow::load_shaders() {
   sunlight_depth_shader = new Shader();
   pointlight_depth_shader = new Shader();
   object_shader = new Shader();
@@ -93,38 +132,25 @@ void OpenGLWindow::initializeGL() {
 
   gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
   post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
+}
 
-  scene = new Scene(this);
-  scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
-  settings->set_scene(scene);
-  settings->set_camera(scene->camera);
-  settings->set_sunlight(scene->sunlight);
-  settings->set_node(scene->floor, "Floor");
-  settings->set_node(scene->nanosuit, "Nanosuit");
-  settings->set_point_light(scene->light, "Pointlight");
-
-  framebuffer_quad = new Mesh();
-  framebuffer_quad->initialize_plane(false);
-
-  for (auto m : Scene::loaded_materials) {
-    settings->set_material(m);
-  }
-
+void OpenGLWindow::create_framebuffer() {
   // Create the framebuffer object
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   // Create the texture attachment (for the framebuffer)
-  int size = sizeof(texture_colorbuffers)/sizeof(texture_colorbuffers[0]);
-  glGenTextures(size, texture_colorbuffers);
+  int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
+  glGenTextures(size, colorbuffers);
   for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[i]);
+    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, texture_colorbuffers[i], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
   }
+  glBindTexture(GL_TEXTURE_2D, 0);
   unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
   glDrawBuffers(2, attachments);
   // Create the renderbuffer (for the framebuffer)
@@ -136,12 +162,17 @@ void OpenGLWindow::initializeGL() {
   // Check if the framebuffer is complete
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
+void OpenGLWindow::create_scene_framebuffer() {
   // Create the scene framebuffer
   glGenFramebuffers(1, &scene_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
+  unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+  glDrawBuffers(2, attachments);
 
-  size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
+  int size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
   glGenTextures(size, scene_colorbuffers);
   for (int i=0; i<size; i++) {
     glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[i]);
@@ -152,14 +183,18 @@ void OpenGLWindow::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, scene_colorbuffers[i], 0);
   }
-  glDrawBuffers(2, attachments);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
+void OpenGLWindow::create_ping_pong_framebuffer() {
   // Create the ping-pong framebuffer
   glGenFramebuffers(1, &ping_pong_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
+  unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
   glDrawBuffers(2, attachments);
 
   glGenTextures(2, ping_pong_colorbuffers);
@@ -173,7 +208,14 @@ void OpenGLWindow::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // Notice how the colorbuffers aren't attached
   }
+  glBindTexture(GL_TEXTURE_2D, 0);
 
+  create_gaussian_blur_colorbuffer();
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void OpenGLWindow::create_gaussian_blur_colorbuffer() {
   // Create the Gaussian Blur colorbuffer (and attach to the ping-pong framebuffers)
   // This blur will add all the results of the ping-pong colorbuffers together
   glGenTextures(1, &bloom_colorbuffer);
@@ -184,21 +226,7 @@ void OpenGLWindow::initializeGL() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
-
-  // Unbind framebuffers and textures
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
-
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
-
-  //glEnable(GL_FRAMEBUFFER_SRGB);
-  //glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-  glEnable(GL_DEBUG_OUTPUT);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
 }
 
 void OpenGLWindow::update_scene() {
@@ -339,38 +367,38 @@ void OpenGLWindow::paintGL() {
       break;
     case 2:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
       break;
     case 3:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("screen_texture", 0);
       break;
     case 4:
       scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("other_textures[0]", 1);
       break;
     case 5:
       scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("other_textures[0]", 1);
       break;
     default:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[1]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("other_textures[0]", 1);
       break;
   }
@@ -453,9 +481,9 @@ void OpenGLWindow::paintGL() {
 
 void OpenGLWindow::resizeGL(int w, int h) {
   // Update framebuffer textures
-  int size = sizeof(texture_colorbuffers)/sizeof(texture_colorbuffers[0]);
+  int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
   for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D, texture_colorbuffers[i]);
+    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
   }
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
@@ -482,5 +510,5 @@ void OpenGLWindow::resizeGL(int w, int h) {
   light_shader->setMat4("projection", projection);
   skybox_shader->use();
   skybox_shader->setMat4("projection", projection);
-  glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+  // glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 }

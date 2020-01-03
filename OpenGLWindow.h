@@ -35,12 +35,19 @@ public:
 
 protected:
   void initializeGL() override;
+  void load_shaders();
+  void create_framebuffer();
+  void create_scene_framebuffer();
+  void create_ping_pong_framebuffer();
+  void create_gaussian_blur_colorbuffer();
+
   void paintGL() override;
+
   void resizeGL(int w, int h) override;
 
 private:
   unsigned int framebuffer;
-  unsigned int texture_colorbuffers[2];
+  unsigned int colorbuffers[2];
   unsigned int renderbuffer;
 
   unsigned int scene_framebuffer;

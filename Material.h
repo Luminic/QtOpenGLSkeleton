@@ -46,8 +46,9 @@ public:
 
   // Defaults are in comments
   glm::vec3 color;
-  float albedo; // 1.0f
-  float ambient; // 1.0f
+  float ambient; // 0.2f
+  float diffuse; // 1.0f
+  float specular; // 1.0f
   float roughness; // 1.0f
   float metalness; // 0.0
 

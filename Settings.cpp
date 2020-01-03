@@ -227,17 +227,20 @@ void Settings::set_material(Material *material, const char *name) {
   QWidget *Material_widget = new QWidget(this);
   QGridLayout *Material_layout = new QGridLayout(Material_widget);
 
-  QGroupBox *Albedo_Box = new QGroupBox(tr("Color"), this);
-  QGridLayout *Albedo_Layout = new QGridLayout(Albedo_Box);
-  create_option_group("R:", &material->color.r, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 0);
-  create_option_group("G:", &material->color.g, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 2);
-  create_option_group("B:", &material->color.b, 0.0, 1.0, 0.1, 2, Albedo_Box, Albedo_Layout, 4);
-  Material_layout->addWidget(Albedo_Box, 0, 0);
+  QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
+  QGridLayout *Color_Layout = new QGridLayout(Color_Box);
+  create_option_group("R:", &material->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &material->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("B:", &material->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
+  Material_layout->addWidget(Color_Box, 0, 0);
 
-  QGroupBox *Misc_box = new QGroupBox(this);
+  QGroupBox *Misc_box = new QGroupBox(tr("Material Properties"), this);
   QGridLayout *Misc_layout = new QGridLayout(Misc_box);
-  create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 0);
-  create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 2);
+  create_option_group("Ambient:", &material->ambient, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 0);
+  create_option_group("Diffuse:", &material->diffuse, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 2);
+  create_option_group("Specular:", &material->specular, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 4);
+  create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 6);
+  create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 8);
   Material_layout->addWidget(Misc_box, 0, 1);
 
   if (material->textures.size() >= 1) {

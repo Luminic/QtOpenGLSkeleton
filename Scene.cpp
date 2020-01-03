@@ -48,7 +48,9 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->initialize_plane(true, 3.0f);
   floor_mesh->material = new Material();
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
-  floor_mesh->material->color = glm::vec3(0.65f);
+  floor_mesh->material->ambient = 0.1f;
+  floor_mesh->material->diffuse = 0.55f;
+  floor_mesh->material->specular = 0.3f;
   floor_mesh->material->roughness = 0.35f;
 
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
@@ -56,10 +58,10 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor->scale = glm::vec3(14.0f,1.0f,7.0f);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
-  nanosuit = new Model("models/raygun/raygun.fbx");
+  // nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
   // nanosuit = new Model("models/lightray_test/wall2.fbx");
-  // nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.6f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
   nanosuit->position = glm::vec3(0.0f,-2.2f,0.0f);

@@ -25,9 +25,10 @@ struct Material {
   sampler2D roughness_map;
   sampler2D metalness_map;
 
-  // Should be vec3(1.0f), 1.0f, 1.0f, & 0.0f by default
-  vec3 albedo;
-  vec3 ambient;
+	vec3 color;
+  float diffuse;
+  float ambient;
+	float specular;
   float roughness; // Should be in range 0.1 - 1.0 (shininess is calculated as 2^(roughness*10))
   float metalness;
 };
@@ -223,33 +224,33 @@ void main() {
   if (material.use_metalness_map)
     metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
 
-  vec3 albedo = vec3(0.0f);
+  vec3 diffuse = vec3(0.0f);
   if (material.number_albedo_maps == 0) {
-  albedo = material.albedo;
+  	diffuse = material.diffuse * material.color;
   } else {
     for (int i=0; i<material.number_albedo_maps; i++) {
-      albedo += texture(material.albedo_map[i], fs_in.texture_coordinate).rgb;
+      diffuse += texture(material.albedo_map[i], fs_in.texture_coordinate).rgb;
     }
-    albedo *= material.albedo;
+    diffuse *= material.diffuse * material.color;
   }
 
-  vec3 ambient = albedo * material.ambient;
+  vec3 ambient = diffuse * material.ambient;
   if (material.use_ambient_occlusion_map) {
     //ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
 
-  vec3 specular = vec3(1.0f);
+  vec3 specular = vec3(material.specular);
   specular *= pow(roughness, 2);
 
-  vec3 metal_tint = albedo;
+  vec3 metal_tint = diffuse;
   if (material.metalness >= 0.9f) {
-    specular *= normalize(albedo) * 1.73;
-    albedo *= 1.0f-roughness;
+    specular *= normalize(diffuse) * 1.73;
+    diffuse *= 1.0f-roughness;
   }
 
-	vec3 lighting_color = calculate_sunlight(sunlight, ambient, albedo, specular, shininess, fragment_normal, camera_direction);
+	vec3 lighting_color = calculate_sunlight(sunlight, ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
 	for (int i=0; i<1; i++) {
-		lighting_color += calculate_pointlight(light[i], ambient, albedo, specular, shininess, fragment_normal, camera_direction);
+		lighting_color += calculate_pointlight(light[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
 	}
 
 	float total_sun_scattering = 0.0f;

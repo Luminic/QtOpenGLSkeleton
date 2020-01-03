@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QMainWindow>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QEvent>
 #include <QGroupBox>
@@ -32,7 +32,7 @@ private slots:
 private:
   OpenGLWindow *GLWindow;
 
-  QTime *frame_time;
+  QElapsedTimer *frame_time;
   std::vector<int> previous_frame_times;
   unsigned int current_pft_index;
   QTimer *timer;

@@ -49,9 +49,11 @@ void main() {
     float x = brightness;
     float pi = 3.1415926535f;
     float interpolate;
-    // Linear interpolation: y = (n-a) / (b-a)
-    if (bloom_interpolation == 0) interpolate = (brightness-bloom_threshold_lower)/(bloom_threshold_upper-bloom_threshold_lower);
-    // Sinusoidal interpolation: y = sin((x-o)s)/2+1/2, s = pi/(b-a), o = (b+a)/2
+    // Linear interpolation
+    if (bloom_interpolation == 0) {
+      interpolate = (x-a)/(b-a);
+    }
+    // Sinusoidal interpolation
     else {
       float s = pi/(b-a);
       float o = (b+a)/2;
