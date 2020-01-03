@@ -15,10 +15,10 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   volumetric_lighting_steps = 30;
   henyey_greenstein_G_value = 0.6f;
 
-  bloom_multiplier = 0.3f;
+  bloom_multiplier = 0.5f;
   bloom_offset = 0.0f;
-  bloom_threshold_upper = 1.0f;
-  bloom_threshold_lower = 0.3f;
+  bloom_threshold_upper = 1.2f;
+  bloom_threshold_lower = 0.5f;
   bloom_interpolation = 1;
   bloom_applications = 10;
 
@@ -33,6 +33,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 
   light = new PointLight(glm::vec3(0.4f, 1.6, 2.3f), glm::vec3(0.2f));
   light->initialize_depth_framebuffer(1024,1024);
+  light->color = glm::vec3(1.3f);
 
   cube = new Mesh();
   cube->initialize_cube();
@@ -48,10 +49,10 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->initialize_plane(true, 3.0f);
   floor_mesh->material = new Material();
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
-  floor_mesh->material->ambient = 0.1f;
-  floor_mesh->material->diffuse = 0.55f;
+  floor_mesh->material->ambient = 0.2f;
+  floor_mesh->material->diffuse = 0.6f;
   floor_mesh->material->specular = 0.3f;
-  floor_mesh->material->roughness = 0.35f;
+  floor_mesh->material->roughness = 0.66f;
 
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
   floor->meshes.push_back(floor_mesh);

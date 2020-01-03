@@ -241,7 +241,7 @@ void OpenGLWindow::paintGL() {
 
   // Get QT's default framebuffer binding
   int qt_framebuffer;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer);
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &qt_framebuffer); // QOpenGLWidget::defaultFramebufferObject() also works
 
   glEnable(GL_DEPTH_TEST);
 

@@ -2,6 +2,7 @@
 #include <QCursor>
 #include <QString>
 #include <QVBoxLayout>
+#include <QFileDialog>
 
 #include "MainWindow.h"
 
@@ -124,6 +125,21 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         QApplication::restoreOverrideCursor();
       }
       break;
+    case Qt::Key_F2:{
+      QFileDialog dialog(this);
+      dialog.setWindowTitle("Save Screenshot");
+      dialog.setFileMode(QFileDialog::AnyFile);
+      dialog.setAcceptMode(QFileDialog::AcceptSave);
+      dialog.setNameFilter(tr("Images (*.png *.bmp *.jpg)"));
+      if (dialog.exec()) {
+        QStringList fileNames(dialog.selectedFiles());
+        if (QRegExp(".+\\.(png|bmp|jpg)").exactMatch(fileNames.at(0))) {
+          GLWindow->grabFramebuffer().save(fileNames.at(0));
+        } else {
+          qDebug() << "Save error: bad format or filename.";
+        }
+      }
+      break;}
     case Qt::Key_F3:
       if (status_box->isHidden())
         status_box->show();
