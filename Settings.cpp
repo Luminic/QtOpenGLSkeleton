@@ -3,6 +3,9 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QPixmap>
+#include <QLabel>
+#include <QDoubleSpinBox>
+#include <QSlider>
 #include <QDebug>
 
 #include <algorithm>

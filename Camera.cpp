@@ -1,6 +1,5 @@
 #include <QDebug>
-#include <QGridLayout>
-
+#include <glm/gtc/matrix_transform.hpp>
 #include <unordered_set>
 
 #include "Camera.h"
@@ -21,11 +20,6 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch) :
   velocity = glm::vec3(0.0f,0.0f,0.0f);
 
   exposure = 1.0f;
-
-  // current_time = 0;
-  // time_offset = 0;
-  // camera_movement = STOPPED;
-  // timer.start();
 
   update_vectors();
 }

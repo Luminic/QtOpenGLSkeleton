@@ -1,7 +1,6 @@
 #ifndef OPENGL_WINDOW_H
 #define OPENGL_WINDOW_H
 
-#include <QOpenGLFunctions>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLWidget>
 

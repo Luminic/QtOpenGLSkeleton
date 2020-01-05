@@ -1,4 +1,4 @@
-#version 420
+#version 450
 
 layout (depth_greater) out float gl_FragDepth;
 

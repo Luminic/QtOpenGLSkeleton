@@ -2,7 +2,6 @@
 #define OBJECT_H
 
 #include <QObject>
-#include <QOpenGLFunctions>
 #include <QOpenGLFunctions_4_5_Core>
 #include <vector>
 #include <string>

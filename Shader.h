@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLWidget>
 #include <QString>
 
@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Shader : public QObject, protected QOpenGLFunctions {
+class Shader : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:

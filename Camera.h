@@ -2,19 +2,10 @@
 #define CAMERA_H
 
 #include <QObject>
-#include <QKeyEvent>
-#include <QElapsedTimer>
+#include <QPoint>
 #include <unordered_set>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-enum Movement_Type {
-  STOPPED,
-  ACCELERATING,
-  DECELERATING,
-  AT_MAX_SPEED
-};
 
 class Camera : public QObject {
   Q_OBJECT
@@ -40,12 +31,6 @@ public:
   float deceleration;
 
   float exposure;
-
-  // QElapsedTimer timer;
-  // int current_time;
-  // int time_offset;
-  // glm::vec2 previous_xz_movement;
-  // Movement_Type camera_movement;
 
 private:
   float friction_curve(float speed);

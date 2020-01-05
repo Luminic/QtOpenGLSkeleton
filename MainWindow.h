@@ -2,9 +2,11 @@
 #include <QMainWindow>
 #include <QElapsedTimer>
 #include <QTimer>
+#include <QKeyEvent>
 #include <QEvent>
 #include <QGroupBox>
 #include <QGridLayout>
+#include <QLabel>
 #include <unordered_set>
 #include <vector>
 

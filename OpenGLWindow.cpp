@@ -53,6 +53,8 @@ OpenGLWindow::~OpenGLWindow() {
 }
 
 void OpenGLWindow::initializeGL() {
+  initializeOpenGLFunctions();
+
   QOpenGLContext *ctx = QOpenGLContext::currentContext();
   QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(this);
   if (!logger->initialize()) {
@@ -71,8 +73,6 @@ void OpenGLWindow::initializeGL() {
     }
   );
   logger->startLogging();
-
-  initializeOpenGLFunctions();
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
 
@@ -238,6 +238,7 @@ void OpenGLWindow::update_scene() {
 
 void OpenGLWindow::paintGL() {
   // Note: never call this function directly--call update() instead.
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   // Get QT's default framebuffer binding
   int qt_framebuffer;

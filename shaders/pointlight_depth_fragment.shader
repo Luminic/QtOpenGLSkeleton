@@ -1,4 +1,4 @@
-#version 420
+#version 450
 
 in vec4 fragment_position;
 
