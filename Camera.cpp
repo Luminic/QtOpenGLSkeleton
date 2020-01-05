@@ -13,7 +13,7 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch) :
   mouse_sensitivity = 0.05f;
   max_movement_speed = 0.5f;
   acceleration = 0.15f;
-  deceleration = 0.08f;
+  deceleration = 0.12f;
 
   world_up = glm::vec3(0.0f, 1.0f, 0.0f);
   up = world_up;
@@ -21,6 +21,11 @@ Camera::Camera(glm::vec3 position, float yaw, float pitch) :
   velocity = glm::vec3(0.0f,0.0f,0.0f);
 
   exposure = 1.0f;
+
+  // current_time = 0;
+  // time_offset = 0;
+  // camera_movement = STOPPED;
+  // timer.start();
 
   update_vectors();
 }
@@ -49,50 +54,72 @@ void Camera::update_direction() {
   }
 }
 
+float Camera::friction_curve(float speed) {
+  // friction(x) = 1/(x+1) +x -1
+  //return 1.0f/(speed+1.0f) + speed - 1.0f;
+  return 1.0f/(speed+1.0f);
+}
+
+float Camera::acceleration_multiplier(float speed) {
+  return 1.0f/(50.0f*speed+1.0f) + 1.0f;
+}
+
 void Camera::update_position() {
-  // Deceleration
-    // x-z deceleration
+  glm::vec2 current_xz_movement(0.0f);
+  float current_y_movement(0.0f); // Upwards movement is calculated seperately.
+
+  // Keyboard input
+  if (keys_pressed->find(Qt::Key_W) != keys_pressed->end()) {
+    current_xz_movement += glm::vec2(front.x, front.z);
+  }
+  if (keys_pressed->find(Qt::Key_S) != keys_pressed->end()) {
+    current_xz_movement -= glm::vec2(front.x, front.z);
+  }
+  if (keys_pressed->find(Qt::Key_A) != keys_pressed->end()) {
+    current_xz_movement -= glm::vec2(right.x, right.z);
+  }
+  if (keys_pressed->find(Qt::Key_D) != keys_pressed->end()) {
+    current_xz_movement += glm::vec2(right.x, right.z);
+  }
+  if (keys_pressed->find(Qt::Key_Space) != keys_pressed->end()) {
+    current_y_movement += 1.0f;
+  }
+  if (keys_pressed->find(Qt::Key_Shift) != keys_pressed->end()) {
+    current_y_movement -= 1.0f;
+  }
+
+  if (glm::abs(current_xz_movement.x)+glm::abs(current_xz_movement.y) > 0.01f) {
+    current_xz_movement = glm::normalize(current_xz_movement);
+    current_xz_movement *= acceleration * (*delta_time)/1000.0f;
+    current_xz_movement *= acceleration_multiplier(glm::length(glm::vec2(velocity.x,velocity.z)));
+    velocity.x += current_xz_movement.x;
+    velocity.z += current_xz_movement.y;
+  }
+  // qDebug() << velocity.x << velocity.z;
+  float friction = friction_curve(glm::length(glm::vec2(velocity.x,velocity.z)));
+  velocity.x *= friction;
+  velocity.z *= friction;
   if (glm::length(glm::vec2(velocity.x,velocity.z)) > deceleration*(*delta_time)/1000.0f) {
     glm::vec2 norm = glm::normalize(glm::vec2(velocity.x,velocity.z));
-    velocity.x -= norm.x*deceleration*(*delta_time)/1000.0f;
-    velocity.z -= norm.y*deceleration*(*delta_time)/1000.0f;
+    norm *= deceleration*(*delta_time)/1000.0f;
+    velocity.x -= norm.x;
+    velocity.z -= norm.y;
   } else {
     velocity.x = 0;
     velocity.z = 0;
   }
-  //   // y deceleration (separated becase I said so)
-  if (glm::abs(velocity.y) >= deceleration*(*delta_time)/1000.0f) velocity.y -=
-                velocity.y>0 ? deceleration*(*delta_time)/1000.0f :
-                              -deceleration*(*delta_time)/1000.0f;
-  else velocity.y = 0;
 
-  // Keyboard input
-  if (keys_pressed->find(Qt::Key_W) != keys_pressed->end()) {
-    velocity += glm::vec3(front.x,0.0f,front.z) * (acceleration * (*delta_time)/1000.0f);
-  } if (keys_pressed->find(Qt::Key_S) != keys_pressed->end()) {
-    velocity -= glm::vec3(front.x,0.0f,front.z) * (acceleration * (*delta_time)/1000.0f);
-  } if (keys_pressed->find(Qt::Key_A) != keys_pressed->end()) {
-    velocity -= right * (acceleration * (*delta_time)/1000.0f);
-  } if (keys_pressed->find(Qt::Key_D) != keys_pressed->end()) {
-    velocity += right * (acceleration * (*delta_time)/1000.0f);
-  } if (keys_pressed->find(Qt::Key_Space) != keys_pressed->end()) {
-    velocity += world_up * (acceleration * (*delta_time)/1000.0f);
-  } if (keys_pressed->find(Qt::Key_Shift) != keys_pressed->end()) {
-    velocity -= world_up * (acceleration * (*delta_time)/1000.0f);
+  // No need to normalize y speed as it can only be 1, -1, or 0
+  velocity.y += current_y_movement * acceleration * (*delta_time)/1000.0f * acceleration_multiplier(glm::abs(velocity.y));
+  velocity.y *= friction_curve(glm::abs(velocity.y));
+  if (glm::abs(velocity.y) > deceleration*(*delta_time)/1000.0f) {
+    velocity.y += velocity.y > 0 ? -deceleration*(*delta_time)/1000.0f : deceleration*(*delta_time)/1000.0f;
+  } else {
+    velocity.y = 0;
   }
-
-  // cap x-z acceleration
-  if (glm::length(glm::vec2(velocity.x,velocity.z)) > max_movement_speed*(*delta_time)/1000.0f) {
-    glm::vec2 norm = glm::normalize(glm::vec2(velocity.x,velocity.z));
-    velocity.x = norm.x * max_movement_speed*(*delta_time)/1000.0f;
-    velocity.z = norm.y * max_movement_speed*(*delta_time)/1000.0f;
-  }
-  // cap y acceleration
-  if (glm::abs(velocity.y) > max_movement_speed*(*delta_time)/1000.0f)
-    velocity.y = max_movement_speed*(*delta_time)/1000.0f * (velocity.y>0? 1:-1);
 
   // Acceleration
-  position += velocity * float((*delta_time));
+  position += velocity / (glm::log((*delta_time)*100.0f) / glm::log(10.0f)) * 50.0f;
 }
 
 glm::mat4 Camera::view_matrix() {
