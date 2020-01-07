@@ -3,6 +3,7 @@
 
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLWidget>
+#include <QWheelEvent>
 
 #include <unordered_set>
 
@@ -29,8 +30,12 @@ public:
   void set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time);
   void update_scene();
 
+  void update_perspective_matrix();
+
   Settings *settings;
   Scene *scene;
+
+  float fov;
 
 protected:
   void initializeGL() override;
@@ -41,13 +46,17 @@ protected:
   void create_gaussian_blur_colorbuffer();
 
   void paintGL() override;
-
   void resizeGL(int w, int h) override;
+
+  void wheelEvent(QWheelEvent *event) override;
 
 private:
   unsigned int framebuffer;
-  unsigned int colorbuffers[2];
+  int multisample_samples;
+  unsigned int multisampled_colorbuffers[2];
   unsigned int renderbuffer;
+  unsigned int resolved_framebuffers[2];
+  unsigned int colorbuffers[2];
 
   unsigned int scene_framebuffer;
   unsigned int scene_colorbuffers[2];

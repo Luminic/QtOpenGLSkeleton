@@ -66,7 +66,7 @@ uniform samplerCube skybox;
 
 uniform Material material;
 uniform Sunlight sunlight;
-uniform Light light[4];
+uniform Light light[1];
 
 uniform vec3 camera_position;
 uniform mat4 light_space;

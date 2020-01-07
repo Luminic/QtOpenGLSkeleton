@@ -31,6 +31,8 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   mouse_movement = nullptr;
 
   angle = 0.0f;
+  multisample_samples = 1;
+  fov = 45.0f;
 }
 
 void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time) {
@@ -137,26 +139,37 @@ void OpenGLWindow::load_shaders() {
 void OpenGLWindow::create_framebuffer() {
   // Create the framebuffer object
   glGenFramebuffers(1, &framebuffer);
+  glGenFramebuffers(2, resolved_framebuffers);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   // Create the texture attachment (for the framebuffer)
   int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
+  glGenTextures(size, multisampled_colorbuffers);
   glGenTextures(size, colorbuffers);
   for (int i=0; i<size; i++) {
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, 800, 600, GL_TRUE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
-  glBindTexture(GL_TEXTURE_2D, 0);
   unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
   glDrawBuffers(2, attachments);
   // Create the renderbuffer (for the framebuffer)
   glGenRenderbuffers(1, &renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, 800, 600);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
   // Check if the framebuffer is complete
@@ -348,6 +361,19 @@ void OpenGLWindow::paintGL() {
     scene->draw_objects(object_shader, true, 3);
   }
 
+  // Resolve the multisampled colorbuffers
+  int number_multisampled_colorbuffers = sizeof(multisampled_colorbuffers)/sizeof(multisampled_colorbuffers[0]);
+  for (int i=0; i<number_multisampled_colorbuffers; i++) {
+    glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[0]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[1]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffers[i], 0);
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, resolved_framebuffers[0]);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolved_framebuffers[1]);
+    glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  }
+
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
   glDisable(GL_DEPTH_TEST);
   glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
@@ -480,15 +506,29 @@ void OpenGLWindow::paintGL() {
   //glBindVertexArray(0);
 }
 
+void OpenGLWindow::update_perspective_matrix() {
+  // Update perspective matrices
+  projection = glm::perspective(glm::radians(fov), width()/float(height()), 0.1f, 100.0f);
+  object_shader->use();
+  object_shader->setMat4("projection", projection);
+  light_shader->use();
+  light_shader->setMat4("projection", projection);
+  skybox_shader->use();
+  skybox_shader->setMat4("projection", projection);
+}
+
 void OpenGLWindow::resizeGL(int w, int h) {
   // Update framebuffer textures
   int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
   for (int i=0; i<size; i++) {
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, w, h, GL_TRUE);
+
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
   }
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, w, h);
   // Update scene texture
   size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
   for (int i=0; i<size; i++) {
@@ -503,13 +543,22 @@ void OpenGLWindow::resizeGL(int w, int h) {
   // Update bloom texture
   glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
-  // Update perspective matrices
-  projection = glm::perspective(glm::radians(45.0f), width()/float(height()), 0.1f, 100.0f);
-  object_shader->use();
-  object_shader->setMat4("projection", projection);
-  light_shader->use();
-  light_shader->setMat4("projection", projection);
-  skybox_shader->use();
-  skybox_shader->setMat4("projection", projection);
+
+  update_perspective_matrix();
+
   // glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+}
+
+void OpenGLWindow::wheelEvent(QWheelEvent *event) {
+  // qDebug() << "Pixel Delta:" << event->pixelDelta();
+  // qDebug() << "Angle Delta:" << event->angleDelta();
+  if (event->angleDelta().y() != 0) {
+    event->accept();
+    fov += event->angleDelta().y() / 60.0f;
+    if (fov > 70.0f) fov = 70.0f;
+    else if (fov < 5.0f) fov = 5.0f;
+    update_perspective_matrix();
+  } else {
+    event->ignore();
+  }
 }

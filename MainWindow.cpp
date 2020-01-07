@@ -58,7 +58,7 @@ void MainWindow::mainLoop() {
     for (auto i : previous_frame_times) fps += i;
     fps = previous_frame_times.size()/fps*1000.0;
 
-    fps_label->setText(QString("Frame time:")+QString::number(delta_time)+QString("\nFPS:")+QString::number(fps));
+    fps_label->setText(QString("Frame time:")+QString::number(delta_time)+QString("\nFPS:")+QString::number(fps)+QString("\nFOV:")+QString::number((int)GLWindow->fov));
   }
 
   //qDebug() << delta_time;
@@ -150,8 +150,16 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
       keys_pressed.insert(event->key());
       break;
   }
+  event->accept();
 }
+
+// void MainWindow::wheelEvent(QWheelEvent *event) {
+  // qDebug() << "Pixel Delta:" << event->pixelDelta();
+  // qDebug() << "Angle Delta:" << event->angleDelta();
+  // event->accept();
+// }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event) {
   keys_pressed.erase(event->key());
+  event->accept();
 }

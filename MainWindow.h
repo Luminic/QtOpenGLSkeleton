@@ -47,6 +47,7 @@ protected:
   void handleMouseMovement(); // I need to be sure that I handle the mouse movement *exactly* once per update
   void mouseMoveEvent(QMouseEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
+  // void wheelEvent(QWheelEvent *event) override;
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 };

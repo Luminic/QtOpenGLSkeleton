@@ -26,6 +26,8 @@ void Mesh::draw(Shader *shader, bool use_material, int material_index_offset) {
   // Draw Mesh
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Mesh::initialize_cube(float texture_scale) {
