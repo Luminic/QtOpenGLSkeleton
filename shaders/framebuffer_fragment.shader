@@ -10,6 +10,7 @@ uniform sampler2D other_textures[1];
 uniform int display_type;
 uniform float bloom_multiplier;
 uniform float bloom_offset;
+uniform bool gamma_correction;
 
 void main() {
   vec3 col;
@@ -17,30 +18,16 @@ void main() {
     case 0:
       col = texture(screen_texture, texture_coordinate).rgb;
       col += max(texture(other_textures[0], texture_coordinate).rgb * bloom_multiplier - bloom_offset, vec3(0.0f));
-      // Gamma correction
-      col = pow(col, vec3(1.0/2.2));
       break;
     case 1:
       col = texture(screen_texture, texture_coordinate).rgb;
       break;
-    case 2:
-      col = texture(screen_texture, texture_coordinate).rgb;
-      break;
-    case 4:
-      col = texture(other_textures[0], texture_coordinate).rgb;
-      // Gamma correction
-      col = pow(col, vec3(1.0/2.2));
-      break;
-    case 5:
-      col = texture(other_textures[0], texture_coordinate).rgb;
-      // Gamma correction
-      col = pow(col, vec3(1.0/2.2));
-      break;
     default:
-      col = texture(screen_texture, texture_coordinate).rgb;
-      // Gamma correction
-      col = pow(col, vec3(1.0/2.2));
+      col = vec3(0.0f,1.0f,0.0f);
       break;
+  }
+  if (gamma_correction) {
+    col = pow(col, vec3(1.0/2.2));
   }
   frag_color = vec4(col, 1.0f);
 }

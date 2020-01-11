@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QDoubleSpinBox>
 #include <QSlider>
+#include <QRadioButton>
 #include <QDebug>
 
 #include <algorithm>
@@ -53,6 +54,24 @@ void Settings::set_scene(Scene *scene, const char *name) {
   create_option_group("Bloom Offset:", &scene->bloom_offset, -2.0, 6.0, 0.1, 1, Post_Processing_box, Post_Processing_layout, 8);
   create_option_group("Bloom Applications:", &scene->bloom_applications, 1.0, 10.0, 1.0, 0, Post_Processing_box, Post_Processing_layout, 10);
   Scene_layout->addWidget(Post_Processing_box, 0, 1);
+
+  QGroupBox *AA_box = new QGroupBox(tr("Anti-Aliasing"), this);
+  QGridLayout *AA_layout = new QGridLayout(AA_box);
+  QRadioButton *none_button = new QRadioButton("None", AA_box);
+  connect(none_button, &QRadioButton::clicked, this, [=](){scene->antialiasing=NONE;});
+  AA_layout->addWidget(none_button, 0, 0);
+  QRadioButton *fxaa_button = new QRadioButton("FXAA", AA_box);
+  connect(fxaa_button, &QRadioButton::clicked, this, [=](){scene->antialiasing=FXAA;});
+  AA_layout->addWidget(fxaa_button, 1, 0);
+  switch (scene->antialiasing) {
+    case FXAA:
+      fxaa_button->setChecked(true);
+      break;
+    default:
+      none_button->setChecked(true);
+      break;
+  }
+  Scene_layout->addWidget(AA_box, 1, 1);
 
   QGroupBox *Misc_box = new QGroupBox(this);
   QGridLayout *Misc_layout = new QGridLayout(Misc_box);

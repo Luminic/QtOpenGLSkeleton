@@ -32,7 +32,6 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   mouse_movement = nullptr;
 
   angle = 0.0f;
-  // multisample_samples = 1;
   fov = 45.0f;
 }
 
@@ -347,14 +346,14 @@ void OpenGLWindow::paintGL() {
   skybox_shader->use();
   skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
 
-  if (scene->display_type == 2) {
+  if (scene->display_type == POINTLIGHT_DEPTH) {
     skybox_shader->setInt("mode", 1);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->light->depth_cubemap);
     skybox_shader->setInt("skybox", 0);
     scene->skybox->draw(skybox_shader);
 
-  } else if (scene->display_type != 1) {
+  } else if (scene->display_type != SUNLIGHT_DEPTH) {
     skybox_shader->setInt("mode", 0);
     scene->draw_skybox(skybox_shader);
 
@@ -388,19 +387,6 @@ void OpenGLWindow::paintGL() {
     scene->draw_objects(object_shader, true, 3);
   }
 
-  // Resolve the multisampled colorbuffers
-  // int number_multisampled_colorbuffers = sizeof(multisampled_colorbuffers)/sizeof(multisampled_colorbuffers[0]);
-  // for (int i=0; i<number_multisampled_colorbuffers; i++) {
-  //   glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[0]);
-  //   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
-  //   glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[1]);
-  //   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffers[i], 0);
-  //
-  //   glBindFramebuffer(GL_READ_FRAMEBUFFER, resolved_framebuffers[0]);
-  //   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolved_framebuffers[1]);
-  //   glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
-  // }
-
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
   glDisable(GL_DEPTH_TEST);
   glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
@@ -414,22 +400,22 @@ void OpenGLWindow::paintGL() {
   scene_shader->setInt("bloom_interpolation", scene->bloom_interpolation);
 
   switch (scene->display_type) {
-    case 1:
+    case SUNLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene->sunlight->depth_map);
       scene_shader->setInt("screen_texture", 0);
       break;
-    case 2:
+    case POINTLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
       break;
-    case 3:
+    case VOLUMETRICS:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("screen_texture", 0);
       break;
-    case 4:
+    case BLOOM:
       scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
@@ -438,7 +424,7 @@ void OpenGLWindow::paintGL() {
       glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
       scene_shader->setInt("other_textures[0]", 1);
       break;
-    case 5:
+    case BRIGHT:
       scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
@@ -494,14 +480,15 @@ void OpenGLWindow::paintGL() {
   glBlendFunc(GL_ONE, GL_ZERO);
 
   glViewport(0, 0, width(), height());
-  glBindFramebuffer(GL_FRAMEBUFFER, post_processing_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
   glClear(GL_COLOR_BUFFER_BIT);
 
   post_processing_shader->use();
-  post_processing_shader->setInt("display_type", scene->display_type);
 
   switch (scene->display_type) {
-    case 0:
+    case SCENE:
+      post_processing_shader->setInt("display_type", 0);
+      post_processing_shader->setBool("gamma_correction", scene->antialiasing==NONE ? true : false);
       post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
       glActiveTexture(GL_TEXTURE0);
@@ -511,17 +498,22 @@ void OpenGLWindow::paintGL() {
       glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
       scene_shader->setInt("other_textures[0]", 1);
       break;
-    case 4:
+    case BLOOM:
+      post_processing_shader->setInt("display_type", 1);
+      post_processing_shader->setBool("gamma_correction", scene->antialiasing==NONE ? true : false);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      scene_shader->setInt("other_textures[0]", 0);
+      scene_shader->setInt("screen_texture", 0);
       break;
-    case 5:
+    case BRIGHT:
+      post_processing_shader->setInt("display_type", 1);
+      post_processing_shader->setBool("gamma_correction", scene->antialiasing==NONE ? true : false);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[1]);
-      scene_shader->setInt("other_textures[0]", 0);
+      scene_shader->setInt("screen_texture", 0);
       break;
     default:
+      post_processing_shader->setInt("display_type", 1);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
@@ -530,15 +522,17 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->draw(post_processing_shader);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  if (scene->antialiasing == FXAA) {
+    glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  antialiasing_shader->use();
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
-  antialiasing_shader->setInt("screen_texture", 0);
+    antialiasing_shader->use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
+    antialiasing_shader->setInt("screen_texture", 0);
 
-  framebuffer_quad->draw(antialiasing_shader);
+    framebuffer_quad->draw(antialiasing_shader);
+  }
 
   glBindTexture(GL_TEXTURE_2D, 0);
   //glBindVertexArray(0);

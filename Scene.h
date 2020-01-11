@@ -19,6 +19,20 @@
 #include "PointLight.h"
 #include "Sunlight.h"
 
+enum Antialiasing_Types {
+  NONE,
+  FXAA
+};
+
+enum Display_Types {
+  SCENE,
+  SUNLIGHT_DEPTH,
+  POINTLIGHT_DEPTH,
+  VOLUMETRICS,
+  BLOOM,
+  BRIGHT
+};
+
 class Scene : public QObject {
   Q_OBJECT
 
@@ -68,6 +82,8 @@ public:
   float bloom_threshold_lower;
   int bloom_interpolation;
   int bloom_applications;
+
+  Antialiasing_Types antialiasing;
 
   /*
   Display Types:

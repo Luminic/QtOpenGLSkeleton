@@ -12,8 +12,8 @@ const int ITERATIONS = 8;
 const float SUBPIXEL_QUALITY = 0.75f;
 
 float rgb2luma(vec3 rgb) {
-  // Assumes rgb is in gamma space so the luma is transformed into linear space
-  return clamp(pow(dot(rgb, vec3(0.299f,0.587f,0.114f)), 2.2f), 0.0f, 1.0f);
+  // Assumes rgb is in linear space so the luma is transformed into gamma space
+  return clamp(pow(dot(rgb, vec3(0.299f,0.587f,0.114f)), 1/2.2f), 0.0f, 1.0f);
 }
 
 void main() {
@@ -33,7 +33,7 @@ void main() {
 
   // AA is not computed for
   if (luma_range < max(EDGE_THRESHOLD_MIN, luma_max*EDGE_THRESHOLD_MAX)) {
-    frag_color = vec4(color_center, 1.0f);
+    frag_color = vec4(pow(color_center, (1/2.2f).xxx), 1.0f);
     return;
   }
 
@@ -158,5 +158,5 @@ void main() {
 
   if (final_offset > 1.0f) final_color = vec3(0.0f, 1.0f, 0.0f);
 
-  frag_color = vec4(final_color, 1.0f);
+  frag_color = vec4(pow(final_color, (1/2.2f).xxx), 1.0f);
 }

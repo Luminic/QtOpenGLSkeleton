@@ -78,6 +78,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     "skyboxes/back.jpg"
   };
   skybox_cubemap = cube->material->load_cubemap(faces, false).id;
+
+  antialiasing = FXAA;
 }
 
 Scene::~Scene() {
