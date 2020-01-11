@@ -25,13 +25,14 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   scene_shader = nullptr;
   gaussian_blur_shader = nullptr;
   post_processing_shader = nullptr;
+  antialiasing_shader = nullptr;
 
   keys_pressed = nullptr;
   delta_time = nullptr;
   mouse_movement = nullptr;
 
   angle = 0.0f;
-  multisample_samples = 1;
+  // multisample_samples = 1;
   fov = 45.0f;
 }
 
@@ -52,6 +53,7 @@ OpenGLWindow::~OpenGLWindow() {
   delete scene_shader;
   delete gaussian_blur_shader;
   delete post_processing_shader;
+  delete antialiasing_shader;
 }
 
 void OpenGLWindow::initializeGL() {
@@ -101,6 +103,7 @@ void OpenGLWindow::initializeGL() {
   create_framebuffer();
   create_scene_framebuffer();
   create_ping_pong_framebuffer();
+  create_post_processing_framebuffer();
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
 
@@ -123,6 +126,7 @@ void OpenGLWindow::load_shaders() {
   scene_shader = new Shader();
   gaussian_blur_shader = new Shader();
   post_processing_shader = new Shader();
+  antialiasing_shader = new Shader();
 
   sunlight_depth_shader->loadShaders("shaders/sunlight_depth_vertex.shader", "shaders/sunlight_depth_fragment.shader");
   pointlight_depth_shader->loadShaders("shaders/pointlight_depth_vertex.shader", "shaders/pointlight_depth_fragment.shader", "shaders/pointlight_depth_geometry.shader");
@@ -134,27 +138,28 @@ void OpenGLWindow::load_shaders() {
 
   gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
   post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
+  antialiasing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/antialiasing_fragment.shader");
 }
 
 void OpenGLWindow::create_framebuffer() {
   // Create the framebuffer object
   glGenFramebuffers(1, &framebuffer);
-  glGenFramebuffers(2, resolved_framebuffers);
+  // glGenFramebuffers(2, resolved_framebuffers);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   // Create the texture attachment (for the framebuffer)
   int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
-  glGenTextures(size, multisampled_colorbuffers);
+  // glGenTextures(size, multisampled_colorbuffers);
   glGenTextures(size, colorbuffers);
   for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
+    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
     // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, 800, 600, GL_TRUE);
+    // glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, 800, 600, GL_TRUE);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
+    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -162,6 +167,7 @@ void OpenGLWindow::create_framebuffer() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
   unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
@@ -169,7 +175,8 @@ void OpenGLWindow::create_framebuffer() {
   // Create the renderbuffer (for the framebuffer)
   glGenRenderbuffers(1, &renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, 800, 600);
+  // glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, 800, 600);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
   // Check if the framebuffer is complete
@@ -240,6 +247,26 @@ void OpenGLWindow::create_gaussian_blur_colorbuffer() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void OpenGLWindow::create_post_processing_framebuffer() {
+  // Create the post-processing framebuffer
+  glGenFramebuffers(1, &post_processing_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, post_processing_framebuffer);
+
+  glGenTextures(1, &post_processing_colorbuffer);
+  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, post_processing_colorbuffer, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void OpenGLWindow::update_scene() {
@@ -362,17 +389,17 @@ void OpenGLWindow::paintGL() {
   }
 
   // Resolve the multisampled colorbuffers
-  int number_multisampled_colorbuffers = sizeof(multisampled_colorbuffers)/sizeof(multisampled_colorbuffers[0]);
-  for (int i=0; i<number_multisampled_colorbuffers; i++) {
-    glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[0]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[1]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffers[i], 0);
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, resolved_framebuffers[0]);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolved_framebuffers[1]);
-    glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
-  }
+  // int number_multisampled_colorbuffers = sizeof(multisampled_colorbuffers)/sizeof(multisampled_colorbuffers[0]);
+  // for (int i=0; i<number_multisampled_colorbuffers; i++) {
+  //   glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[0]);
+  //   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
+  //   glBindFramebuffer(GL_FRAMEBUFFER, resolved_framebuffers[1]);
+  //   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffers[i], 0);
+  //
+  //   glBindFramebuffer(GL_READ_FRAMEBUFFER, resolved_framebuffers[0]);
+  //   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolved_framebuffers[1]);
+  //   glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  // }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
   glDisable(GL_DEPTH_TEST);
@@ -467,8 +494,8 @@ void OpenGLWindow::paintGL() {
   glBlendFunc(GL_ONE, GL_ZERO);
 
   glViewport(0, 0, width(), height());
-  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glBindFramebuffer(GL_FRAMEBUFFER, post_processing_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT);
 
   post_processing_shader->use();
   post_processing_shader->setInt("display_type", scene->display_type);
@@ -503,6 +530,17 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->draw(post_processing_shader);
 
+  glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+  antialiasing_shader->use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
+  antialiasing_shader->setInt("screen_texture", 0);
+
+  framebuffer_quad->draw(antialiasing_shader);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
   //glBindVertexArray(0);
 }
 
@@ -521,14 +559,15 @@ void OpenGLWindow::resizeGL(int w, int h) {
   // Update framebuffer textures
   int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
   for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, w, h, GL_TRUE);
+    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
+    // glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, w, h, GL_TRUE);
 
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
   }
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, w, h);
+  // glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, w, h);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
   // Update scene texture
   size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
   for (int i=0; i<size; i++) {
@@ -543,6 +582,10 @@ void OpenGLWindow::resizeGL(int w, int h) {
   // Update bloom texture
   glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
+
+  // Update post-processing texture
+  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
 
   update_perspective_matrix();
 

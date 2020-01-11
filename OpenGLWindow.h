@@ -44,6 +44,7 @@ protected:
   void create_scene_framebuffer();
   void create_ping_pong_framebuffer();
   void create_gaussian_blur_colorbuffer();
+  void create_post_processing_framebuffer();
 
   void paintGL() override;
   void resizeGL(int w, int h) override;
@@ -51,11 +52,11 @@ protected:
   void wheelEvent(QWheelEvent *event) override;
 
 private:
+  // int multisample_samples;
+  // unsigned int multisampled_colorbuffers[2];
+  // unsigned int resolved_framebuffers[2];
   unsigned int framebuffer;
-  int multisample_samples;
-  unsigned int multisampled_colorbuffers[2];
   unsigned int renderbuffer;
-  unsigned int resolved_framebuffers[2];
   unsigned int colorbuffers[2];
 
   unsigned int scene_framebuffer;
@@ -64,6 +65,9 @@ private:
   unsigned int ping_pong_framebuffer;
   unsigned int ping_pong_colorbuffers[2]; // Half Resolution
   unsigned int bloom_colorbuffer; // Half Resolution
+
+  unsigned int post_processing_framebuffer;
+  unsigned int post_processing_colorbuffer;
 
   Mesh *framebuffer_quad;
 
@@ -80,6 +84,7 @@ private:
 
   Shader *gaussian_blur_shader;
   Shader *post_processing_shader;
+  Shader *antialiasing_shader;
 
   std::unordered_set<int> *keys_pressed;
   int *delta_time;
