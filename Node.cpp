@@ -20,10 +20,10 @@ Node::~Node() {
 void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int material_index_offset) {
   model *= transformation;
   model = glm::translate(model, position);
-  model = glm::scale(model, scale);
   model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(0.0f,1.0f,0.0f));
   model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(1.0f,0.0f,0.0f));
   model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f,0.0f,1.0f));
+  model = glm::scale(model, scale);
   shader->use();
   shader->setMat4("model", model);
   for (unsigned int i=0; i<meshes.size(); i++) {
