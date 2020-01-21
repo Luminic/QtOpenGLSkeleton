@@ -71,6 +71,7 @@ Texture Material::load_texture(const char *path, Image_Type type, bool add_to_ma
 
   if (texture.id == 0) {
     texture.path = path;
+    glActiveTexture(GL_TEXTURE0);
 
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);

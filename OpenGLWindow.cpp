@@ -136,7 +136,7 @@ void OpenGLWindow::load_shaders() {
   scene_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/scene_fragment.shader");
 
   gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
-  post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/framebuffer_fragment.shader");
+  post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/post_processing_fragment.shader");
   antialiasing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/antialiasing_fragment.shader");
 }
 

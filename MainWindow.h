@@ -18,11 +18,18 @@ class MainWindow : public QMainWindow {
 public:
   MainWindow(QWidget *parent=nullptr);
   ~MainWindow();
+  void create_pause_menu();
+
+  void pause();
+  void resume();
 
   QGridLayout *window_layout;
 
   QGroupBox *status_box;
   QLabel *fps_label;
+
+  QGroupBox *pause_menu;
+  QLabel *pause_label;
 
   std::unordered_set<int> keys_pressed;
   int delta_time;
@@ -38,8 +45,9 @@ private:
   std::vector<int> previous_frame_times;
   unsigned int current_pft_index;
   QTimer *timer;
-  bool mouse_grabbed;
   bool first_mouse;
+
+  bool paused;
 
 protected:
   void closeEvent(QCloseEvent *event) override;
