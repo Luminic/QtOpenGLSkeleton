@@ -48,6 +48,28 @@ void Sunlight::initialize_depth_framebuffer(unsigned int depth_map_width, unsign
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Sunlight::bind_sunlight_framebuffer(Shader *depth_shader, glm::mat4 &sun_space) {
+  glViewport(0, 0, depth_map_width, depth_map_height);
+  glBindFramebuffer(GL_FRAMEBUFFER, depth_framebuffer);
+
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  glm::mat4 sunlight_projection = glm::ortho(
+    -x_view_size/2, x_view_size/2,
+    -y_view_size/2, y_view_size/2,
+    near_plane, far_plane
+  );
+  glm::mat4 sunlight_view = glm::lookAt(
+    get_position()*2.0f,
+    glm::vec3(0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+  );
+  sun_space = sunlight_projection*sunlight_view;
+
+  depth_shader->use();
+  depth_shader->setMat4("light_space", sun_space);
+}
+
 glm::vec3 Sunlight::get_position() {
   glm::vec3 pos = glm::vec3(
     glm::sin(glm::radians(polar_position.x))*glm::cos(glm::radians(polar_position.y)),

@@ -7,7 +7,7 @@ in VS_OUT {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
 	vec3 normal;
-	vec4 fragment_light_space;
+	vec4 fragment_sun_space;
 } fs_in;
 
 //out vec4 frag_color;
@@ -69,7 +69,7 @@ uniform Sunlight sunlight;
 uniform Light light[1];
 
 uniform vec3 camera_position;
-uniform mat4 light_space;
+uniform mat4 sun_space;
 
 uniform bool use_volumetric_lighting;
 uniform float volumetric_multiplier;
@@ -78,7 +78,7 @@ uniform int steps;
 uniform float henyey_greenstein_G_value;
 
 float in_sun_shadow(sampler2D shadow_map, bool use_pcf) {
-	vec3 projected_coordinates = fs_in.fragment_light_space.xyz / fs_in.fragment_light_space.w;
+	vec3 projected_coordinates = fs_in.fragment_sun_space.xyz / fs_in.fragment_sun_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
 	if (projected_coordinates.z > 1.0f) return 0.0f;
 
@@ -103,7 +103,7 @@ float in_sun_shadow(sampler2D shadow_map, bool use_pcf) {
 }
 
 float in_sun_shadow(sampler2D shadow_map, vec3 position_world_space, bool use_pcf) {
-	vec4 position_light_space = light_space * vec4(position_world_space, 1.0f);
+	vec4 position_light_space = sun_space * vec4(position_world_space, 1.0f);
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
 	if (projected_coordinates.z > 1.0f) return 0.0f;
