@@ -141,130 +141,57 @@ void OpenGLWindow::load_shaders() {
 }
 
 void OpenGLWindow::create_framebuffer() {
-  // Create the framebuffer object
   glGenFramebuffers(1, &framebuffer);
-  // glGenFramebuffers(2, resolved_framebuffers);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  // Create the texture attachment (for the framebuffer)
-  int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
-  // glGenTextures(size, multisampled_colorbuffers);
-  glGenTextures(size, colorbuffers);
-  for (int i=0; i<size; i++) {
-    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
-    // glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, 800, 600, GL_TRUE);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i], 0);
-    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
-  unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-  glDrawBuffers(2, attachments);
-  // Create the renderbuffer (for the framebuffer)
+  // Create the texture attachment
+  int nr_color_buffers = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
+  scene->create_color_buffers(800, 600, nr_color_buffers, colorbuffers);
+
+  // Create the renderbuffer
   glGenRenderbuffers(1, &renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  // glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, 800, 600);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
-  // Check if the framebuffer is complete
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+
+  Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void OpenGLWindow::create_scene_framebuffer() {
-  // Create the scene framebuffer
   glGenFramebuffers(1, &scene_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, scene_framebuffer);
   unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
   glDrawBuffers(2, attachments);
 
-  int size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
-  glGenTextures(size, scene_colorbuffers);
-  for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, scene_colorbuffers[i], 0);
-  }
-  glBindTexture(GL_TEXTURE_2D, 0);
+  int nr_color_buffers = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
+  scene->create_color_buffers(800, 600, nr_color_buffers, scene_colorbuffers);
 
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void OpenGLWindow::create_ping_pong_framebuffer() {
-  // Create the ping-pong framebuffer
   glGenFramebuffers(1, &ping_pong_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
-  unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-  glDrawBuffers(2, attachments);
 
-  glGenTextures(2, ping_pong_colorbuffers);
-  glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
-  for (int i=0; i<2; i++) {
-    glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 400, 300, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // Notice how the colorbuffers aren't attached
-  }
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  create_gaussian_blur_colorbuffer();
+  // Note: these colorbuffers should be attached when they will be used
+  // Their attachment locations here mean nothing
+  scene->create_color_buffers(400, 300, 1, &bloom_colorbuffer);
+  // The ping pong colorbuffers should be created last so the drawbuffers is 2
+  scene->create_color_buffers(400, 300, 2, ping_pong_colorbuffers);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void OpenGLWindow::create_gaussian_blur_colorbuffer() {
-  // Create the Gaussian Blur colorbuffer (and attach to the ping-pong framebuffers)
-  // This blur will add all the results of the ping-pong colorbuffers together
-  glGenTextures(1, &bloom_colorbuffer);
-  glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 400, 300, 0, GL_RGBA, GL_FLOAT, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-}
-
 void OpenGLWindow::create_post_processing_framebuffer() {
-  // Create the post-processing framebuffer
   glGenFramebuffers(1, &post_processing_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, post_processing_framebuffer);
 
-  glGenTextures(1, &post_processing_colorbuffer);
-  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 800, 600, 0, GL_RGBA, GL_FLOAT, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, post_processing_colorbuffer, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  scene->create_color_buffers(800, 600, 1, &post_processing_colorbuffer);
 
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    qDebug() << "INCOMPLETE FRAMEBUFFER!\n";
+  Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -286,25 +213,8 @@ void OpenGLWindow::paintGL() {
   glEnable(GL_DEPTH_TEST);
 
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
-  glViewport(0, 0, scene->sunlight->depth_map_width, scene->sunlight->depth_map_height);
-  glBindFramebuffer(GL_FRAMEBUFFER, scene->sunlight->depth_framebuffer);
-
-  glClear(GL_DEPTH_BUFFER_BIT);
-
-  sunlight_depth_shader->use();
-  glm::mat4 sunlight_projection = glm::ortho(
-    -scene->sunlight->x_view_size/2, scene->sunlight->x_view_size/2,
-    -scene->sunlight->y_view_size/2, scene->sunlight->y_view_size/2,
-    scene->sunlight->near_plane, scene->sunlight->far_plane
-  );
-  glm::mat4 sunlight_view = glm::lookAt(
-    scene->sunlight->get_position()*2.0f,
-    glm::vec3(0.0f),
-    glm::vec3(0.0f, 1.0f, 0.0f)
-  );
-
-  sunlight_depth_shader->setMat4("light_space", sunlight_projection*sunlight_view);
-
+  glm::mat4 sun_space;
+  scene->sunlight->bind_sunlight_framebuffer(sunlight_depth_shader, sun_space);
   scene->draw_objects(sunlight_depth_shader, false, 0);
 
   // Draw the scene to the pointlight's depth buffer
@@ -378,7 +288,7 @@ void OpenGLWindow::paintGL() {
     object_shader->setInt("steps", scene->volumetric_lighting_steps);
     object_shader->setFloat("henyey_greenstein_G_value", scene->henyey_greenstein_G_value);
 
-    object_shader->setMat4("light_space", sunlight_projection*sunlight_view);
+    object_shader->setMat4("sun_space", sun_space);
 
     scene->set_skybox_settings("skybox", object_shader, 0);
     scene->set_sunlight_settings("sunlight", object_shader, 1);
@@ -450,9 +360,10 @@ void OpenGLWindow::paintGL() {
   // Clear the buffers (if they aren't cleared it causes problems when window is resized)
   glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[0], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, ping_pong_colorbuffers[1], 0);
   glClear(GL_COLOR_BUFFER_BIT);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[1], 0);
-  glClearBufferfv(GL_COLOR, 0, glm::value_ptr(glm::vec4(0.0f,1.0f,0.0f,1.0f)));
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
+  glClearBufferfv(GL_COLOR, 1, glm::value_ptr(glm::vec4(0.0f,1.0f,0.0f,1.0f)));
 
   gaussian_blur_shader->use();
 
@@ -551,35 +462,24 @@ void OpenGLWindow::update_perspective_matrix() {
 
 void OpenGLWindow::resizeGL(int w, int h) {
   // Update framebuffer textures
-  int size = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
-  for (int i=0; i<size; i++) {
-    // glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampled_colorbuffers[i]);
-    // glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisample_samples, GL_RGBA16F, w, h, GL_TRUE);
+  int nr_color_buffers = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
+  scene->update_color_buffers_size(w, h, nr_color_buffers, colorbuffers);
 
-    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
-  }
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-  // glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisample_samples, GL_DEPTH24_STENCIL8, w, h);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+
   // Update scene texture
-  size = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
-  for (int i=0; i<size; i++) {
-    glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
-  }
+  nr_color_buffers = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
+  scene->update_color_buffers_size(w, h, nr_color_buffers, scene_colorbuffers);
+
   // Update ping-pong textures
-  for (int i=0; i<2; i++) {
-    glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
-  }
+  scene->update_color_buffers_size(w/2, h/2, 2, ping_pong_colorbuffers);
+
   // Update bloom texture
-  glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w/2, h/2, 0, GL_RGBA, GL_FLOAT, NULL);
+  scene->update_color_buffers_size(w/2, h/2, 1, &bloom_colorbuffer);
 
   // Update post-processing texture
-  glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
+  scene->update_color_buffers_size(w, h, 1, &post_processing_colorbuffer);
 
   update_perspective_matrix();
 

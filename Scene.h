@@ -33,13 +33,16 @@ enum Display_Types {
   BRIGHT
 };
 
-class Scene : public QObject {
+class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:
   Scene(QObject *parent=nullptr);
   ~Scene();
+
   void initialize_scene();
+  void create_color_buffers(int width, int height, int number, unsigned int colorbuffers[]); // Creates color buffers for the currently bound framebuffer
+  void update_color_buffers_size(int width, int height, int number, unsigned int colorbuffers[]); // Resizes the color buffers
 
   void update_scene();
 
@@ -52,7 +55,7 @@ public:
   void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);
 
   Camera *camera;
-  Sunlight *sunlight; // Display it like a pointlight but have its lighting be sunlight
+  Sunlight *sunlight;
   PointLight *light;
 
   Mesh *cube;

@@ -43,7 +43,6 @@ protected:
   void create_framebuffer();
   void create_scene_framebuffer();
   void create_ping_pong_framebuffer();
-  void create_gaussian_blur_colorbuffer();
   void create_post_processing_framebuffer();
 
   void paintGL() override;
@@ -52,9 +51,6 @@ protected:
   void wheelEvent(QWheelEvent *event) override;
 
 private:
-  // int multisample_samples;
-  // unsigned int multisampled_colorbuffers[2];
-  // unsigned int resolved_framebuffers[2];
   unsigned int framebuffer;
   unsigned int renderbuffer;
   unsigned int colorbuffers[2];

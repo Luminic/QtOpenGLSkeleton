@@ -6,6 +6,8 @@ std::vector<Texture> Scene::loaded_textures;
 std::vector<Material*> Scene::loaded_materials;
 
 Scene::Scene(QObject *parent) : QObject(parent) {
+  initializeOpenGLFunctions();
+
   background_color = glm::vec3(0.1, 0.1, 0.2);
   display_type = 0;
 
@@ -96,6 +98,36 @@ Scene::~Scene() {
 }
 
 void Scene::initialize_scene() {
+}
+
+void Scene::create_color_buffers(int width, int height, int number, unsigned int colorbuffers[]) {
+  glGenTextures(number, colorbuffers); // generate the colorbuffers
+
+  for (int i=0; i<number; i++) {
+    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
+  }
+  glBindTexture(GL_TEXTURE_2D, 0);
+  
+  unsigned int attachments[GL_MAX_COLOR_ATTACHMENTS];
+  for (int i=0; i<GL_MAX_COLOR_ATTACHMENTS; i++) {
+    attachments[i] = GL_COLOR_ATTACHMENT0+i;
+  }
+
+  glDrawBuffers(number, attachments);
+}
+
+void Scene::update_color_buffers_size(int width, int height, int number, unsigned int colorbuffers[]) {
+  for (int i=0; i<number; i++) {
+    glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+  }
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Scene::update_scene() {
