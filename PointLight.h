@@ -11,6 +11,7 @@ public:
   ~PointLight();
 
   void initialize_depth_framebuffer(unsigned int depth_map_width, unsigned int depth_map_height);
+  void bind_pointlight_framebuffer(Shader *depth_shader);
 
   void set_object_settings(std::string name, Shader *shader);
 

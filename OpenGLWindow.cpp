@@ -218,27 +218,7 @@ void OpenGLWindow::paintGL() {
   scene->draw_objects(sunlight_depth_shader, false, 0);
 
   // Draw the scene to the pointlight's depth buffer
-  glViewport(0, 0, scene->light->depth_map_width, scene->light->depth_map_height);
-  glBindFramebuffer(GL_FRAMEBUFFER, scene->light->depth_framebuffer);
-
-  glClear(GL_DEPTH_BUFFER_BIT);
-
-  pointlight_depth_shader->use();
-  glm::mat4 pointlight_projection = glm::perspective(glm::radians(90.0f), float(scene->light->depth_map_width)/scene->light->depth_map_height, scene->light->near_plane, scene->light->far_plane);
-  std::vector<glm::mat4> pointlight_views;
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3( 1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f)));
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f)));
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3( 0.0f, 1.0f, 0.0f), glm::vec3( 0.0f, 0.0f, 1.0f)));
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3( 0.0f,-1.0f, 0.0f), glm::vec3( 0.0f, 0.0f,-1.0f)));
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3( 0.0f, 0.0f, 1.0f), glm::vec3( 0.0f,-1.0f, 0.0f)));
-  pointlight_views.push_back(glm::lookAt(scene->light->position, scene->light->position+glm::vec3( 0.0f, 0.0f,-1.0f), glm::vec3( 0.0f,-1.0f, 0.0f)));
-
-  for (int i=0; i<6; i++) {
-    pointlight_depth_shader->setMat4(("light_spaces["+std::to_string(i)+"]").c_str(), pointlight_projection*pointlight_views[i]);
-  }
-  pointlight_depth_shader->setVec3("pointlight_position", scene->light->position);
-  pointlight_depth_shader->setFloat("far_plane", scene->light->far_plane);
-
+  scene->light->bind_pointlight_framebuffer(pointlight_depth_shader);
   scene->draw_objects(pointlight_depth_shader, false, 0);
 
   // Draw the scene to our framebuffer
