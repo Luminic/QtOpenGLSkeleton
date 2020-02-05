@@ -28,7 +28,6 @@ protected:
   void load_model(std::string path);
   Node * process_node(aiNode *node, const aiScene *scene);
   Mesh * process_mesh(aiMesh *mesh, const aiScene *scene);
-
   void load_material_textures(aiMaterial *mat, Material *mesh_material);
 
   //std::vector<Mesh*> meshes;

@@ -32,6 +32,8 @@ public:
 
   void update_perspective_matrix();
 
+  Camera *camera;
+
   Settings *settings;
   Scene *scene;
 

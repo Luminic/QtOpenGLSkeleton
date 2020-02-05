@@ -46,30 +46,35 @@ public:
 
   void update_scene();
 
-  void draw_sun(Shader *shader);
-  void set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0);
-  void draw_light(Shader *shader);
-  void set_light_settings(std::string name, Shader *shader, int texture_unit=0);
   void draw_skybox(Shader *shader);
   void set_skybox_settings(std::string name, Shader *shader, int texture_unit=0);
+
+  void draw_sun(Shader *shader);
+  void set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0);
+
+  void draw_light(Shader *shader);
+  void set_light_settings(std::string name, Shader *shader, int texture_unit=0);
+
   void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);
 
-  Camera *camera;
+  static std::vector<Texture> loaded_textures;
+  static std::vector<Material*> loaded_materials;
+
+  static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
+  static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
+
   Sunlight *sunlight;
   PointLight *light;
 
-  Mesh *cube;
-  Node *floor;
-  Model *nanosuit;
+  // Mesh *cube;
+  // Node *floor;
+  // Model *nanosuit;
+
+  std::vector<Node*> objects;
 
   Mesh *skybox;
   unsigned int skybox_cubemap;
 
-  static std::vector<Texture> loaded_textures;
-  static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
-
-  static std::vector<Material*> loaded_materials;
-  static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
   glm::vec3 background_color;
 

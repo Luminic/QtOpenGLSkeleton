@@ -24,9 +24,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   bloom_interpolation = 1;
   bloom_applications = 10;
 
-  camera = new Camera();
-  camera->exposure = 1.3f;
-
   sunlight = new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f));
   sunlight->initialize_depth_framebuffer(2048,2048);
   sunlight->ambient = 2.5f;
@@ -37,7 +34,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   light->initialize_depth_framebuffer(1024,1024);
   light->color = glm::vec3(1.3f);
 
-  cube = new Mesh();
+  Mesh* cube = new Mesh();
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
@@ -46,8 +43,26 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   cube->material->metalness = 1.0f;
   cube->material = Scene::is_material_loaded(cube->material);
 
-  floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
-  Mesh *floor_mesh = new Mesh();
+  glm::vec3 cube_positions[10] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f,  15.0f),
+    glm::vec3(-1.5f, -2.2f,  2.5f),
+    glm::vec3(-3.8f, -2.0f,  12.3f),
+    glm::vec3( 2.4f, -0.4f,  3.5f),
+    glm::vec3(-1.7f,  3.0f,  7.5f),
+    glm::vec3( 1.3f, -2.0f,  2.5f),
+    glm::vec3( 1.5f,  2.0f,  2.5f),
+    glm::vec3( 1.5f,  0.2f,  1.5f),
+    glm::vec3(-1.3f,  1.0f,  1.5f)
+  };
+  for (int i=0; i<10; i++) {
+    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,0.6f*i,-2.0f*i));
+    n->meshes.push_back(cube);
+    objects.push_back(n);
+  }
+
+  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
+  Mesh* floor_mesh = new Mesh();
   floor_mesh->initialize_plane(true, 3.0f);
   floor_mesh->material = new Material();
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
@@ -55,19 +70,21 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->material->diffuse = 0.6f;
   floor_mesh->material->specular = 0.3f;
   floor_mesh->material->roughness = 0.66f;
-
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
+
   floor->meshes.push_back(floor_mesh);
   floor->scale = glm::vec3(14.0f,1.0f,7.0f);
+  objects.push_back(floor);
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
   // nanosuit = new Model("models/lightray_test/wall2.fbx");
-  nanosuit = new Model("models/nanosuit/nanosuit.obj");
-  nanosuit->scale = glm::vec3(0.6f);
+  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit->scale = glm::vec3(0.3f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
-  nanosuit->position = glm::vec3(0.0f,-2.2f,0.0f);
+  nanosuit->position = glm::vec3(0.0f,-3.5f,0.0f);
+  objects.push_back(nanosuit);
 
   skybox = new Mesh();
   skybox->initialize_cube();
@@ -85,13 +102,15 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 }
 
 Scene::~Scene() {
-  delete camera;
   delete sunlight;
   delete light;
-  delete cube;
-  delete floor;
-  delete nanosuit;
+  // delete cube;
+  // delete floor;
+  // delete nanosuit;
   delete skybox;
+
+  for (auto object : objects)
+    delete object;
 
   for (auto m: Scene::loaded_materials)
     delete m;
@@ -113,7 +132,7 @@ void Scene::create_color_buffers(int width, int height, int number, unsigned int
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, colorbuffers[i], 0);
   }
   glBindTexture(GL_TEXTURE_2D, 0);
-  
+
   unsigned int attachments[GL_MAX_COLOR_ATTACHMENTS];
   for (int i=0; i<GL_MAX_COLOR_ATTACHMENTS; i++) {
     attachments[i] = GL_COLOR_ATTACHMENT0+i;
@@ -131,14 +150,10 @@ void Scene::update_color_buffers_size(int width, int height, int number, unsigne
 }
 
 void Scene::update_scene() {
-  camera->update_cam();
+
 }
 
 void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
-  shader->use();
-  shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
-  //shader->setMat4("model", glm::mat4(1.0f));//sunlight->get_model_matrix());
-
   sunlight->draw(shader);
 }
 
@@ -176,7 +191,7 @@ void Scene::set_skybox_settings(std::string name, Shader *shader, int texture_un
 }
 
 void Scene::draw_objects(Shader *shader, bool use_material, int material_index_offset) {
-  glm::vec3 cube_positions[] = {
+  /*glm::vec3 cube_positions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
     glm::vec3( 2.0f,  5.0f,  15.0f),
     glm::vec3(-1.5f, -2.2f,  2.5f),
@@ -195,14 +210,17 @@ void Scene::draw_objects(Shader *shader, bool use_material, int material_index_o
     model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
     shader->setMat4("model", model);
     cube->draw(shader, use_material, material_index_offset);
-  }
+  }*/
 
   // Render the floor
-  floor->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
+  // floor->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
+  for (Node* object : objects) {
+    object->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
+  }
 
   // Render the Nanosuit
-  glm::mat4 model = nanosuit->get_model_matrix();
-  nanosuit->draw(shader, model, use_material, material_index_offset);
+  // glm::mat4 model = nanosuit->get_model_matrix();
+  // nanosuit->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
 }
 
 Texture Scene::is_texture_loaded(std::string image_path) {

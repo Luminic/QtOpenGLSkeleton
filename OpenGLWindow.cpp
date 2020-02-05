@@ -43,6 +43,7 @@ void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mou
 
 OpenGLWindow::~OpenGLWindow() {
   delete settings;
+  delete camera;
   delete framebuffer_quad;
   delete object_shader;
   delete light_shader;
@@ -84,12 +85,10 @@ void OpenGLWindow::initializeGL() {
   load_shaders();
 
   scene = new Scene(this);
-  scene->camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
   settings->set_scene(scene);
-  settings->set_camera(scene->camera);
   settings->set_sunlight(scene->sunlight);
-  settings->set_node(scene->floor, "Floor");
-  settings->set_node(scene->nanosuit, "Nanosuit");
+  // settings->set_node(scene->floor, "Floor");
+  // settings->set_node(scene->nanosuit, "Nanosuit");
   settings->set_point_light(scene->light, "Pointlight");
 
   framebuffer_quad = new Mesh();
@@ -98,6 +97,11 @@ void OpenGLWindow::initializeGL() {
   for (auto m : Scene::loaded_materials) {
     settings->set_material(m);
   }
+
+  camera = new Camera();
+  camera->exposure = 1.3f;
+  camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
+  settings->set_camera(camera);
 
   create_framebuffer();
   create_scene_framebuffer();
@@ -197,6 +201,7 @@ void OpenGLWindow::create_post_processing_framebuffer() {
 
 void OpenGLWindow::update_scene() {
   scene->update_scene();
+  camera->update_cam();
   angle++;
   if (angle>=360) angle=0;
   update();
@@ -228,7 +233,7 @@ void OpenGLWindow::paintGL() {
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  glm::mat4 view = scene->camera->view_matrix();
+  glm::mat4 view = camera->view_matrix();
 
   glDepthMask(GL_FALSE);
 
@@ -248,6 +253,8 @@ void OpenGLWindow::paintGL() {
     scene->draw_skybox(skybox_shader);
 
     // Draw the sun
+    light_shader->use();
+    light_shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
     scene->draw_sun(light_shader);
 
     glDepthMask(GL_TRUE);
@@ -259,7 +266,7 @@ void OpenGLWindow::paintGL() {
 
     // Draw the objects
     object_shader->use();
-    object_shader->setVec3("camera_position", scene->camera->position);
+    object_shader->setVec3("camera_position", camera->position);
     object_shader->setMat4("view", view);
 
     object_shader->setBool("use_volumetric_lighting", scene->use_volumetric_lighting);
@@ -284,7 +291,7 @@ void OpenGLWindow::paintGL() {
 
   scene_shader->use();
   scene_shader->setInt("display_type", scene->display_type);
-  scene_shader->setFloat("exposure", scene->camera->exposure);
+  scene_shader->setFloat("exposure", camera->exposure);
   scene_shader->setFloat("bloom_threshold_upper", scene->bloom_threshold_upper);
   scene_shader->setFloat("bloom_threshold_lower", scene->bloom_threshold_lower);
   scene_shader->setInt("bloom_interpolation", scene->bloom_interpolation);

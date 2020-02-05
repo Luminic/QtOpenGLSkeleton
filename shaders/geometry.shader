@@ -3,7 +3,7 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
-// Note to self: Do all calculations in worldspace when possible; Camera space hella gey.
+// Note to self: Do all calculations in worldspace when possible; Camera space is annoying to work with.
 
 in VS_OUT {
 	vec3 fragment_position;
