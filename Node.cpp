@@ -10,8 +10,8 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 {}
 
 Node::~Node() {
-  for (auto m : meshes)
-    delete m;
+  // for (auto m : meshes)
+  //   delete m;
 
   for (auto c : child_nodes)
     delete c;

@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -24,7 +25,7 @@ public:
   // Getters
   glm::mat4 get_model_matrix();
 
-  std::vector<Mesh*> meshes;
+  std::vector<std::shared_ptr<Mesh>> meshes;
   std::vector<Node*> child_nodes;
 
   glm::mat4 transformation;

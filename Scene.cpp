@@ -34,7 +34,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   light->initialize_depth_framebuffer(1024,1024);
   light->color = glm::vec3(1.3f);
 
-  Mesh* cube = new Mesh();
+  std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
@@ -55,9 +55,9 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     glm::vec3( 1.5f,  0.2f,  1.5f),
     glm::vec3(-1.3f,  1.0f,  1.5f)
   };
-  for (int i=0; i<10; i++) {
+  for (int i=0; i<1; i++) {
     Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,0.6f*i,-2.0f*i));
-    n->meshes.push_back(cube);
+    n->meshes.push_back((cube));
     objects.push_back(n);
   }
 
@@ -72,7 +72,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->material->roughness = 0.66f;
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
 
-  floor->meshes.push_back(floor_mesh);
+  floor->meshes.push_back(std::shared_ptr<Mesh>(floor_mesh));
   floor->scale = glm::vec3(14.0f,1.0f,7.0f);
   objects.push_back(floor);
 

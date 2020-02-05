@@ -47,7 +47,7 @@ Node * Model::process_node(aiNode *node, const aiScene *scene) {
   // Process the node's mesh (might be none)
   for (unsigned int i=0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    my_node->meshes.push_back(process_mesh(mesh, scene));
+    my_node->meshes.push_back(std::shared_ptr<Mesh>(process_mesh(mesh, scene)));
   }
 
   // Process the node's children (might be none)
