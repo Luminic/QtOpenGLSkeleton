@@ -113,7 +113,7 @@ std::vector<Material*> get_node_materials(Node *node) {
         materials.push_back(mesh_ptr->material);
   }
   for (auto node_ptr : node->child_nodes) {
-    std::vector<Material*> cn_mats = get_node_materials(node_ptr);
+    std::vector<Material*> cn_mats = get_node_materials(node_ptr.get());
     for (auto mat_ptr : cn_mats) {
       if (mat_ptr != nullptr && std::find(materials.begin(), materials.end(), mat_ptr) == materials.end())
         materials.push_back(mat_ptr);

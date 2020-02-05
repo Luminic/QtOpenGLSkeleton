@@ -13,8 +13,8 @@ Node::~Node() {
   // for (auto m : meshes)
   //   delete m;
 
-  for (auto c : child_nodes)
-    delete c;
+  // for (auto c : child_nodes)
+  //   delete c;
 }
 
 void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int material_index_offset) {

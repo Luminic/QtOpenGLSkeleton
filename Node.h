@@ -26,7 +26,7 @@ public:
   glm::mat4 get_model_matrix();
 
   std::vector<std::shared_ptr<Mesh>> meshes;
-  std::vector<Node*> child_nodes;
+  std::vector<std::shared_ptr<Node>> child_nodes;
 
   glm::mat4 transformation;
   glm::vec3 position;

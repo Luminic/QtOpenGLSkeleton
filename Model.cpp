@@ -36,7 +36,7 @@ void Model::load_model(std::string path) {
   }
 
   directory = path.substr(0, path.find_last_of('/'));
-  child_nodes.push_back(process_node(scene->mRootNode, scene));
+  child_nodes.push_back(std::shared_ptr<Node>(process_node(scene->mRootNode, scene)));
 }
 
 Node * Model::process_node(aiNode *node, const aiScene *scene) {
@@ -52,7 +52,7 @@ Node * Model::process_node(aiNode *node, const aiScene *scene) {
 
   // Process the node's children (might be none)
   for (unsigned int i=0; i < node->mNumChildren; i++) {
-    my_node->child_nodes.push_back(process_node(node->mChildren[i], scene));
+    my_node->child_nodes.push_back(std::shared_ptr<Node>(process_node(node->mChildren[i], scene)));
   }
 
   return my_node;

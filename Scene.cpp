@@ -44,19 +44,19 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   cube->material = Scene::is_material_loaded(cube->material);
 
   glm::vec3 cube_positions[10] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f,  15.0f),
-    glm::vec3(-1.5f, -2.2f,  2.5f),
-    glm::vec3(-3.8f, -2.0f,  12.3f),
-    glm::vec3( 2.4f, -0.4f,  3.5f),
-    glm::vec3(-1.7f,  3.0f,  7.5f),
-    glm::vec3( 1.3f, -2.0f,  2.5f),
-    glm::vec3( 1.5f,  2.0f,  2.5f),
-    glm::vec3( 1.5f,  0.2f,  1.5f),
-    glm::vec3(-1.3f,  1.0f,  1.5f)
+    glm::vec3( 0.0f,  0.0f,  2.0f),
+    glm::vec3( 2.0f,  5.0f,  17.0f),
+    glm::vec3(-1.5f, -2.2f,  4.5f),
+    glm::vec3(-3.8f, -2.0f,  14.3f),
+    glm::vec3( 2.4f, -0.4f,  5.5f),
+    glm::vec3(-1.7f,  3.0f,  9.5f),
+    glm::vec3( 1.3f, -2.0f,  4.5f),
+    glm::vec3( 1.5f,  2.0f,  4.5f),
+    glm::vec3( 1.5f,  0.2f,  3.5f),
+    glm::vec3(-1.3f,  1.0f,  3.5f)
   };
-  for (int i=0; i<1; i++) {
-    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,0.6f*i,-2.0f*i));
+  for (int i=0; i<10; i++) {
+    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
     n->meshes.push_back((cube));
     objects.push_back(n);
   }
