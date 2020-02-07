@@ -227,7 +227,7 @@ void OpenGLWindow::paintGL() {
   scene->render_suns_shadow_map(sunlight_depth_shader, sun_space);
 
   // Draw the scene to the pointlight's depth buffer
-  scene->render_lights_shadow_map(pointlight_depth_shader);
+  scene->render_pointlights_shadow_map(pointlight_depth_shader);
 
   // Draw the scene to our framebuffer
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);

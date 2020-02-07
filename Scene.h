@@ -53,7 +53,7 @@ public:
   int set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_sun(Shader *shader);
 
-  void render_lights_shadow_map(Shader *shader);
+  void render_pointlights_shadow_map(Shader *shader);
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 

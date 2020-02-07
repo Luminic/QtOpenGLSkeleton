@@ -182,7 +182,7 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
   sunlight->draw(shader);
 }
 
-void Scene::render_lights_shadow_map(Shader *shader) {
+void Scene::render_pointlights_shadow_map(Shader *shader) {
   for (auto light : pointlights) {
     light->bind_pointlight_framebuffer(shader);
     int texture_unit = 0;
