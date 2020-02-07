@@ -227,7 +227,7 @@ void OpenGLWindow::paintGL() {
   scene->sunlight->bind_sunlight_framebuffer(sunlight_depth_shader, sun_space);
   {
     int texture_unit = 0;
-    scene->draw_objects(sunlight_depth_shader, false, texture_unit);
+    scene->draw_objects(sunlight_depth_shader, false, 0);
   }
 
   // Draw the scene to the pointlight's depth buffer

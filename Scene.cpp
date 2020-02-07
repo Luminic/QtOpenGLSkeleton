@@ -113,7 +113,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 
 Scene::~Scene() {
   delete sunlight;
-  // delete light;
   delete skybox;
 
   for (auto object : objects)
@@ -188,7 +187,6 @@ void Scene::draw_light(Shader *shader) {
   for (auto light : pointlights) {
     light->draw(shader);
   }
-  // light->draw(shader);
 }
 
 void Scene::set_light_settings(std::string name, Shader* shader, int& texture_unit) {
