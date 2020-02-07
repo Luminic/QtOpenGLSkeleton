@@ -47,15 +47,16 @@ public:
   void update_scene();
 
   void draw_skybox(Shader *shader);
-  void set_skybox_settings(std::string name, Shader *shader, int texture_unit=0);
+  void set_skybox_settings(std::string name, Shader *shader, int& texture_unit);
 
   void draw_sun(Shader *shader);
-  void set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0);
+  void set_sunlight_settings(std::string name, Shader *shader, int& texture_unit);
 
+  void render_lights_shadow_map(Shader *shader);
   void draw_light(Shader *shader);
-  void set_light_settings(std::string name, Shader *shader, int texture_unit=0);
+  void set_light_settings(std::string name, Shader *shader, int& texture_unit);
 
-  void draw_objects(Shader *shader, bool use_material=false, int material_index_offset=0);
+  void draw_objects(Shader *shader, bool use_material, int& material_index_offset);
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;
@@ -64,13 +65,10 @@ public:
   static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
   Sunlight *sunlight;
-  PointLight *light;
-
-  // Mesh *cube;
-  // Node *floor;
-  // Model *nanosuit;
+  // PointLight *light;
 
   std::vector<Node*> objects;
+  std::vector<PointLight*> pointlights;
 
   Mesh *skybox;
   unsigned int skybox_cubemap;

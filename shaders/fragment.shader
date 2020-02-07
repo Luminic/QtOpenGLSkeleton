@@ -66,7 +66,9 @@ uniform samplerCube skybox;
 
 uniform Material material;
 uniform Sunlight sunlight;
-uniform Light light[1];
+
+uniform int nr_lights;
+uniform Light light[2];
 
 uniform vec3 camera_position;
 uniform mat4 sun_space;
@@ -249,7 +251,7 @@ void main() {
   }
 
 	vec3 lighting_color = calculate_sunlight(sunlight, ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
-	for (int i=0; i<1; i++) {
+	for (int i=0; i<nr_lights; i++) {
 		lighting_color += calculate_pointlight(light[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
 	}
 

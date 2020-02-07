@@ -1,3 +1,5 @@
+#include <QOpenGLContext>
+#include <QOpenGLDebugLogger>
 #include <QDebug>
 
 #include "Scene.h"
@@ -30,9 +32,17 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   sunlight->diffuse = 3.0f;
   sunlight->specular = 3.0f;
 
-  light = new PointLight(glm::vec3(0.4f, 1.6, 2.3f), glm::vec3(0.2f));
-  light->initialize_depth_framebuffer(1024,1024);
-  light->color = glm::vec3(1.3f);
+  glm::vec3 light_positions[2] = {
+    glm::vec3( 0.4f, 1.6, 2.3f),
+    glm::vec3(-1.5f, 1.2, 0.5f)
+  };
+
+  for (int i=0; i<2; i++) {
+    PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
+    light->initialize_depth_framebuffer(1024,1024);
+    light->color = glm::vec3(1.3f);
+    pointlights.push_back(light);
+  }
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->initialize_cube();
@@ -103,14 +113,14 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 
 Scene::~Scene() {
   delete sunlight;
-  delete light;
-  // delete cube;
-  // delete floor;
-  // delete nanosuit;
+  // delete light;
   delete skybox;
 
   for (auto object : objects)
     delete object;
+
+  for (auto light : pointlights)
+    delete light;
 
   for (auto m: Scene::loaded_materials)
     delete m;
@@ -157,24 +167,40 @@ void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
   sunlight->draw(shader);
 }
 
-void Scene::set_sunlight_settings(std::string name, Shader *shader, int texture_unit) {
+void Scene::set_sunlight_settings(std::string name, Shader* shader, int& texture_unit) {
   sunlight->set_object_settings(name, shader);
 
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_2D, sunlight->depth_map);
   shader->setInt((name+".shadow_map").c_str(), texture_unit);
+  texture_unit++;
+}
+
+void Scene::render_lights_shadow_map(Shader *shader) {
+  for (auto light : pointlights) {
+    light->bind_pointlight_framebuffer(shader);
+    int texture_unit = 0;
+    draw_objects(shader, false, texture_unit);
+  }
 }
 
 void Scene::draw_light(Shader *shader) {
-  light->draw(shader);
+  for (auto light : pointlights) {
+    light->draw(shader);
+  }
+  // light->draw(shader);
 }
 
-void Scene::set_light_settings(std::string name, Shader *shader, int texture_unit) {
-  light->set_object_settings((name+"["+std::to_string(0)+"]").c_str(), shader);
+void Scene::set_light_settings(std::string name, Shader* shader, int& texture_unit) {
+  shader->setInt("nr_lights", pointlights.size());
+  for (unsigned int i=0; i<pointlights.size(); i++) {
+    pointlights[i]->set_object_settings((name+"["+std::to_string(i)+"]").c_str(), shader);
 
-  glActiveTexture(GL_TEXTURE0+texture_unit);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, light->depth_cubemap);
-  shader->setInt((name+"["+std::to_string(0)+"]"+".shadow_cubemap").c_str(), texture_unit);
+    glActiveTexture(GL_TEXTURE0+texture_unit);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, pointlights[i]->depth_cubemap);
+    shader->setInt((name+"["+std::to_string(i)+"]"+".shadow_cubemap").c_str(), texture_unit);
+    texture_unit++;
+  }
 }
 
 void Scene::draw_skybox(Shader *shader) {
@@ -184,43 +210,17 @@ void Scene::draw_skybox(Shader *shader) {
   skybox->draw(shader);
 }
 
-void Scene::set_skybox_settings(std::string name, Shader *shader, int texture_unit) {
+void Scene::set_skybox_settings(std::string name, Shader *shader, int& texture_unit) {
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
   shader->setInt(name.c_str(), texture_unit);
+  texture_unit++;
 }
 
-void Scene::draw_objects(Shader *shader, bool use_material, int material_index_offset) {
-  /*glm::vec3 cube_positions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f,  15.0f),
-    glm::vec3(-1.5f, -2.2f,  2.5f),
-    glm::vec3(-3.8f, -2.0f,  12.3f),
-    glm::vec3( 2.4f, -0.4f,  3.5f),
-    glm::vec3(-1.7f,  3.0f,  7.5f),
-    glm::vec3( 1.3f, -2.0f,  2.5f),
-    glm::vec3( 1.5f,  2.0f,  2.5f),
-    glm::vec3( 1.5f,  0.2f,  1.5f),
-    glm::vec3(-1.3f,  1.0f,  1.5f)
-  };
-  for (int i=0; i<10; i++) {
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, cube_positions[i]+glm::vec3(0.0f,0.0f,2.0f));
-    model = glm::rotate(model, glm::radians(20.0f*i), glm::vec3(1.0f,0.3f,0.5f));
-    model = glm::scale(model, glm::vec3(1.0f));//cube->get_scale());
-    shader->setMat4("model", model);
-    cube->draw(shader, use_material, material_index_offset);
-  }*/
-
-  // Render the floor
-  // floor->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
+void Scene::draw_objects(Shader *shader, bool use_material, int& material_index_offset) {
   for (Node* object : objects) {
     object->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
   }
-
-  // Render the Nanosuit
-  // glm::mat4 model = nanosuit->get_model_matrix();
-  // nanosuit->draw(shader, glm::mat4(1.0f), use_material, material_index_offset);
 }
 
 Texture Scene::is_texture_loaded(std::string image_path) {

@@ -59,24 +59,26 @@ OpenGLWindow::~OpenGLWindow() {
 void OpenGLWindow::initializeGL() {
   initializeOpenGLFunctions();
 
-  QOpenGLContext *ctx = QOpenGLContext::currentContext();
-  QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(this);
-  if (!logger->initialize()) {
-    qDebug() << "QOpenGLDebugLogger failed to initialize.";
-  }
-  if (!ctx->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
-    qDebug() << "KHR Debug extension unavailable.";
-  }
-
-  connect(logger, &QOpenGLDebugLogger::messageLogged, this,
-    [](const QOpenGLDebugMessage &message){
-      if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
-        qDebug() << message;
-
-      }
+  #ifdef QT_DEBUG
+    QOpenGLContext *ctx = QOpenGLContext::currentContext();
+    QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(this);
+    if (!logger->initialize()) {
+      qDebug() << "QOpenGLDebugLogger failed to initialize.";
     }
-  );
-  logger->startLogging();
+    if (!ctx->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
+      qDebug() << "KHR Debug extension unavailable.";
+    }
+
+    connect(logger, &QOpenGLDebugLogger::messageLogged, this,
+      [](const QOpenGLDebugMessage &message){
+        if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
+          qDebug() << message;
+
+        }
+      }
+    );
+    logger->startLogging();
+  #endif
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
 
@@ -89,7 +91,10 @@ void OpenGLWindow::initializeGL() {
   settings->set_sunlight(scene->sunlight);
   // settings->set_node(scene->floor, "Floor");
   // settings->set_node(scene->nanosuit, "Nanosuit");
-  settings->set_point_light(scene->light, "Pointlight");
+  // settings->set_point_light(scene->light, "Pointlight");
+  for (unsigned int i=0; i<scene->pointlights.size(); i++) {
+    settings->set_point_light(scene->pointlights[i], ("Pointlight "+std::to_string(i)).c_str() );
+  }
 
   framebuffer_quad = new Mesh();
   framebuffer_quad->initialize_plane(false);
@@ -220,11 +225,13 @@ void OpenGLWindow::paintGL() {
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
   glm::mat4 sun_space;
   scene->sunlight->bind_sunlight_framebuffer(sunlight_depth_shader, sun_space);
-  scene->draw_objects(sunlight_depth_shader, false, 0);
+  {
+    int texture_unit = 0;
+    scene->draw_objects(sunlight_depth_shader, false, texture_unit);
+  }
 
   // Draw the scene to the pointlight's depth buffer
-  scene->light->bind_pointlight_framebuffer(pointlight_depth_shader);
-  scene->draw_objects(pointlight_depth_shader, false, 0);
+  scene->render_lights_shadow_map(pointlight_depth_shader);
 
   // Draw the scene to our framebuffer
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
@@ -244,7 +251,7 @@ void OpenGLWindow::paintGL() {
   if (scene->display_type == POINTLIGHT_DEPTH) {
     skybox_shader->setInt("mode", 1);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->light->depth_cubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->pointlights[0]->depth_cubemap);
     skybox_shader->setInt("skybox", 0);
     scene->skybox->draw(skybox_shader);
 
@@ -277,11 +284,11 @@ void OpenGLWindow::paintGL() {
 
     object_shader->setMat4("sun_space", sun_space);
 
-    scene->set_skybox_settings("skybox", object_shader, 0);
-    scene->set_sunlight_settings("sunlight", object_shader, 1);
-    scene->set_light_settings("light", object_shader, 2);
-
-    scene->draw_objects(object_shader, true, 3);
+    int texture_unit = 0;
+    scene->set_skybox_settings("skybox", object_shader, texture_unit);
+    scene->set_sunlight_settings("sunlight", object_shader, texture_unit);
+    scene->set_light_settings("light", object_shader, texture_unit);
+    scene->draw_objects(object_shader, true, texture_unit);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
