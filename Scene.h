@@ -47,16 +47,16 @@ public:
   void update_scene();
 
   void draw_skybox(Shader *shader);
-  void set_skybox_settings(std::string name, Shader *shader, int& texture_unit);
+  int set_skybox_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
   void draw_sun(Shader *shader);
-  void set_sunlight_settings(std::string name, Shader *shader, int& texture_unit);
+  int set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
   void render_lights_shadow_map(Shader *shader);
   void draw_light(Shader *shader);
-  void set_light_settings(std::string name, Shader *shader, int& texture_unit);
+  int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
-  void draw_objects(Shader *shader, bool use_material, int& material_index_offset);
+  void draw_objects(Shader *shader, bool use_material, int texture_unit=0);
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;

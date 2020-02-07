@@ -20,7 +20,7 @@ Material::Material() {
 Material::~Material() {
 }
 
-void Material::set_materials(Shader *shader, int material_index_offset) {
+int Material::set_materials(Shader *shader, int texture_unit) {
   shader->use();
 
   int number_albedo_maps = 0;
@@ -29,27 +29,28 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
   int number_metalness_maps = 0;
 
   for (unsigned int i=0; i<textures.size(); i++) {
-    glActiveTexture(GL_TEXTURE0+i+material_index_offset);
+    glActiveTexture(GL_TEXTURE0+i+texture_unit);
     glBindTexture(GL_TEXTURE_2D, textures[i].id);
     switch (textures[i].type) {
       case ALBEDO_MAP:
-        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), i+material_index_offset);
+        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), i+texture_unit);
         number_albedo_maps++;
         break;
       case AMBIENT_OCCLUSION_MAP: // AO maps are non-functional at the moment
         number_ambient_occlusion_maps++;
         break;
       case ROUGHNESS_MAP:
-        shader->setInt("material.roughness_map", i+material_index_offset);
+        shader->setInt("material.roughness_map", i+texture_unit);
         number_roughness_maps++;
         break;
       case METALNESS_MAP:
-        shader->setInt("material.metalness_map", i+material_index_offset);
+        shader->setInt("material.metalness_map", i+texture_unit);
         number_metalness_maps++;
         break;
       default:
         break;
     }
+    texture_unit++;
   }
 
   shader->setInt("material.number_albedo_maps", number_albedo_maps);
@@ -63,6 +64,8 @@ void Material::set_materials(Shader *shader, int material_index_offset) {
   shader->setFloat("material.specular", specular);
   shader->setFloat("material.roughness", roughness);
   shader->setFloat("material.metalness", metalness);
+
+  return texture_unit;
 }
 
 Texture Material::load_texture(const char *path, Image_Type type, bool add_to_material) {

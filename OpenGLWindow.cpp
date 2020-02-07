@@ -225,10 +225,7 @@ void OpenGLWindow::paintGL() {
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
   glm::mat4 sun_space;
   scene->sunlight->bind_sunlight_framebuffer(sunlight_depth_shader, sun_space);
-  {
-    int texture_unit = 0;
-    scene->draw_objects(sunlight_depth_shader, false, 0);
-  }
+  scene->draw_objects(sunlight_depth_shader, false);
 
   // Draw the scene to the pointlight's depth buffer
   scene->render_lights_shadow_map(pointlight_depth_shader);
@@ -285,9 +282,9 @@ void OpenGLWindow::paintGL() {
     object_shader->setMat4("sun_space", sun_space);
 
     int texture_unit = 0;
-    scene->set_skybox_settings("skybox", object_shader, texture_unit);
-    scene->set_sunlight_settings("sunlight", object_shader, texture_unit);
-    scene->set_light_settings("light", object_shader, texture_unit);
+    texture_unit = scene->set_skybox_settings("skybox", object_shader, texture_unit);
+    texture_unit = scene->set_sunlight_settings("sunlight", object_shader, texture_unit);
+    texture_unit = scene->set_light_settings("light", object_shader, texture_unit);
     scene->draw_objects(object_shader, true, texture_unit);
   }
 

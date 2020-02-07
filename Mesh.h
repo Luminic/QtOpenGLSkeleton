@@ -31,7 +31,7 @@ public:
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
   void initialize_buffers();
 
-  void draw(Shader *shader, bool use_material=true, int material_index_offset=0);
+  void draw(Shader *shader, bool use_material=true, int texture_unit=0);
 
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;

@@ -19,9 +19,9 @@ Mesh::~Mesh() {
     //delete material;
 }
 
-void Mesh::draw(Shader *shader, bool use_material, int material_index_offset) {
+void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {
   if (material != nullptr && use_material)
-    material->set_materials(shader, material_index_offset);
+    material->set_materials(shader, texture_unit);
 
   // Draw Mesh
   glBindVertexArray(VAO);

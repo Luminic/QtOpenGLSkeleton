@@ -17,7 +17,7 @@ Node::~Node() {
   //   delete c;
 }
 
-void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int material_index_offset) {
+void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int texture_unit) {
   model *= transformation;
   model = glm::translate(model, position);
   model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(0.0f,1.0f,0.0f));
@@ -27,10 +27,10 @@ void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int material
   shader->use();
   shader->setMat4("model", model);
   for (unsigned int i=0; i<meshes.size(); i++) {
-    meshes[i]->draw(shader, use_material, material_index_offset);
+    meshes[i]->draw(shader, use_material, texture_unit);
   }
   for (unsigned int i=0; i<child_nodes.size(); i++) {
-    child_nodes[i]->draw(shader, model, use_material, material_index_offset);
+    child_nodes[i]->draw(shader, model, use_material, texture_unit);
   }
 }
 
