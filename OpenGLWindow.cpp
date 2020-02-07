@@ -224,8 +224,7 @@ void OpenGLWindow::paintGL() {
 
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
   glm::mat4 sun_space;
-  scene->sunlight->bind_sunlight_framebuffer(sunlight_depth_shader, sun_space);
-  scene->draw_objects(sunlight_depth_shader, false);
+  scene->render_suns_shadow_map(sunlight_depth_shader, sun_space);
 
   // Draw the scene to the pointlight's depth buffer
   scene->render_lights_shadow_map(pointlight_depth_shader);

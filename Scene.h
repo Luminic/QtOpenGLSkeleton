@@ -49,12 +49,13 @@ public:
   void draw_skybox(Shader *shader);
   int set_skybox_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
-  void draw_sun(Shader *shader);
+  void render_suns_shadow_map(Shader *shader, glm::mat4& sun_space);
   int set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
+  void draw_sun(Shader *shader);
 
   void render_lights_shadow_map(Shader *shader);
-  void draw_light(Shader *shader);
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
+  void draw_light(Shader *shader);
 
   void draw_objects(Shader *shader, bool use_material, int texture_unit=0);
 

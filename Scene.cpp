@@ -162,8 +162,9 @@ void Scene::update_scene() {
 
 }
 
-void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
-  sunlight->draw(shader);
+void Scene::render_suns_shadow_map(Shader *shader, glm::mat4& sun_space) {
+  sunlight->bind_sunlight_framebuffer(shader, sun_space);
+  draw_objects(shader, false);
 }
 
 int Scene::set_sunlight_settings(std::string name, Shader* shader, int texture_unit) {
@@ -177,17 +178,15 @@ int Scene::set_sunlight_settings(std::string name, Shader* shader, int texture_u
   return texture_unit;
 }
 
+void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
+  sunlight->draw(shader);
+}
+
 void Scene::render_lights_shadow_map(Shader *shader) {
   for (auto light : pointlights) {
     light->bind_pointlight_framebuffer(shader);
     int texture_unit = 0;
     draw_objects(shader, false, texture_unit);
-  }
-}
-
-void Scene::draw_light(Shader *shader) {
-  for (auto light : pointlights) {
-    light->draw(shader);
   }
 }
 
@@ -203,6 +202,12 @@ int Scene::set_light_settings(std::string name, Shader* shader, int texture_unit
   }
 
   return texture_unit;
+}
+
+void Scene::draw_light(Shader *shader) {
+  for (auto light : pointlights) {
+    light->draw(shader);
+  }
 }
 
 void Scene::draw_skybox(Shader *shader) {
