@@ -92,8 +92,21 @@ void OpenGLWindow::initializeGL() {
   // settings->set_node(scene->floor, "Floor");
   // settings->set_node(scene->nanosuit, "Nanosuit");
   // settings->set_point_light(scene->light, "Pointlight");
-  for (unsigned int i=0; i<scene->pointlights.size(); i++) {
-    settings->set_point_light(scene->pointlights[i], ("Pointlight "+std::to_string(i)).c_str() );
+
+  glm::vec3 light_positions[2] = {
+    glm::vec3( 0.4f, 1.6, 2.3f),
+    glm::vec3(-1.5f, 1.2, 0.5f)
+  };
+
+  for (int i=0; i<2; i++) {
+    PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
+    light->initialize_depth_framebuffer(1024,1024);
+    light->color = glm::vec3(1.3f);
+    scene->add_pointlight(std::shared_ptr<PointLight>(light));
+  }
+
+  for (unsigned int i=0; i<scene->pointlights_size(); i++) {
+    settings->set_point_light(scene->get_pointlight_at(i).get(), ("Pointlight "+std::to_string(i)).c_str() );
   }
 
   framebuffer_quad = new Mesh();
@@ -247,7 +260,7 @@ void OpenGLWindow::paintGL() {
   if (scene->display_type == POINTLIGHT_DEPTH) {
     skybox_shader->setInt("mode", 1);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->pointlights[0]->depth_cubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->get_pointlight_at(0)->depth_cubemap);
     skybox_shader->setInt("skybox", 0);
     scene->skybox->draw(skybox_shader);
 

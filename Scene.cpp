@@ -32,18 +32,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   sunlight->diffuse = 3.0f;
   sunlight->specular = 3.0f;
 
-  glm::vec3 light_positions[2] = {
-    glm::vec3( 0.4f, 1.6, 2.3f),
-    glm::vec3(-1.5f, 1.2, 0.5f)
-  };
-
-  for (int i=0; i<2; i++) {
-    PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
-    light->initialize_depth_framebuffer(1024,1024);
-    light->color = glm::vec3(1.3f);
-    pointlights.push_back(light);
-  }
-
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->initialize_cube();
   cube->material = new Material();
@@ -68,7 +56,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   for (int i=0; i<10; i++) {
     Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
     n->meshes.push_back((cube));
-    objects.push_back(n);
+    add_node(std::shared_ptr<Node>(n));
   }
 
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
@@ -84,7 +72,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 
   floor->meshes.push_back(std::shared_ptr<Mesh>(floor_mesh));
   floor->scale = glm::vec3(14.0f,1.0f,7.0f);
-  objects.push_back(floor);
+  add_node(std::shared_ptr<Node>(floor));
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // nanosuit = new Model("models/raygun/raygun.fbx");
@@ -94,7 +82,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   nanosuit->scale = glm::vec3(0.3f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
   nanosuit->position = glm::vec3(0.0f,-3.5f,0.0f);
-  objects.push_back(nanosuit);
+  add_node(std::shared_ptr<Node>(nanosuit));
 
   skybox = new Mesh();
   skybox->initialize_cube();
@@ -115,12 +103,6 @@ Scene::~Scene() {
   delete sunlight;
   delete skybox;
 
-  for (auto object : objects)
-    delete object;
-
-  for (auto light : pointlights)
-    delete light;
-
   for (auto m: Scene::loaded_materials)
     delete m;
 }
@@ -128,10 +110,10 @@ Scene::~Scene() {
 void Scene::initialize_scene() {
 }
 
-void Scene::create_color_buffers(int width, int height, int number, unsigned int colorbuffers[]) {
-  glGenTextures(number, colorbuffers); // generate the colorbuffers
+void Scene::create_color_buffers(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]) {
+  glGenTextures(nr_colorbuffers, colorbuffers); // generate the colorbuffers
 
-  for (int i=0; i<number; i++) {
+  for (int i=0; i<nr_colorbuffers; i++) {
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -147,11 +129,11 @@ void Scene::create_color_buffers(int width, int height, int number, unsigned int
     attachments[i] = GL_COLOR_ATTACHMENT0+i;
   }
 
-  glDrawBuffers(number, attachments);
+  glDrawBuffers(nr_colorbuffers, attachments);
 }
 
-void Scene::update_color_buffers_size(int width, int height, int number, unsigned int colorbuffers[]) {
-  for (int i=0; i<number; i++) {
+void Scene::update_color_buffers_size(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]) {
+  for (int i=0; i<nr_colorbuffers; i++) {
     glBindTexture(GL_TEXTURE_2D, colorbuffers[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
   }
@@ -227,8 +209,8 @@ int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_uni
 }
 
 void Scene::draw_objects(Shader *shader, bool use_material, int texture_unit) {
-  for (Node* object : objects) {
-    object->draw(shader, glm::mat4(1.0f), use_material, texture_unit);
+  for (auto node : nodes) {
+    node->draw(shader, glm::mat4(1.0f), use_material, texture_unit);
   }
 }
 
@@ -250,6 +232,52 @@ Material * Scene::is_material_loaded(Material *new_material) {
   }
   Scene::loaded_materials.push_back(new_material);
   return new_material;
+}
+
+// Getters and Setters
+unsigned int Scene::nodes_size() {
+  return nodes.size();
+}
+
+std::shared_ptr<Node> Scene::get_node_at(unsigned int index) {
+  Q_ASSERT_X(index < nodes.size(), "get_node_at", "index is greater than vector nodes' size");
+  return nodes[index];
+}
+
+void Scene::add_node(std::shared_ptr<Node> node) {
+  nodes.push_back(node);
+}
+
+void Scene::delete_node_at(unsigned int index) {
+  Q_ASSERT_X(index < nodes.size(), "delete_node_at", "index is greater than vector nodes' size");
+  nodes.erase(nodes.begin() + index);
+}
+
+void Scene::clear_nodes() {
+  nodes.clear();
+}
+
+
+unsigned int Scene::pointlights_size() {
+  return pointlights.size();
+}
+
+std::shared_ptr<PointLight> Scene::get_pointlight_at(unsigned int index) {
+  Q_ASSERT_X(index < pointlights.size(), "get_pointlight_at", "index is greater than vector pointlights' size");
+  return pointlights[index];
+}
+
+void Scene::add_pointlight(std::shared_ptr<PointLight> pointlight) {
+  pointlights.push_back(pointlight);
+}
+
+void Scene::delete_pointlight_at(unsigned int index) {
+  Q_ASSERT_X(index < pointlights.size(), "delete_pointlight_at", "index is greater than vector pointlights' size");
+  pointlights.erase(pointlights.begin() + index);
+}
+
+void Scene::clear_pointlights() {
+  pointlights.clear();
 }
 
 //void Scene::set_background_color(glm::vec3)

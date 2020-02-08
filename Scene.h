@@ -41,8 +41,8 @@ public:
   ~Scene();
 
   void initialize_scene();
-  void create_color_buffers(int width, int height, int number, unsigned int colorbuffers[]); // Creates color buffers for the currently bound framebuffer
-  void update_color_buffers_size(int width, int height, int number, unsigned int colorbuffers[]); // Resizes the color buffers
+  void create_color_buffers(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]); // Creates color buffers for the currently bound framebuffer
+  void update_color_buffers_size(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]); // Resizes the color buffers
 
   void update_scene();
 
@@ -65,11 +65,20 @@ public:
   static Texture is_texture_loaded(std::string image_path); // Returns the texture if the path is already loaded. Returns an empty texture otherwise
   static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
-  Sunlight *sunlight;
-  // PointLight *light;
+  // Getters and Setters
+  unsigned int nodes_size();
+  std::shared_ptr<Node> get_node_at(unsigned int index);
+  void add_node(std::shared_ptr<Node> node);
+  void delete_node_at(unsigned int index); // Currently unfinished
+  void clear_nodes();
 
-  std::vector<Node*> objects;
-  std::vector<PointLight*> pointlights;
+  unsigned int pointlights_size();
+  std::shared_ptr<PointLight> get_pointlight_at(unsigned int index);
+  void add_pointlight(std::shared_ptr<PointLight> pointlight);
+  void delete_pointlight_at(unsigned int index); // Currently unfinished
+  void clear_pointlights();
+
+  Sunlight *sunlight;
 
   Mesh *skybox;
   unsigned int skybox_cubemap;
@@ -101,6 +110,10 @@ public:
     4: Bloom
   */
   int display_type;
+
+protected:
+  std::vector<std::shared_ptr<Node>> nodes;
+  std::vector<std::shared_ptr<PointLight>> pointlights;
 
 private:
   float angle;
