@@ -37,7 +37,7 @@ public:
   int set_materials(Shader *shader, int texture_unit=0);
 
   Texture load_texture(const char *path, Image_Type type, bool add_to_material=true);
-  Texture load_cubemap(std::vector<std::string> faces, bool add_to_material=true);
+  Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
 
   bool operator==(const Material& other_material);
 

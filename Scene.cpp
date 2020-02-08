@@ -50,8 +50,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
-  // nanosuit = new Model("models/lightray_test/wall2.fbx");
-  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
+  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.3f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
   nanosuit->position = glm::vec3(0.0f,-3.5f,0.0f);
@@ -67,7 +67,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     "skyboxes/front.jpg",
     "skyboxes/back.jpg"
   };
-  skybox_cubemap = floor_mesh->material->load_cubemap(faces, false).id;
+  skybox->material = new Material();
+  skybox->material->load_cubemap(faces);
 
   antialiasing = FXAA;
 }
@@ -118,18 +119,15 @@ void Scene::update_scene() {
 }
 
 void Scene::draw_skybox(Shader *shader) {
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
-  shader->setInt("skybox", 0);
   skybox->draw(shader);
 }
 
 int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_unit) {
   glActiveTexture(GL_TEXTURE0+texture_unit);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->material->textures[0].id); // The skybox should only have 1 texture
   shader->setInt(name.c_str(), texture_unit);
-  texture_unit++;
 
+  texture_unit++;
   return texture_unit;
 }
 

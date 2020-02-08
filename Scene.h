@@ -83,8 +83,6 @@ public:
   Sunlight *sunlight;
 
   Mesh *skybox;
-  unsigned int skybox_cubemap;
-
 
   glm::vec3 background_color;
 

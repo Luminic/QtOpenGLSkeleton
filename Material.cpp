@@ -29,23 +29,30 @@ int Material::set_materials(Shader *shader, int texture_unit) {
   int number_metalness_maps = 0;
 
   for (unsigned int i=0; i<textures.size(); i++) {
-    glActiveTexture(GL_TEXTURE0+i+texture_unit);
-    glBindTexture(GL_TEXTURE_2D, textures[i].id);
+    glActiveTexture(GL_TEXTURE0+(texture_unit));
     switch (textures[i].type) {
       case ALBEDO_MAP:
-        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), i+texture_unit);
+        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), texture_unit);
         number_albedo_maps++;
         break;
       case AMBIENT_OCCLUSION_MAP: // AO maps are non-functional at the moment
+        glBindTexture(GL_TEXTURE_2D, textures[i].id);
         number_ambient_occlusion_maps++;
         break;
       case ROUGHNESS_MAP:
-        shader->setInt("material.roughness_map", i+texture_unit);
+        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        shader->setInt("material.roughness_map", texture_unit);
         number_roughness_maps++;
         break;
       case METALNESS_MAP:
-        shader->setInt("material.metalness_map", i+texture_unit);
+        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        shader->setInt("material.metalness_map", texture_unit);
         number_metalness_maps++;
+        break;
+      case CUBE_MAP:
+        glBindTexture(GL_TEXTURE_CUBE_MAP, textures[i].id);
+        shader->setInt("skybox", 0);
         break;
       default:
         break;
@@ -102,7 +109,7 @@ Texture Material::load_texture(const char *path, Image_Type type, bool add_to_ma
   return texture;
 }
 
-Texture Material::load_cubemap(std::vector<std::string> faces, bool add_to_material) {
+Texture Material::load_cubemap(const std::vector<std::string>& faces, bool add_to_material) {
   Texture texture;
   texture.path = faces[0];
   texture.type = CUBE_MAP;
