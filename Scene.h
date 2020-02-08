@@ -66,16 +66,18 @@ public:
   static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
   // Getters and Setters
-  unsigned int nodes_size();
-  std::shared_ptr<Node> get_node_at(unsigned int index);
+  const std::vector<std::shared_ptr<Node>>& get_nodes() const {return nodes;}
+  unsigned int nodes_size() const {return nodes.size();}
+  std::shared_ptr<Node> get_node_at(unsigned int index) {return nodes[index];}
   void add_node(std::shared_ptr<Node> node);
-  void delete_node_at(unsigned int index); // Currently unfinished
+  void delete_node_at(unsigned int index);
   void clear_nodes();
 
-  unsigned int pointlights_size();
-  std::shared_ptr<PointLight> get_pointlight_at(unsigned int index);
+  const std::vector<std::shared_ptr<PointLight>>& get_pointlights() const {return pointlights;}
+  unsigned int pointlights_size() const {return pointlights.size();}
+  std::shared_ptr<PointLight> get_pointlight_at(unsigned int index) {return pointlights[index];}
   void add_pointlight(std::shared_ptr<PointLight> pointlight);
-  void delete_pointlight_at(unsigned int index); // Currently unfinished
+  void delete_pointlight_at(unsigned int index);
   void clear_pointlights();
 
   Sunlight *sunlight;

@@ -32,33 +32,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   sunlight->diffuse = 3.0f;
   sunlight->specular = 3.0f;
 
-  std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
-  cube->initialize_cube();
-  cube->material = new Material();
-  cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
-  cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
-  cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
-  cube->material->metalness = 1.0f;
-  cube->material = Scene::is_material_loaded(cube->material);
-
-  glm::vec3 cube_positions[10] = {
-    glm::vec3( 0.0f,  0.0f,  2.0f),
-    glm::vec3( 2.0f,  5.0f,  17.0f),
-    glm::vec3(-1.5f, -2.2f,  4.5f),
-    glm::vec3(-3.8f, -2.0f,  14.3f),
-    glm::vec3( 2.4f, -0.4f,  5.5f),
-    glm::vec3(-1.7f,  3.0f,  9.5f),
-    glm::vec3( 1.3f, -2.0f,  4.5f),
-    glm::vec3( 1.5f,  2.0f,  4.5f),
-    glm::vec3( 1.5f,  0.2f,  3.5f),
-    glm::vec3(-1.3f,  1.0f,  3.5f)
-  };
-  for (int i=0; i<10; i++) {
-    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
-    n->meshes.push_back((cube));
-    add_node(std::shared_ptr<Node>(n));
-  }
-
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();
   floor_mesh->initialize_plane(true, 3.0f);
@@ -94,7 +67,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     "skyboxes/front.jpg",
     "skyboxes/back.jpg"
   };
-  skybox_cubemap = cube->material->load_cubemap(faces, false).id;
+  skybox_cubemap = floor_mesh->material->load_cubemap(faces, false).id;
 
   antialiasing = FXAA;
 }
@@ -142,6 +115,22 @@ void Scene::update_color_buffers_size(int width, int height, int nr_colorbuffers
 
 void Scene::update_scene() {
 
+}
+
+void Scene::draw_skybox(Shader *shader) {
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  shader->setInt("skybox", 0);
+  skybox->draw(shader);
+}
+
+int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_unit) {
+  glActiveTexture(GL_TEXTURE0+texture_unit);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
+  shader->setInt(name.c_str(), texture_unit);
+  texture_unit++;
+
+  return texture_unit;
 }
 
 void Scene::render_suns_shadow_map(Shader *shader, glm::mat4& sun_space) {
@@ -192,22 +181,6 @@ void Scene::draw_light(Shader *shader) {
   }
 }
 
-void Scene::draw_skybox(Shader *shader) {
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
-  shader->setInt("skybox", 0);
-  skybox->draw(shader);
-}
-
-int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_unit) {
-  glActiveTexture(GL_TEXTURE0+texture_unit);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_cubemap);
-  shader->setInt(name.c_str(), texture_unit);
-  texture_unit++;
-
-  return texture_unit;
-}
-
 void Scene::draw_objects(Shader *shader, bool use_material, int texture_unit) {
   for (auto node : nodes) {
     node->draw(shader, glm::mat4(1.0f), use_material, texture_unit);
@@ -235,15 +208,6 @@ Material * Scene::is_material_loaded(Material *new_material) {
 }
 
 // Getters and Setters
-unsigned int Scene::nodes_size() {
-  return nodes.size();
-}
-
-std::shared_ptr<Node> Scene::get_node_at(unsigned int index) {
-  Q_ASSERT_X(index < nodes.size(), "get_node_at", "index is greater than vector nodes' size");
-  return nodes[index];
-}
-
 void Scene::add_node(std::shared_ptr<Node> node) {
   nodes.push_back(node);
 }
@@ -255,16 +219,6 @@ void Scene::delete_node_at(unsigned int index) {
 
 void Scene::clear_nodes() {
   nodes.clear();
-}
-
-
-unsigned int Scene::pointlights_size() {
-  return pointlights.size();
-}
-
-std::shared_ptr<PointLight> Scene::get_pointlight_at(unsigned int index) {
-  Q_ASSERT_X(index < pointlights.size(), "get_pointlight_at", "index is greater than vector pointlights' size");
-  return pointlights[index];
 }
 
 void Scene::add_pointlight(std::shared_ptr<PointLight> pointlight) {

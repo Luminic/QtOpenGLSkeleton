@@ -109,6 +109,35 @@ void OpenGLWindow::initializeGL() {
     settings->set_point_light(scene->get_pointlight_at(i).get(), ("Pointlight "+std::to_string(i)).c_str() );
   }
 
+  std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
+  cube->initialize_cube();
+  cube->material = new Material();
+  cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
+  cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
+  cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
+  cube->material->metalness = 1.0f;
+  cube->material = Scene::is_material_loaded(cube->material);
+
+  glm::vec3 cube_positions[10] = {
+    glm::vec3( 0.0f,  0.0f,  2.0f),
+    glm::vec3( 2.0f,  5.0f,  17.0f),
+    glm::vec3(-1.5f, -2.2f,  4.5f),
+    glm::vec3(-3.8f, -2.0f,  14.3f),
+    glm::vec3( 2.4f, -0.4f,  5.5f),
+    glm::vec3(-1.7f,  3.0f,  9.5f),
+    glm::vec3( 1.3f, -2.0f,  4.5f),
+    glm::vec3( 1.5f,  2.0f,  4.5f),
+    glm::vec3( 1.5f,  0.2f,  3.5f),
+    glm::vec3(-1.3f,  1.0f,  3.5f)
+  };
+
+  for (int i=0; i<10; i++) {
+    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
+    n->meshes.push_back((cube));
+    scene->add_node(std::shared_ptr<Node>(n));
+  }
+
+
   framebuffer_quad = new Mesh();
   framebuffer_quad->initialize_plane(false);
 
