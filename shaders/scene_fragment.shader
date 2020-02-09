@@ -9,7 +9,6 @@ uniform sampler2D screen_texture;
 uniform sampler2D other_textures[1];
 
 uniform int display_type;
-uniform float exposure;
 uniform float bloom_threshold_upper;
 uniform float bloom_threshold_lower;
 uniform int bloom_interpolation;
@@ -21,8 +20,6 @@ void main() {
       vec3 scr_col = texture(screen_texture, texture_coordinate).rgb;
       vec4 vol_col = texture(other_textures[0], texture_coordinate);
       col = mix(scr_col, vol_col.rgb, 1.0f-vol_col.a);
-      // Exposure mapping
-      col = vec3(1.0f) - exp(-col * exposure);
       break;}
     case 1:
       col = texture(screen_texture, texture_coordinate).rrr;
@@ -32,8 +29,6 @@ void main() {
       break;
     default:
       col = texture(screen_texture, texture_coordinate).rgb;
-      // Exposure mapping
-      col = vec3(1.0f) - exp(-col * exposure);
       break;
   }
   frag_color = vec4(col, 1.0f);

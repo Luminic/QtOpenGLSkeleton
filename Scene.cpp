@@ -19,18 +19,18 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   volumetric_lighting_steps = 30;
   henyey_greenstein_G_value = 0.6f;
 
-  bloom_multiplier = 0.5f;
+  bloom_multiplier = 0.2f;
   bloom_offset = 0.0f;
   bloom_threshold_upper = 1.2f;
-  bloom_threshold_lower = 0.5f;
+  bloom_threshold_lower = 0.7f;
   bloom_interpolation = 1;
   bloom_applications = 10;
 
   sunlight = new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f));
   sunlight->initialize_depth_framebuffer(2048,2048);
-  sunlight->ambient = 2.5f;
-  sunlight->diffuse = 3.0f;
-  sunlight->specular = 3.0f;
+  sunlight->ambient = 0.5f;
+  sunlight->diffuse = 2.5f;
+  sunlight->specular = 2.5f;
 
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();
@@ -50,8 +50,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
-  Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
+  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
   nanosuit->scale = glm::vec3(0.3f);
   nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
   nanosuit->position = glm::vec3(0.0f,-3.5f,0.0f);

@@ -10,6 +10,7 @@ uniform sampler2D other_textures[1];
 uniform int display_type;
 uniform float bloom_multiplier;
 uniform float bloom_offset;
+uniform float exposure;
 uniform bool gamma_correction;
 
 void main() {
@@ -18,6 +19,10 @@ void main() {
     case 0:
       col = texture(screen_texture, texture_coordinate).rgb;
       col += max(texture(other_textures[0], texture_coordinate).rgb * bloom_multiplier - bloom_offset, vec3(0.0f));
+      // Exposure mapping: Jim Hejl and Richard Burgess-Dawson http://filmicworlds.com/blog/filmic-tonemapping-operators/
+      col *= exposure;
+      col = max(0.0f.xxx, col-0.004.xxx);
+      col = (col*(6.2.xxx*col+0.5.xxx))/(col*(6.2.xxx*col+1.7.xxx)+0.06.xxx);
       break;
     case 1:
       col = texture(screen_texture, texture_coordinate).rgb;
@@ -27,7 +32,7 @@ void main() {
       break;
   }
   if (gamma_correction) {
-    col = pow(col, vec3(1.0/2.2));
+    col = pow(col, vec3(1/2.2));
   }
   frag_color = vec4(col, 1.0f);
 }
