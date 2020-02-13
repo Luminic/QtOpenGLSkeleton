@@ -17,7 +17,7 @@
 #include "Material.h"
 #include "Light.h"
 #include "PointLight.h"
-#include "Sunlight.h"
+#include "DirectionalLight.h"
 
 enum Antialiasing_Types {
   NONE,
@@ -49,9 +49,9 @@ public:
   void draw_skybox(Shader *shader);
   int set_skybox_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
-  void render_suns_shadow_map(Shader *shader, glm::mat4& sun_space);
-  int set_sunlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
-  void draw_sun(Shader *shader);
+  void render_dirlights_shadow_map(Shader *shader);
+  int set_dirlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
+  void draw_dirlight(Shader *shader);
 
   void render_pointlights_shadow_map(Shader *shader);
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
@@ -73,14 +73,17 @@ public:
   void delete_node_at(unsigned int index);
   void clear_nodes();
 
+  const std::vector<std::shared_ptr<DirectionalLight>>& get_dirlights() const {return dirlights;}
+  void add_dirlight(std::shared_ptr<DirectionalLight> dirlight);
+  void delete_dirlight_at(unsigned int index);
+  void clear_dirlights();
+
   const std::vector<std::shared_ptr<PointLight>>& get_pointlights() const {return pointlights;}
-  unsigned int pointlights_size() const {return pointlights.size();}
-  std::shared_ptr<PointLight> get_pointlight_at(unsigned int index) {return pointlights[index];}
   void add_pointlight(std::shared_ptr<PointLight> pointlight);
   void delete_pointlight_at(unsigned int index);
   void clear_pointlights();
 
-  Sunlight *sunlight;
+  // DirectionalLight *sunlight;
 
   Mesh *skybox;
 
@@ -113,6 +116,7 @@ public:
 
 protected:
   std::vector<std::shared_ptr<Node>> nodes;
+  std::vector<std::shared_ptr<DirectionalLight>> dirlights;
   std::vector<std::shared_ptr<PointLight>> pointlights;
 
 private:

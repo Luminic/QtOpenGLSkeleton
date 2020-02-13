@@ -26,11 +26,21 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   bloom_interpolation = 1;
   bloom_applications = 10;
 
-  sunlight = new Sunlight(glm::vec3(210.0f, 24.0f, 5.0f), glm::vec3(0.06f));
-  sunlight->initialize_depth_framebuffer(2048,2048);
-  sunlight->ambient = 0.5f;
-  sunlight->diffuse = 2.5f;
-  sunlight->specular = 2.5f;
+  DirectionalLight* dirlight = new DirectionalLight(glm::vec3(-3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  dirlight->set_direction(glm::vec3(1.0f,-2.0f,1.0f));
+  dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->ambient = 0.5f;
+  dirlight->diffuse = 2.5f;
+  dirlight->specular = 2.5f;
+  add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+
+  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
+  dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->ambient = 0.5f;
+  dirlight->diffuse = 2.5f;
+  dirlight->specular = 2.5f;
+  add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
 
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();
@@ -43,8 +53,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   floor_mesh->material->roughness = 0.66f;
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
 
-  floor->meshes.push_back(std::shared_ptr<Mesh>(floor_mesh));
-  floor->scale = glm::vec3(14.0f,1.0f,7.0f);
+  floor->add_mesh(std::shared_ptr<Mesh>(floor_mesh));
+  floor->set_scale(glm::vec3(14.0f,1.0f,7.0f));
   add_node(std::shared_ptr<Node>(floor));
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
@@ -52,9 +62,9 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   //nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
   Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
-  nanosuit->scale = glm::vec3(0.3f);
-  nanosuit->rotation = glm::vec3(180.0f,0.0f,0.0f);
-  nanosuit->position = glm::vec3(0.0f,-3.5f,0.0f);
+  nanosuit->set_scale(glm::vec3(0.3f));
+  nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
+  nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
   add_node(std::shared_ptr<Node>(nanosuit));
 
   skybox = new Mesh();
@@ -74,7 +84,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 }
 
 Scene::~Scene() {
-  delete sunlight;
   delete skybox;
 
   for (auto m: Scene::loaded_materials)
@@ -131,31 +140,38 @@ int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_uni
   return texture_unit;
 }
 
-void Scene::render_suns_shadow_map(Shader *shader, glm::mat4& sun_space) {
-  sunlight->bind_sunlight_framebuffer(shader, sun_space);
-  draw_objects(shader, false);
+void Scene::render_dirlights_shadow_map(Shader *shader) {
+  for (auto dirlight : dirlights) {
+    dirlight->bind_dirlight_framebuffer(shader);
+    draw_objects(shader, false);
+  }
 }
 
-int Scene::set_sunlight_settings(std::string name, Shader* shader, int texture_unit) {
-  sunlight->set_object_settings(name, shader);
+int Scene::set_dirlight_settings(std::string name, Shader* shader, int texture_unit) {
+  shader->setInt("nr_dirlights", dirlights.size());
 
-  glActiveTexture(GL_TEXTURE0+texture_unit);
-  glBindTexture(GL_TEXTURE_2D, sunlight->depth_map);
-  shader->setInt((name+".shadow_map").c_str(), texture_unit);
-  texture_unit++;
+  for (unsigned int i=0; i<dirlights.size(); i++) {
+    dirlights[i]->set_object_settings(name+"["+std::to_string(i)+"]", shader);
 
+    glActiveTexture(GL_TEXTURE0+texture_unit+i);
+    glBindTexture(GL_TEXTURE_2D, dirlights[i]->depth_map);
+    shader->setInt((name+"["+std::to_string(i)+"]"+".shadow_map").c_str(), texture_unit);
+  }
+
+  texture_unit += dirlights.size();
   return texture_unit;
 }
 
-void Scene::draw_sun(Shader *shader) { // Should be the first thing drawn
-  sunlight->draw(shader);
+void Scene::draw_dirlight(Shader *shader) {
+  for (auto dirlight : dirlights) {
+    dirlight->draw(shader);
+  }
 }
 
 void Scene::render_pointlights_shadow_map(Shader *shader) {
   for (auto light : pointlights) {
     light->bind_pointlight_framebuffer(shader);
-    int texture_unit = 0;
-    draw_objects(shader, false, texture_unit);
+    draw_objects(shader, false);
   }
 }
 
@@ -217,6 +233,19 @@ void Scene::delete_node_at(unsigned int index) {
 
 void Scene::clear_nodes() {
   nodes.clear();
+}
+
+void Scene::add_dirlight(std::shared_ptr<DirectionalLight> dirlight) {
+  dirlights.push_back(dirlight);
+}
+
+void Scene::delete_dirlight_at(unsigned int index) {
+  Q_ASSERT_X(index < dirlights.size(), "delete_dirlight_at", "index is greater than vector dirlights' size");
+  dirlights.erase(dirlights.begin() + index);
+}
+
+void Scene::clear_dirlights() {
+  dirlights.clear();
 }
 
 void Scene::add_pointlight(std::shared_ptr<PointLight> pointlight) {

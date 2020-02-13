@@ -93,7 +93,10 @@ void OpenGLWindow::initializeGL() {
 
   scene = new Scene(this);
   settings->set_scene(scene);
-  settings->set_sunlight(scene->sunlight);
+
+  for (auto dirlight : scene->get_dirlights())
+    settings->set_dirlight(dirlight.get());
+
   // settings->set_node(scene->floor, "Floor");
   // settings->set_node(scene->nanosuit, "Nanosuit");
   // settings->set_point_light(scene->light, "Pointlight");
@@ -110,8 +113,8 @@ void OpenGLWindow::initializeGL() {
     scene->add_pointlight(std::shared_ptr<PointLight>(light));
   }
 
-  for (unsigned int i=0; i<scene->pointlights_size(); i++) {
-    settings->set_point_light(scene->get_pointlight_at(i).get(), ("Pointlight "+std::to_string(i)).c_str() );
+  for (unsigned int i=0; i<scene->get_pointlights().size(); i++) {
+    settings->set_point_light(scene->get_pointlights()[i].get(), ("Pointlight "+std::to_string(i)).c_str() );
   }
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
@@ -138,7 +141,7 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<10; i++) {
     Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
-    n->meshes.push_back((cube));
+    n->add_mesh((cube));
     scene->add_node(std::shared_ptr<Node>(n));
   }
 
@@ -265,8 +268,7 @@ void OpenGLWindow::paintGL() {
   glEnable(GL_DEPTH_TEST);
 
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
-  glm::mat4 sun_space;
-  scene->render_suns_shadow_map(sunlight_depth_shader, sun_space);
+  scene->render_dirlights_shadow_map(sunlight_depth_shader);
 
   // Draw the scene to the pointlight's depth buffer
   scene->render_pointlights_shadow_map(pointlight_depth_shader);
@@ -289,7 +291,7 @@ void OpenGLWindow::paintGL() {
 
     skybox_shader->setInt("mode", 1);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->get_pointlight_at(0)->depth_cubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->get_pointlights()[0]->depth_cubemap);
     skybox_shader->setInt("skybox", 0);
     scene->skybox->draw(skybox_shader, false);
 
@@ -301,16 +303,18 @@ void OpenGLWindow::paintGL() {
     skybox_shader->setInt("mode", 0);
     scene->draw_skybox(skybox_shader);
 
-    // Draw the sun
-    light_shader->use();
-    light_shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
-    scene->draw_sun(light_shader);
-
     glDepthMask(GL_TRUE);
+
+    // Draw the sun
+    // light_shader->use();
+    // light_shader->setMat4("view", view);
+    // light_shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
+
 
     // Draw the light
     light_shader->use();
     light_shader->setMat4("view", view);
+    scene->draw_dirlight(light_shader);
     scene->draw_light(light_shader);
 
     // Draw the objects
@@ -324,12 +328,10 @@ void OpenGLWindow::paintGL() {
     object_shader->setInt("steps", scene->volumetric_lighting_steps);
     object_shader->setFloat("henyey_greenstein_G_value", scene->henyey_greenstein_G_value);
 
-    object_shader->setMat4("sun_space", sun_space);
-
     int texture_unit = 0;
     texture_unit = scene->set_skybox_settings("skybox", object_shader, texture_unit);
-    texture_unit = scene->set_sunlight_settings("sunlight", object_shader, texture_unit);
-    texture_unit = scene->set_light_settings("light", object_shader, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_shader, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_shader, texture_unit);
     scene->draw_objects(object_shader, true, texture_unit);
   }
 
@@ -347,7 +349,7 @@ void OpenGLWindow::paintGL() {
   switch (scene->display_type) {
     case SUNLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene->sunlight->depth_map);
+      glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[1]->depth_map);
       scene_shader->setInt("screen_texture", 0);
       break;
     case POINTLIGHT_DEPTH:

@@ -6,6 +6,10 @@ PointLight::PointLight(glm::vec3 position, glm::vec3 scale, glm::vec3 color, flo
   linear(linear),
   quadratic(quadratic)
 {
+  Mesh* pointlight_mesh = new Mesh();
+  pointlight_mesh->initialize_cube();
+  meshes.push_back(std::shared_ptr<Mesh>(pointlight_mesh));
+
   samples = 5;
   sample_radius = 0.02f;
 
@@ -46,7 +50,7 @@ void PointLight::bind_pointlight_framebuffer(Shader *depth_shader) {
   glClear(GL_DEPTH_BUFFER_BIT);
 
   depth_shader->use();
-  
+
   glm::mat4 pointlight_projection = glm::perspective(glm::radians(90.0f), float(depth_map_width)/depth_map_height, near_plane, far_plane);
 
   glm::mat4 pointlight_views[6] = {

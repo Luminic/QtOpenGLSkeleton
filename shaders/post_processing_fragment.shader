@@ -23,6 +23,7 @@ void main() {
       col *= exposure;
       col = max(0.0f.xxx, col-0.004.xxx);
       col = (col*(6.2.xxx*col+0.5.xxx))/(col*(6.2.xxx*col+1.7.xxx)+0.06.xxx);
+      // col = pow(col,1/2.2.xxx);
       break;
     case 1:
       col = texture(screen_texture, texture_coordinate).rgb;

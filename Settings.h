@@ -14,7 +14,7 @@
 #include "Camera.h"
 #include "Node.h"
 #include "Light.h"
-#include "Sunlight.h"
+#include "DirectionalLight.h"
 #include "Material.h"
 
 class Settings : public QTabWidget {
@@ -28,8 +28,11 @@ public:
   void set_camera(Camera *camera, const char *name="Camera");
   void set_node(Node *node, const char *name="Node");
   void set_point_light(PointLight *point_light, const char *name="Point Light");
-  void set_sunlight(Sunlight *sunlight, const char *name="Sunlight");
+  void set_dirlight(DirectionalLight *sunlight, const char *name="Sunlight");
   void set_material(Material *material, const char *name="Material");
+
+  // Helper functions
+  std::vector<Material*> get_node_materials(Node *node);
 
   template <typename T>
   QWidget * create_option_group(

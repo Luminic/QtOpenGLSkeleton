@@ -17,13 +17,10 @@ glm::mat4 aiMat_to_glmMat(const aiMatrix4x4* from) {
 
 
 Model::Model(const char *path) {
-  initializeOpenGLFunctions();
   load_model(path);
 }
 
 Model::~Model() {
-  //for (auto m : meshes)
-  //  delete m;
 }
 
 void Model::load_model(std::string path) {
@@ -42,23 +39,23 @@ void Model::load_model(std::string path) {
 Node * Model::process_node(aiNode *node, const aiScene *scene) {
   Node *my_node = new Node();
   my_node->name = node->mName.C_Str();
-  my_node->transformation = aiMat_to_glmMat(&node->mTransformation);;
+  my_node->set_transformation(aiMat_to_glmMat(&node->mTransformation));
 
   // Process the node's mesh (might be none)
   for (unsigned int i=0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    my_node->meshes.push_back(std::shared_ptr<Mesh>(process_mesh(mesh, scene)));
+    my_node->add_mesh(std::shared_ptr<Mesh>(process_mesh(mesh, scene)));
   }
 
   // Process the node's children (might be none)
   for (unsigned int i=0; i < node->mNumChildren; i++) {
-    my_node->child_nodes.push_back(std::shared_ptr<Node>(process_node(node->mChildren[i], scene)));
+    my_node->add_child_node(std::shared_ptr<Node>(process_node(node->mChildren[i], scene)));
   }
 
   return my_node;
 }
 
-Mesh * Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
+Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
 
