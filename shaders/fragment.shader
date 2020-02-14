@@ -68,7 +68,7 @@ uniform samplerCube skybox;
 uniform Material material;
 
 uniform int nr_dirlights;
-uniform DirLight dirlights[2];
+uniform DirLight dirlights[1];
 
 uniform int nr_lights;
 uniform Light lights[2];
@@ -107,13 +107,14 @@ float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 	}
 }
 
-// vec3 dirlight_vis(DirLight dirlight) {
-// 	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
-// 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
-// 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
-// 	if (projected_coordinates.z > 1.0f) return vec3(1.0f,0.0f,0.0f);
-// 	return projected_coordinates;
-// }
+vec3 dirlight_vis(DirLight dirlight) {
+	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
+	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
+	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
+	// if (projected_coordinates.z > 1.0f) return vec3(1.0f,0.0f,0.0f);
+	// float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
+	return projected_coordinates;
+}
 
 vec3 sample_offset_directions[26] = vec3[](
 	vec3( 0,  0,  0), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1),
