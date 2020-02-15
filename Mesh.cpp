@@ -11,12 +11,10 @@ Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Ma
 }
 
 Mesh::Mesh() :
-material(nullptr) // Declare as null bc compiler doesn't
+  material(nullptr)
 {}
 
 Mesh::~Mesh() {
-  //if (material != nullptr)
-    //delete material;
 }
 
 void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {

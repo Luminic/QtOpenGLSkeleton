@@ -83,8 +83,6 @@ public:
   void delete_pointlight_at(unsigned int index);
   void clear_pointlights();
 
-  // DirectionalLight *sunlight;
-
   Mesh *skybox;
 
   glm::vec3 background_color;
