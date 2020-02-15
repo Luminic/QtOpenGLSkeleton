@@ -13,62 +13,12 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   background_color = glm::vec3(0.1, 0.1, 0.2);
   display_type = 0;
 
-  use_volumetric_lighting = false;
-  volumetric_lighting_multiplier = 1.0f;
-  volumetric_lighting_offset = 0.0f;
-  volumetric_lighting_steps = 30;
-  henyey_greenstein_G_value = 0.6f;
-
   bloom_multiplier = 0.2f;
   bloom_offset = 0.0f;
   bloom_threshold_upper = 1.2f;
   bloom_threshold_lower = 0.7f;
   bloom_interpolation = 1;
   bloom_applications = 10;
-
-  DirectionalLight* dirlight = new DirectionalLight(glm::vec3(-6.0f, 7.0f, -10.0f), glm::vec3(0.2f));
-  dirlight->set_direction(glm::vec3(2.0f,-3.0f,4.0f));
-  dirlight->x_view_size = 35;
-  dirlight->y_view_size = 35;
-  dirlight->initialize_depth_framebuffer(2048,2048);
-  dirlight->ambient = 0.5f;
-  dirlight->diffuse = 2.5f;
-  dirlight->specular = 2.5f;
-  dirlight->set_visibility(false);
-  add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
-
-  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
-  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
-  dirlight->initialize_depth_framebuffer(2048,2048);
-  dirlight->ambient = 0.5f;
-  dirlight->diffuse = 2.5f;
-  dirlight->specular = 2.5f;
-  add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
-
-  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
-  Mesh* floor_mesh = new Mesh();
-  floor_mesh->initialize_plane(true, 3.0f);
-  floor_mesh->material = new Material();
-  floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
-  floor_mesh->material->ambient = 0.2f;
-  floor_mesh->material->diffuse = 0.6f;
-  floor_mesh->material->specular = 0.3f;
-  floor_mesh->material->roughness = 0.66f;
-  floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
-
-  floor->add_mesh(std::shared_ptr<Mesh>(floor_mesh));
-  floor->set_scale(glm::vec3(14.0f,1.0f,7.0f));
-  add_node(std::shared_ptr<Node>(floor));
-
-  //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
-  // nanosuit = new Model("models/raygun/raygun.fbx");
-  //nanosuit = new Model("models/material_test/sphere.fbx");
-  // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
-  nanosuit->set_scale(glm::vec3(0.3f));
-  nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
-  nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
-  add_node(std::shared_ptr<Node>(nanosuit));
 
   skybox = new Mesh();
   skybox->initialize_cube();

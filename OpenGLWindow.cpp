@@ -94,8 +94,26 @@ void OpenGLWindow::initializeGL() {
   scene = new Scene(this);
   settings->set_scene(scene);
 
-  for (auto dirlight : scene->get_dirlights())
-    settings->set_dirlight(dirlight.get());
+  DirectionalLight* dirlight = new DirectionalLight(glm::vec3(-6.0f, 7.0f, -10.0f), glm::vec3(0.2f));
+  dirlight->set_direction(glm::vec3(2.0f,-3.0f,4.0f));
+  dirlight->x_view_size = 35;
+  dirlight->y_view_size = 35;
+  dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->ambient = 0.5f;
+  dirlight->diffuse = 2.5f;
+  dirlight->specular = 2.5f;
+  dirlight->set_visibility(false);
+  scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+  settings->set_dirlight(dirlight);
+
+  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
+  dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->ambient = 0.5f;
+  dirlight->diffuse = 2.5f;
+  dirlight->specular = 2.5f;
+  scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+  settings->set_dirlight(dirlight);
 
   // settings->set_node(scene->floor, "Floor");
   // settings->set_node(scene->nanosuit, "Nanosuit");
@@ -116,6 +134,16 @@ void OpenGLWindow::initializeGL() {
   for (unsigned int i=0; i<scene->get_pointlights().size(); i++) {
     settings->set_point_light(scene->get_pointlights()[i].get(), ("Pointlight "+std::to_string(i)).c_str() );
   }
+
+  //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
+  // nanosuit = new Model("models/raygun/raygun.fbx");
+  //nanosuit = new Model("models/material_test/sphere.fbx");
+  // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
+  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  nanosuit->set_scale(glm::vec3(0.3f));
+  nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
+  nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
+  scene->add_node(std::shared_ptr<Node>(nanosuit));
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->initialize_cube();
@@ -144,6 +172,21 @@ void OpenGLWindow::initializeGL() {
     n->add_mesh((cube));
     scene->add_node(std::shared_ptr<Node>(n));
   }
+
+  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
+  Mesh* floor_mesh = new Mesh();
+  floor_mesh->initialize_plane(true, 3.0f);
+  floor_mesh->material = new Material();
+  floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
+  floor_mesh->material->ambient = 0.2f;
+  floor_mesh->material->diffuse = 0.6f;
+  floor_mesh->material->specular = 0.3f;
+  floor_mesh->material->roughness = 0.66f;
+  floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
+
+  floor->add_mesh(std::shared_ptr<Mesh>(floor_mesh));
+  floor->set_scale(glm::vec3(14.0f,1.0f,7.0f));
+  scene->add_node(std::shared_ptr<Node>(floor));
 
 
   framebuffer_quad = new Mesh();
@@ -305,12 +348,6 @@ void OpenGLWindow::paintGL() {
 
     glDepthMask(GL_TRUE);
 
-    // Draw the sun
-    // light_shader->use();
-    // light_shader->setMat4("view", view);
-    // light_shader->setMat4("view", glm::lookAt(glm::vec3(0.0f), camera->get_front(), camera->get_up()));
-
-
     // Draw the light
     light_shader->use();
     light_shader->setMat4("view", view);
@@ -321,12 +358,6 @@ void OpenGLWindow::paintGL() {
     object_shader->use();
     object_shader->setVec3("camera_position", camera->position);
     object_shader->setMat4("view", view);
-
-    object_shader->setBool("use_volumetric_lighting", scene->use_volumetric_lighting);
-    object_shader->setFloat("volumetric_multiplier", scene->volumetric_lighting_multiplier);
-    object_shader->setFloat("volumetric_offset", scene->volumetric_lighting_offset);
-    object_shader->setInt("steps", scene->volumetric_lighting_steps);
-    object_shader->setFloat("henyey_greenstein_G_value", scene->henyey_greenstein_G_value);
 
     int texture_unit = 0;
     texture_unit = scene->set_skybox_settings("skybox", object_shader, texture_unit);
