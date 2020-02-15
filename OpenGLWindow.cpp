@@ -325,13 +325,14 @@ void OpenGLWindow::paintGL() {
 
   glm::mat4 view = camera->view_matrix();
 
-  // Draw the skybox
-  skybox_shader->use();
-  skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
+
 
   if (scene->display_type == POINTLIGHT_DEPTH) {
     glDepthMask(GL_FALSE);
 
+    // Draw the skybox
+    skybox_shader->use();
+    skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
     skybox_shader->setInt("mode", 1);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->get_pointlights()[0]->depth_cubemap);
@@ -343,6 +344,9 @@ void OpenGLWindow::paintGL() {
   } else if (scene->display_type != SUNLIGHT_DEPTH) {
     glDepthMask(GL_FALSE);
 
+    // Draw the skybox
+    skybox_shader->use();
+    skybox_shader->setMat4("view", glm::mat4(glm::mat3(view)));
     skybox_shader->setInt("mode", 0);
     scene->draw_skybox(skybox_shader);
 
@@ -372,7 +376,6 @@ void OpenGLWindow::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   scene_shader->use();
-  scene_shader->setInt("display_type", scene->display_type);
   scene_shader->setFloat("bloom_threshold_upper", scene->bloom_threshold_upper);
   scene_shader->setFloat("bloom_threshold_lower", scene->bloom_threshold_lower);
   scene_shader->setInt("bloom_interpolation", scene->bloom_interpolation);
@@ -382,42 +385,31 @@ void OpenGLWindow::paintGL() {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[0]->depth_map);
       scene_shader->setInt("screen_texture", 0);
+      scene_shader->setBool("greyscale", true);
       break;
     case POINTLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
-      break;
-    case VOLUMETRICS:
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setBool("greyscale", true);
       break;
     case BLOOM:
-      scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
-      scene_shader->setInt("other_textures[0]", 1);
+      scene_shader->setBool("greyscale", false);
       break;
     case BRIGHT:
-      scene_shader->setInt("display_type", 0);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
-      scene_shader->setInt("other_textures[0]", 1);
+      scene_shader->setBool("greyscale", false);
       break;
     default:
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       scene_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, colorbuffers[1]);
-      scene_shader->setInt("other_textures[0]", 1);
+      scene_shader->setBool("greyscale", false);
       break;
   }
 
@@ -466,35 +458,45 @@ void OpenGLWindow::paintGL() {
 
   switch (scene->display_type) {
     case SCENE:
-      post_processing_shader->setInt("display_type", 0);
-      post_processing_shader->setFloat("exposure", camera->exposure);
-      post_processing_shader->setBool("gamma_correction", false);
+      post_processing_shader->setBool("do_bloom", true);
       post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
+
+      post_processing_shader->setBool("do_exposure", true);
+      post_processing_shader->setFloat("exposure", camera->exposure);
+
+      post_processing_shader->setBool("do_gamma_correction", false);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      scene_shader->setInt("other_textures[0]", 1);
+      post_processing_shader->setInt("bloom_texture", 1);
       break;
     case BLOOM:
-      post_processing_shader->setInt("display_type", 1);
-      post_processing_shader->setBool("gamma_correction", true);
+      post_processing_shader->setBool("do_bloom", false);
+      post_processing_shader->setBool("do_exposure", false);
+      post_processing_shader->setBool("do_gamma_correction", true);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      scene_shader->setInt("screen_texture", 0);
+      post_processing_shader->setInt("screen_texture", 0);
       break;
     case BRIGHT:
-      post_processing_shader->setInt("display_type", 1);
-      post_processing_shader->setBool("gamma_correction", true);
+      post_processing_shader->setBool("do_bloom", false);
+      post_processing_shader->setBool("do_exposure", false);
+      post_processing_shader->setBool("do_gamma_correction", true);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[1]);
-      scene_shader->setInt("screen_texture", 0);
+      post_processing_shader->setInt("screen_texture", 0);
       break;
     default:
-      post_processing_shader->setInt("display_type", 1);
-      post_processing_shader->setBool("gamma_correction", false);
+      post_processing_shader->setBool("do_bloom", false);
+      post_processing_shader->setBool("do_exposure", false);
+      post_processing_shader->setBool("do_gamma_correction", true);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);

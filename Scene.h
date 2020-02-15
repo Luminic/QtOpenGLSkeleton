@@ -25,12 +25,12 @@ enum Antialiasing_Types {
 };
 
 enum Display_Types {
-  SCENE,
-  SUNLIGHT_DEPTH,
-  POINTLIGHT_DEPTH,
-  VOLUMETRICS,
-  BLOOM,
-  BRIGHT
+  SCENE=0,
+  SUNLIGHT_DEPTH=1,
+  POINTLIGHT_DEPTH=2,
+  VOLUMETRICS=3,
+  BLOOM=4,
+  BRIGHT=5
 };
 
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
@@ -86,12 +86,6 @@ public:
   Mesh *skybox;
 
   glm::vec3 background_color;
-
-  bool use_volumetric_lighting;
-  float volumetric_lighting_multiplier;
-  float volumetric_lighting_offset;
-  int volumetric_lighting_steps;
-  float henyey_greenstein_G_value;
 
   float bloom_multiplier;
   float bloom_offset;

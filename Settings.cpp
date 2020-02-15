@@ -33,18 +33,6 @@ void Settings::set_scene(Scene *scene, const char *name) {
   QWidget *Scene_widget = new QWidget(this);
   QGridLayout *Scene_layout = new QGridLayout(Scene_widget);
 
-  QGroupBox *Volumetric_box = new QGroupBox(tr("Volumetrics"), this);
-  Volumetric_box->setCheckable(true);
-  Volumetric_box->setChecked(scene->use_volumetric_lighting);
-  connect(Volumetric_box, &QGroupBox::toggled, this, [=](bool on){scene->use_volumetric_lighting=on;});
-
-  QGridLayout *Volumetric_layout = new QGridLayout(Volumetric_box);
-  create_option_group("Volumetric Lighting Multiplier:", &scene->volumetric_lighting_multiplier, 0.0, 5.0, 0.2, 2, Volumetric_box, Volumetric_layout, 0);
-  create_option_group("Volumetric Lighting Offset:", &scene->volumetric_lighting_offset, -1.0, 1.0, 0.01, 2, Volumetric_box, Volumetric_layout, 2);
-  create_option_group("Volumetric Lighting Steps:", &scene->volumetric_lighting_steps, 0.0, 500.0, 10, 0, Volumetric_box, Volumetric_layout, 4);
-  create_option_group("Henyey Greenstein G Value:", &scene->henyey_greenstein_G_value, -1.0, 1.0, 0.1, 2, Volumetric_box, Volumetric_layout, 6);
-  Scene_layout->addWidget(Volumetric_box, 0, 0);
-
   QGroupBox *Post_Processing_box = new QGroupBox(this);
   QGridLayout *Post_Processing_layout = new QGridLayout(Post_Processing_box);
   create_option_group("Bloom Threshold Lower:", &scene->bloom_threshold_lower, 0.0, 5.0, 0.05, 2, Post_Processing_box, Post_Processing_layout, 0);

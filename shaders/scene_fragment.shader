@@ -6,30 +6,18 @@ layout(location=1) out vec4 bloom_color;
 in vec2 texture_coordinate;
 
 uniform sampler2D screen_texture;
-uniform sampler2D other_textures[1];
+uniform bool greyscale;
 
-uniform int display_type;
 uniform float bloom_threshold_upper;
 uniform float bloom_threshold_lower;
 uniform int bloom_interpolation;
 
 void main() {
   vec3 col;
-  switch (display_type) {
-    case 0:{
-      vec3 scr_col = texture(screen_texture, texture_coordinate).rgb;
-      vec4 vol_col = texture(other_textures[0], texture_coordinate);
-      col = mix(scr_col, vol_col.rgb, 1.0f-vol_col.a);
-      break;}
-    case 1:
-      col = texture(screen_texture, texture_coordinate).rrr;
-      break;
-    case 2:
-      col = texture(screen_texture, texture_coordinate).rgb;
-      break;
-    default:
-      col = texture(screen_texture, texture_coordinate).rgb;
-      break;
+  if (greyscale) {
+    col = texture(screen_texture, texture_coordinate).rrr;
+  } else {
+    col = texture(screen_texture, texture_coordinate).rgb;
   }
   frag_color = vec4(col, 1.0f);
 
@@ -43,22 +31,16 @@ void main() {
     float b = bloom_threshold_upper;
     float x = brightness;
     float pi = 3.1415926535f;
+
     float interpolate;
-    // Linear interpolation
-    if (bloom_interpolation == 0) {
+    if (bloom_interpolation == 0) { // Linear interpolation
       interpolate = (x-a)/(b-a);
     }
-    // Sinusoidal interpolation
-    else {
+    else { // Sinusoidal interpolation
       float s = pi/(b-a);
       float o = (b+a)/2;
       interpolate = sin((x-o)*s)/2.0f+0.5f;
     }
     bloom_color = vec4(col*interpolate, 1.0f);
   }
-  // bloom_color = max(bloom_color, 0.0f.xxxx);
-  // bloom_color = min(bloom_color, 5.0f.xxxx);
-  // bloom_color.a = 1.0f;
-  //frag_color = vec4(vec3(display_type), 1.0f);
-  //frag_color = vec4(vec3(texture(screen_texture, texture_coordinate).r), 1.0f);
 }
