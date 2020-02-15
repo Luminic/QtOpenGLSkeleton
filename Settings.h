@@ -28,7 +28,7 @@ public:
   void set_camera(Camera *camera, const char *name="Camera");
   void set_node(Node *node, const char *name="Node");
   void set_point_light(PointLight *point_light, const char *name="Point Light");
-  void set_dirlight(DirectionalLight *sunlight, const char *name="Sunlight");
+  void set_dirlight(DirectionalLight *sunlight, const char *name="Directional Light");
   void set_material(Material *material, const char *name="Material");
 
   // Helper functions

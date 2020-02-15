@@ -23,7 +23,9 @@ void Light::set_object_settings(std::string name, Shader *shader) {
 }
 
 void Light::draw(Shader *shader, glm::mat4 model, bool use_material, int texture_unit) {
-  shader->use();
-  shader->setVec3("color", color);
-  Node::draw(shader, model, use_material, texture_unit);
+  if (visible) {
+    shader->use();
+    shader->setVec3("color", color);
+    Node::draw(shader, model, use_material, texture_unit);
+  }
 }

@@ -2,6 +2,7 @@
 #define OBJECT_H
 
 #include <QObject>
+#include <QDebug>
 #include <vector>
 #include <string>
 #include <memory>
@@ -45,6 +46,9 @@ public:
   virtual void set_rotation(glm::vec3 rot);
   virtual const glm::vec3& get_rotation();
 
+  virtual void set_visibility(bool v);
+  virtual bool get_visibility() {return visible;};
+
 protected:
   friend class Settings;
 
@@ -55,6 +59,8 @@ protected:
   glm::vec3 position;
   glm::vec3 scale;
   glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
+
+  bool visible;
 };
 
 #endif

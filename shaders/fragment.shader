@@ -7,10 +7,7 @@ in VS_OUT {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
 	vec3 normal;
-	// vec4 fragment_sun_space;
 } fs_in;
-
-//out vec4 frag_color;
 
 struct Material {
   // Should be 0 and false by default
@@ -26,8 +23,8 @@ struct Material {
   sampler2D metalness_map;
 
 	vec3 color;
+	float ambient;
   float diffuse;
-  float ambient;
 	float specular;
   float roughness; // Should be in range 0.1 - 1.0 (shininess is calculated as 2^(roughness*10))
   float metalness;
@@ -68,7 +65,7 @@ uniform samplerCube skybox;
 uniform Material material;
 
 uniform int nr_dirlights;
-uniform DirLight dirlights[1];
+uniform DirLight dirlights[2];
 
 uniform int nr_lights;
 uniform Light lights[2];

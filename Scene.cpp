@@ -34,15 +34,16 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   dirlight->ambient = 0.5f;
   dirlight->diffuse = 2.5f;
   dirlight->specular = 2.5f;
+  dirlight->set_visibility(false);
   add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
 
-  // dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
-  // dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
-  // dirlight->initialize_depth_framebuffer(2048,2048);
-  // dirlight->ambient = 0.5f;
-  // dirlight->diffuse = 2.5f;
-  // dirlight->specular = 2.5f;
-  // add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
+  dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->ambient = 0.5f;
+  dirlight->diffuse = 2.5f;
+  dirlight->specular = 2.5f;
+  add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
 
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();

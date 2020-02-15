@@ -7,20 +7,24 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
   position(position),
   scale(scale),
   rotation(rotation)
-{}
+{
+  visible = true;
+}
 
 Node::~Node() {
 }
 
 void Node::draw(Shader *shader, glm::mat4 model, bool use_material, int texture_unit) {
-  model *= get_model_matrix();
-  shader->use();
-  shader->setMat4("model", model);
-  for (unsigned int i=0; i<meshes.size(); i++) {
-    meshes[i]->draw(shader, use_material, texture_unit);
-  }
-  for (unsigned int i=0; i<child_nodes.size(); i++) {
-    child_nodes[i]->draw(shader, model, use_material, texture_unit);
+  if (visible) {
+    model *= get_model_matrix();
+    shader->use();
+    shader->setMat4("model", model);
+    for (unsigned int i=0; i<meshes.size(); i++) {
+      meshes[i]->draw(shader, use_material, texture_unit);
+    }
+    for (unsigned int i=0; i<child_nodes.size(); i++) {
+      child_nodes[i]->draw(shader, model, use_material, texture_unit);
+    }
   }
 }
 
@@ -79,4 +83,8 @@ void Node::set_rotation(glm::vec3 rot) {
 }
 const glm::vec3& Node::get_rotation() {
   return rotation;
+}
+
+void Node::set_visibility(bool v) {
+  visible = v;
 }
