@@ -17,16 +17,6 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   scene = nullptr;
   framebuffer_quad = nullptr;
 
-  sunlight_depth_shader = nullptr;
-  pointlight_depth_shader = nullptr;
-  object_shader = nullptr;
-  light_shader = nullptr;
-  skybox_shader = nullptr;
-  scene_shader = nullptr;
-  gaussian_blur_shader = nullptr;
-  post_processing_shader = nullptr;
-  antialiasing_shader = nullptr;
-
   keys_pressed = nullptr;
   delta_time = nullptr;
   mouse_movement = nullptr;
@@ -45,10 +35,18 @@ OpenGLWindow::~OpenGLWindow() {
   delete settings;
   delete camera;
   delete framebuffer_quad;
-  delete object_shader;
-  delete light_shader;
-  delete sunlight_depth_shader;
+
+  delete dirlight_depth_opaque_shader;
+  delete dirlight_depth_full_transparency_shader;
+  delete dirlight_depth_partial_transparency_shader;
+
   delete pointlight_depth_shader;
+
+  delete object_opaque_shader;
+  delete object_full_transparency_shader;
+  delete object_partial_transparency_shader;
+
+  delete light_shader;
   delete skybox_shader;
   delete scene_shader;
   delete gaussian_blur_shader;
@@ -169,7 +167,29 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<10; i++) {
     Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
-    n->add_mesh((cube));
+    n->add_mesh(cube);
+    scene->add_node(std::shared_ptr<Node>(n));
+  }
+
+  std::shared_ptr<Mesh> grass = std::make_shared<Mesh>();
+  grass->initialize_plane(false);
+  grass->material = new Material();
+  grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
+  grass->material->opacity_map.type = OPACITY_MAP;
+  grass->set_transparency(FULL_TRANSPARENCY);
+  grass->material = Scene::is_material_loaded(grass->material);
+
+  glm::vec3 grass_positions[5] = {
+    glm::vec3( 0.0f, -3.0f,  1.0f),
+    glm::vec3( 1.0f, -3.0f,  7.0f),
+    glm::vec3(-2.5f, -3.0f,  3.5f),
+    glm::vec3(-2.8f, -3.0f,  6.0f),
+    glm::vec3( 2.4f, -3.0f,  2.5f)
+  };
+
+  for (int i=0; i<10; i++) {
+    Node* n = new Node(glm::mat4(1.0f), grass_positions[i/2], glm::vec3(0.5f), glm::vec3(90.0f*(i%2),0.0f,0.0f));
+    n->add_mesh(grass);
     scene->add_node(std::shared_ptr<Node>(n));
   }
 
@@ -194,6 +214,7 @@ void OpenGLWindow::initializeGL() {
 
   for (auto m : Scene::loaded_materials) {
     settings->set_material(m);
+    qDebug() << m->textures[0].path.c_str();
   }
 
   create_framebuffer();
@@ -214,20 +235,34 @@ void OpenGLWindow::initializeGL() {
 }
 
 void OpenGLWindow::load_shaders() {
-  sunlight_depth_shader = new Shader();
+  dirlight_depth_opaque_shader = new Shader();
+  dirlight_depth_full_transparency_shader = new Shader();
+  dirlight_depth_partial_transparency_shader = new Shader();
+
   pointlight_depth_shader = new Shader();
-  object_shader = new Shader();
+
+  object_opaque_shader = new Shader();
+  object_full_transparency_shader = new Shader();
+  object_partial_transparency_shader = new Shader();
+
   light_shader = new Shader();
   skybox_shader = new Shader();
   scene_shader = new Shader();
+
   gaussian_blur_shader = new Shader();
   post_processing_shader = new Shader();
   antialiasing_shader = new Shader();
 
-  sunlight_depth_shader->loadShaders("shaders/sunlight_depth_vertex.shader", "shaders/sunlight_depth_fragment.shader");
+  dirlight_depth_opaque_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_opaque.fs");
+  dirlight_depth_full_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
+  // dirlight_depth_partial_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
+
   pointlight_depth_shader->loadShaders("shaders/pointlight_depth_vertex.shader", "shaders/pointlight_depth_fragment.shader", "shaders/pointlight_depth_geometry.shader");
 
-  object_shader->loadShaders("shaders/vertex.shader", "shaders/fragment.shader");//, "shaders/geometry.shader");
+  object_opaque_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
+  object_full_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
+  // object_partial_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
+
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
   scene_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/scene_fragment.shader");
@@ -311,7 +346,7 @@ void OpenGLWindow::paintGL() {
   glEnable(GL_DEPTH_TEST);
 
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
-  scene->render_dirlights_shadow_map(sunlight_depth_shader);
+  scene->render_dirlights_shadow_map(dirlight_depth_opaque_shader, dirlight_depth_full_transparency_shader, nullptr);
 
   // Draw the scene to the pointlight's depth buffer
   scene->render_pointlights_shadow_map(pointlight_depth_shader);
@@ -359,15 +394,25 @@ void OpenGLWindow::paintGL() {
     scene->draw_light(light_shader);
 
     // Draw the objects
-    object_shader->use();
-    object_shader->setVec3("camera_position", camera->position);
-    object_shader->setMat4("view", view);
+    object_opaque_shader->use();
+    object_opaque_shader->setVec3("camera_position", camera->position);
+    object_opaque_shader->setMat4("view", view);
 
     int texture_unit = 0;
-    texture_unit = scene->set_skybox_settings("skybox", object_shader, texture_unit);
-    texture_unit = scene->set_dirlight_settings("dirlights", object_shader, texture_unit);
-    texture_unit = scene->set_light_settings("lights", object_shader, texture_unit);
-    scene->draw_objects(object_shader, true, texture_unit);
+    texture_unit = scene->set_skybox_settings("skybox", object_opaque_shader, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_opaque_shader, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_opaque_shader, texture_unit);
+
+    object_full_transparency_shader->use();
+    object_full_transparency_shader->setVec3("camera_position", camera->position);
+    object_full_transparency_shader->setMat4("view", view);
+
+    texture_unit = 0;
+    texture_unit = scene->set_skybox_settings("skybox", object_full_transparency_shader, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_full_transparency_shader, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_full_transparency_shader, texture_unit);
+
+    scene->draw_objects(object_opaque_shader, object_full_transparency_shader, nullptr, true, texture_unit);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
@@ -413,7 +458,7 @@ void OpenGLWindow::paintGL() {
       break;
   }
 
-  framebuffer_quad->draw(scene_shader);
+  framebuffer_quad->draw(scene_shader, false);
 
   // Create bloom effect with gaussian blur
   glViewport(0, 0, width()/2, height()/2);
@@ -443,7 +488,7 @@ void OpenGLWindow::paintGL() {
     }
     gaussian_blur_shader->setInt("image", 0);
 
-    framebuffer_quad->draw(gaussian_blur_shader);
+    framebuffer_quad->draw(gaussian_blur_shader, false);
 
     horizontal = !horizontal;
   }
@@ -503,7 +548,7 @@ void OpenGLWindow::paintGL() {
       break;
   }
 
-  framebuffer_quad->draw(post_processing_shader);
+  framebuffer_quad->draw(post_processing_shader, false);
 
   if (scene->antialiasing == FXAA) {
     glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
@@ -514,7 +559,7 @@ void OpenGLWindow::paintGL() {
     glBindTexture(GL_TEXTURE_2D, post_processing_colorbuffer);
     antialiasing_shader->setInt("screen_texture", 0);
 
-    framebuffer_quad->draw(antialiasing_shader);
+    framebuffer_quad->draw(antialiasing_shader, false);
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -524,8 +569,10 @@ void OpenGLWindow::paintGL() {
 void OpenGLWindow::update_perspective_matrix() {
   // Update perspective matrices
   projection = glm::perspective(glm::radians(fov), width()/float(height()), 0.1f, 100.0f);
-  object_shader->use();
-  object_shader->setMat4("projection", projection);
+  object_opaque_shader->use();
+  object_opaque_shader->setMat4("projection", projection);
+  object_full_transparency_shader->use();
+  object_full_transparency_shader->setMat4("projection", projection);
   light_shader->use();
   light_shader->setMat4("projection", projection);
   skybox_shader->use();

@@ -18,8 +18,25 @@ enum Image_Type {
   AMBIENT_OCCLUSION_MAP, // Should be in linear space
   ROUGHNESS_MAP, // Should be in linear space
   METALNESS_MAP, // Should be in linear space
-  CUBE_MAP // Should be in gamma space (will be converted into linear space)
+  CUBE_MAP, // Should be in gamma space (will be converted into linear space)
+  OPACITY_MAP // Only used when a mesh w/ transparent arts is drawn. Only the alpha value is used
 };
+
+namespace ImageLoading {
+  enum Options : char {
+    NONE            = 0,
+    TRANSPARENCY    = 1 << 0,
+    FLIP_ON_LOAD    = 1 << 1,
+    CLAMPED         = 1 << 2,
+    ADD_TO_MATERIAL = 1 << 3
+  };
+  inline constexpr Options operator|(Options a, Options b) {
+    return a = static_cast<Options> (int(a) | int(b));
+  }
+  inline constexpr Options operator&(Options a, Options b) {
+    return a = static_cast<Options> (int(a) & int(b));
+  }
+}
 
 struct Texture {
   unsigned int id;
@@ -35,13 +52,15 @@ public:
   ~Material();
 
   int set_materials(Shader *shader, int texture_unit=0);
+  void set_opacity_map(Shader* shader, int texture_unit=0);
 
-  Texture load_texture(const char *path, Image_Type type, bool add_to_material=true);
+  Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
   Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
 
   bool operator==(const Material& other_material);
 
   std::vector<Texture> textures;
+  Texture opacity_map;
 
   // Defaults are in comments
   glm::vec3 color;

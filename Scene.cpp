@@ -93,10 +93,11 @@ int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_uni
   return texture_unit;
 }
 
-void Scene::render_dirlights_shadow_map(Shader *shader) {
+void Scene::render_dirlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader) {
   for (auto dirlight : dirlights) {
-    dirlight->bind_dirlight_framebuffer(shader);
-    draw_objects(shader, false);
+    dirlight->bind_dirlight_framebuffer(opaque_shader);
+    dirlight->bind_dirlight_framebuffer(full_transparency_shader);
+    draw_objects(opaque_shader, full_transparency_shader, partial_transparency_shader, false);
   }
 }
 
@@ -124,7 +125,7 @@ void Scene::draw_dirlight(Shader *shader) {
 void Scene::render_pointlights_shadow_map(Shader *shader) {
   for (auto light : pointlights) {
     light->bind_pointlight_framebuffer(shader);
-    draw_objects(shader, false);
+    draw_objects(shader, shader, nullptr, false);
   }
 }
 
@@ -148,9 +149,9 @@ void Scene::draw_light(Shader *shader) {
   }
 }
 
-void Scene::draw_objects(Shader *shader, bool use_material, int texture_unit) {
+void Scene::draw_objects(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, bool use_material, int texture_unit) {
   for (auto node : nodes) {
-    node->draw(shader, glm::mat4(1.0f), use_material, texture_unit);
+    node->draw(opaque_shader, full_transparency_shader, partial_transparency_shader, glm::mat4(1.0f), use_material, texture_unit);
   }
 }
 

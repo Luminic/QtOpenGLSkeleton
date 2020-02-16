@@ -14,6 +14,8 @@ Material::Material() {
 
   index = 0;
 
+  opacity_map = {0, OPACITY_MAP, ""};
+
   initializeOpenGLFunctions();
 }
 
@@ -52,8 +54,14 @@ int Material::set_materials(Shader *shader, int texture_unit) {
         break;
       case CUBE_MAP:
         glBindTexture(GL_TEXTURE_CUBE_MAP, textures[i].id);
-        shader->setInt("skybox", 0);
+        shader->setInt("skybox", texture_unit);
         break;
+      case OPACITY_MAP:{
+        #ifdef QT_DEBUG
+          qDebug() << "Opacity maps should not be put in textures\n";
+          qDebug() << "Materials have a special opacity map variable\n";
+        #endif
+        break;}
       default:
         break;
     }
@@ -75,7 +83,15 @@ int Material::set_materials(Shader *shader, int texture_unit) {
   return texture_unit;
 }
 
-Texture Material::load_texture(const char *path, Image_Type type, bool add_to_material) {
+void Material::set_opacity_map(Shader* shader, int texture_unit) {
+  Q_ASSERT_X(opacity_map.id != 0, "set_opacity_map", "no opacity map exists");
+  shader->use();
+  glActiveTexture(GL_TEXTURE0+texture_unit);
+  glBindTexture(GL_TEXTURE_2D, opacity_map.id);
+  shader->setInt("material.opacity_map", texture_unit);
+}
+
+Texture Material::load_texture(const char *path, Image_Type type, ImageLoading::Options options) {
   Texture texture = Scene::is_texture_loaded(path);
   texture.type = type;
 
@@ -86,24 +102,47 @@ Texture Material::load_texture(const char *path, Image_Type type, bool add_to_ma
     glGenTextures(1, &texture.id);
     glBindTexture(GL_TEXTURE_2D, texture.id);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    if (options & ImageLoading::Options::CLAMPED) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    QImage img = QImage(path).convertToFormat(QImage::Format_RGB888);
-    if (img.isNull()) qDebug() << "ERROR: COULD NOT LOAD IMAGE:" << path;
+    QImage img = QImage(path);
+    if (options & ImageLoading::Options::TRANSPARENCY) {
+      img = img.convertToFormat(QImage::Format_RGBA8888);
+    } else {
+      img = img.convertToFormat(QImage::Format_RGB888);
+    }
+    if (options & ImageLoading::Options::FLIP_ON_LOAD) {
+      img = img.mirrored(false, true);
+    }
+
+    Q_ASSERT_X(img.isNull()==false, "image loading", path);
     if (type == ALBEDO_MAP) { // Convert gamma (SRGB) space into linear (RGB) space
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+      if (options & ImageLoading::Options::TRANSPARENCY) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+      } else {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+      }
     } else { // Non-albedo maps should already be in linear space
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+      if (options & ImageLoading::Options::TRANSPARENCY) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+      } else {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+      }
     }
     glGenerateMipmap(GL_TEXTURE_2D);
 
     Scene::loaded_textures.push_back(texture);
   }
 
-  if (add_to_material)
+  if (options & ImageLoading::Options::ADD_TO_MATERIAL)
     textures.push_back(texture);
 
   return texture;

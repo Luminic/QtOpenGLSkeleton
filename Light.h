@@ -21,10 +21,8 @@ public:
 
   void set_object_settings(std::string name, Shader *shader);
 
-  // model, use_material, and texture_unit SHOULD NOT be used (for 90% of nomal cases); they are only included here because of how Node::draw works
-  // I did not want to throw an error if they are changed from defaults because I hate removing functionality that *might* be useful someday
-  // That being said, they should work as indended if you do decide to use them
-  virtual void draw(Shader *shader, glm::mat4 model=glm::mat4(1.0f), bool use_material=false, int texture_unit=0) override;
+  // No "override" because only one shader is needed (there is no transparency with light sources)
+  virtual void draw(Shader *shader, glm::mat4 model=glm::mat4(1.0f), bool use_material=false, int texture_unit=0);
 
   glm::vec3 color;
   float ambient;

@@ -19,6 +19,12 @@ struct Vertex {
   glm::vec2 texture_coordinate;
 };
 
+enum Transparency {
+  OPAQUE = 0,                 // Everything is opaque
+  FULL_TRANSPARENCY = 1,      // Some parts are fully transparent (fragment discarding must be enabled)
+  PARTIAL_TRANSPARENCY = 2    // Some parts are partially transparent (fragment blending must be enabled)
+};
+
 class Mesh : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
@@ -33,6 +39,9 @@ public:
 
   void draw(Shader *shader, bool use_material=true, int texture_unit=0);
 
+  Transparency get_transparency() {return transparency;};
+  void set_transparency(Transparency new_transparency) {transparency=new_transparency;};
+
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
 
@@ -46,6 +55,8 @@ protected:
   unsigned int VAO;
   unsigned int VBO;
   unsigned int EBO;
+
+  Transparency transparency;
 };
 
 #endif

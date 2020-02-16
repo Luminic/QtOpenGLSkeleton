@@ -72,17 +72,23 @@ private:
   float angle;
   glm::mat4 projection;
 
-  Shader *sunlight_depth_shader;
-  Shader *pointlight_depth_shader;
+  Shader *dirlight_depth_opaque_shader = nullptr;
+  Shader *dirlight_depth_full_transparency_shader = nullptr;
+  Shader *dirlight_depth_partial_transparency_shader = nullptr;
 
-  Shader *object_shader;
-  Shader *light_shader;
-  Shader *skybox_shader;
-  Shader *scene_shader;
+  Shader *pointlight_depth_shader = nullptr;
 
-  Shader *gaussian_blur_shader;
-  Shader *post_processing_shader;
-  Shader *antialiasing_shader;
+  Shader *object_opaque_shader = nullptr;
+  Shader *object_full_transparency_shader = nullptr;
+  Shader *object_partial_transparency_shader = nullptr;
+
+  Shader *light_shader = nullptr;
+  Shader *skybox_shader = nullptr;
+  Shader *scene_shader = nullptr;
+
+  Shader *gaussian_blur_shader = nullptr;
+  Shader *post_processing_shader = nullptr;
+  Shader *antialiasing_shader = nullptr;
 
   std::unordered_set<int> *keys_pressed;
   int *delta_time;

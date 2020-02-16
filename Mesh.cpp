@@ -7,19 +7,29 @@ Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Ma
   indices(indices),
   material(material)
 {
+  transparency = OPAQUE;
   initialize_buffers();
 }
 
-Mesh::Mesh() :
-  material(nullptr)
-{}
+Mesh::Mesh() {
+  material = nullptr;
+  transparency = OPAQUE;
+}
 
 Mesh::~Mesh() {
 }
 
 void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {
-  if (material != nullptr && use_material)
+  if (transparency != OPAQUE) {
+    Q_ASSERT_X(material != nullptr, "Setting transparency map for mesh", "material does not exist");
+    material->set_opacity_map(shader, texture_unit);
+    texture_unit++;
+  }
+
+  if (use_material) {
+    Q_ASSERT_X(material != nullptr, "Setting materials for mesh", "material does not exist");
     material->set_materials(shader, texture_unit);
+  }
 
   // Draw Mesh
   glBindVertexArray(VAO);

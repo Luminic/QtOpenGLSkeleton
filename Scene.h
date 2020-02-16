@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
+#include <list>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,6 +34,15 @@ enum Display_Types {
   BRIGHT=5
 };
 
+struct Transparent_Draw {
+  Shader* shader;
+  glm::mat4 model;
+  bool use_material;
+  int texture_unit;
+
+  Mesh* mesh;
+};
+
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
@@ -49,7 +59,7 @@ public:
   void draw_skybox(Shader *shader);
   int set_skybox_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
-  void render_dirlights_shadow_map(Shader *shader);
+  void render_dirlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader);
   int set_dirlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_dirlight(Shader *shader);
 
@@ -57,7 +67,7 @@ public:
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 
-  void draw_objects(Shader *shader, bool use_material, int texture_unit=0);
+  void draw_objects(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, bool use_material, int texture_unit=0);
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;
@@ -107,9 +117,15 @@ public:
   int display_type;
 
 protected:
-  std::vector<std::shared_ptr<Node>> nodes;
   std::vector<std::shared_ptr<DirectionalLight>> dirlights;
   std::vector<std::shared_ptr<PointLight>> pointlights;
+
+  std::vector<std::shared_ptr<Node>> nodes;
+  // Transparent objects wil be added to these lists to be drawn later
+  // Opaque objects will be drawn first, then objects w/ fully transparent parts, then objects w/ partially transparent parts
+  // These lists will be cleared after every draw
+  std::list<Transparent_Draw> fully_transparent_draw;
+  std::list<Transparent_Draw> partially_transparent_draw;
 
 private:
   float angle;
