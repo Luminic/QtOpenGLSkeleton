@@ -428,7 +428,7 @@ void OpenGLWindow::paintGL() {
   switch (scene->display_type) {
     case SUNLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[0]->depth_map);
+      glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[1]->depth_map);
       scene_shader->setInt("screen_texture", 0);
       scene_shader->setBool("greyscale", true);
       break;

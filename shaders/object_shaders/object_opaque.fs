@@ -107,6 +107,10 @@ vec3 dirlight_vis(DirLight dirlight) {
 	// if (projected_coordinates.z > 1.0f) return vec3(1.0f,0.0f,0.0f);
 	// float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
 	return projected_coordinates;
+	// float current_depth = max(0.001f,projected_coordinates.z);
+	// float closest_depth = texture(dirlights[1].shadow_map, projected_coordinates.xy).r;
+	// return closest_depth.xxx;
+	// return current_depth > closest_depth+BIAS ? 1.0f.xxx : 0.0f.xxx;
 }
 
 vec3 sample_offset_directions[26] = vec3[](
@@ -237,6 +241,7 @@ void main() {
 	for (int i=0; i<nr_dirlights; i++) {
 		lighting_color += calculate_dirlight(dirlights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
 	}
+	// lighting_color += calculate_dirlight(dirlights[1], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
 
 	for (int i=0; i<nr_lights; i++) {
 		lighting_color += calculate_pointlight(lights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);

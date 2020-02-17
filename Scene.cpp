@@ -109,7 +109,7 @@ int Scene::set_dirlight_settings(std::string name, Shader* shader, int texture_u
 
     glActiveTexture(GL_TEXTURE0+texture_unit+i);
     glBindTexture(GL_TEXTURE_2D, dirlights[i]->depth_map);
-    shader->setInt((name+"["+std::to_string(i)+"]"+".shadow_map").c_str(), texture_unit);
+    shader->setInt((name+"["+std::to_string(i)+"]"+".shadow_map").c_str(), texture_unit+i);
   }
 
   texture_unit += dirlights.size();
