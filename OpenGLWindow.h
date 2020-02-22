@@ -76,7 +76,9 @@ private:
   Shader *dirlight_depth_full_transparency_shader = nullptr;
   Shader *dirlight_depth_partial_transparency_shader = nullptr;
 
-  Shader *pointlight_depth_shader = nullptr;
+  Shader *pointlight_depth_opaque_shader = nullptr;
+  Shader *pointlight_depth_full_transparency_shader = nullptr;
+  Shader *pointlight_depth_partial_transparency_shader = nullptr;
 
   Shader *object_opaque_shader = nullptr;
   Shader *object_full_transparency_shader = nullptr;

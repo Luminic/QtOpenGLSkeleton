@@ -63,7 +63,7 @@ public:
   int set_dirlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_dirlight(Shader *shader);
 
-  void render_pointlights_shadow_map(Shader *shader);
+  void render_pointlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader);
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 

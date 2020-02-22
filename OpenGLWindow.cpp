@@ -40,7 +40,9 @@ OpenGLWindow::~OpenGLWindow() {
   delete dirlight_depth_full_transparency_shader;
   delete dirlight_depth_partial_transparency_shader;
 
-  delete pointlight_depth_shader;
+  delete pointlight_depth_opaque_shader;
+  delete pointlight_depth_full_transparency_shader;
+  delete pointlight_depth_partial_transparency_shader;
 
   delete object_opaque_shader;
   delete object_full_transparency_shader;
@@ -239,7 +241,9 @@ void OpenGLWindow::load_shaders() {
   dirlight_depth_full_transparency_shader = new Shader();
   dirlight_depth_partial_transparency_shader = new Shader();
 
-  pointlight_depth_shader = new Shader();
+  pointlight_depth_opaque_shader = new Shader();
+  pointlight_depth_full_transparency_shader = new Shader();
+  pointlight_depth_partial_transparency_shader = new Shader();
 
   object_opaque_shader = new Shader();
   object_full_transparency_shader = new Shader();
@@ -257,7 +261,9 @@ void OpenGLWindow::load_shaders() {
   dirlight_depth_full_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
   // dirlight_depth_partial_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
-  pointlight_depth_shader->loadShaders("shaders/pointlight_depth_vertex.shader", "shaders/pointlight_depth_fragment.shader", "shaders/pointlight_depth_geometry.shader");
+  pointlight_depth_opaque_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+  pointlight_depth_full_transparency_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+  // pointlight_depth_partial_transparency_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
 
   object_opaque_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
   object_full_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
@@ -349,7 +355,7 @@ void OpenGLWindow::paintGL() {
   scene->render_dirlights_shadow_map(dirlight_depth_opaque_shader, dirlight_depth_full_transparency_shader, nullptr);
 
   // Draw the scene to the pointlight's depth buffer
-  scene->render_pointlights_shadow_map(pointlight_depth_shader);
+  scene->render_pointlights_shadow_map(pointlight_depth_opaque_shader, pointlight_depth_full_transparency_shader, nullptr);
 
   // Draw the scene to our framebuffer
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);

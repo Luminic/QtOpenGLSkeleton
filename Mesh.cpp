@@ -20,6 +20,8 @@ Mesh::~Mesh() {
 }
 
 void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {
+  shader->use();
+
   if (transparency != OPAQUE) {
     Q_ASSERT_X(material != nullptr, "Setting transparency map for mesh", "material does not exist");
     material->set_opacity_map(shader, texture_unit);

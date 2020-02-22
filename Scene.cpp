@@ -122,10 +122,11 @@ void Scene::draw_dirlight(Shader *shader) {
   }
 }
 
-void Scene::render_pointlights_shadow_map(Shader *shader) {
+void Scene::render_pointlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader) {
   for (auto light : pointlights) {
-    light->bind_pointlight_framebuffer(shader);
-    draw_objects(shader, shader, nullptr, false);
+    light->bind_pointlight_framebuffer(opaque_shader);
+    light->bind_pointlight_framebuffer(full_transparency_shader);
+    draw_objects(opaque_shader, full_transparency_shader, partial_transparency_shader, false);
   }
 }
 
