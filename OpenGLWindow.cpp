@@ -36,17 +36,10 @@ OpenGLWindow::~OpenGLWindow() {
   delete camera;
   delete framebuffer_quad;
 
-  delete dirlight_depth_opaque_shader;
-  delete dirlight_depth_full_transparency_shader;
-  delete dirlight_depth_partial_transparency_shader;
+  dirlight_depth_shaders.delete_shaders();
+  pointlight_depth_shaders.delete_shaders();
 
-  delete pointlight_depth_opaque_shader;
-  delete pointlight_depth_full_transparency_shader;
-  delete pointlight_depth_partial_transparency_shader;
-
-  delete object_opaque_shader;
-  delete object_full_transparency_shader;
-  delete object_partial_transparency_shader;
+  object_shaders.delete_shaders();
 
   delete light_shader;
   delete skybox_shader;
@@ -237,17 +230,17 @@ void OpenGLWindow::initializeGL() {
 }
 
 void OpenGLWindow::load_shaders() {
-  dirlight_depth_opaque_shader = new Shader();
-  dirlight_depth_full_transparency_shader = new Shader();
-  dirlight_depth_partial_transparency_shader = new Shader();
+  dirlight_depth_shaders.opaque = new Shader();
+  dirlight_depth_shaders.full_transparency = new Shader();
+  // dirlight_depth_partial_transparency_shader = new Shader();
 
-  pointlight_depth_opaque_shader = new Shader();
-  pointlight_depth_full_transparency_shader = new Shader();
-  pointlight_depth_partial_transparency_shader = new Shader();
+  pointlight_depth_shaders.opaque = new Shader();
+  pointlight_depth_shaders.full_transparency = new Shader();
+  // pointlight_depth_partial_transparency_shader = new Shader();
 
-  object_opaque_shader = new Shader();
-  object_full_transparency_shader = new Shader();
-  object_partial_transparency_shader = new Shader();
+  object_shaders.opaque = new Shader();
+  object_shaders.full_transparency = new Shader();
+  object_shaders.partial_transparency = new Shader();
 
   light_shader = new Shader();
   skybox_shader = new Shader();
@@ -257,17 +250,18 @@ void OpenGLWindow::load_shaders() {
   post_processing_shader = new Shader();
   antialiasing_shader = new Shader();
 
-  dirlight_depth_opaque_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_opaque.fs");
-  dirlight_depth_full_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
+  dirlight_depth_shaders.opaque->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_opaque.fs");
+  dirlight_depth_shaders.full_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
   // dirlight_depth_partial_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
-  pointlight_depth_opaque_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
-  pointlight_depth_full_transparency_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+  pointlight_depth_shaders.opaque->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+  pointlight_depth_shaders.full_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   // pointlight_depth_partial_transparency_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
 
-  object_opaque_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
-  object_full_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
-  object_partial_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
+  object_shaders.opaque->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
+  object_shaders.full_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
+  object_shaders.partial_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
+
 
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
@@ -352,10 +346,10 @@ void OpenGLWindow::paintGL() {
   glEnable(GL_DEPTH_TEST);
 
   // Draw the scene to the sunlight's depth buffer to create the sunlight's depth map
-  scene->render_dirlights_shadow_map(dirlight_depth_opaque_shader, dirlight_depth_full_transparency_shader, nullptr);
+  scene->render_dirlights_shadow_map(dirlight_depth_shaders);
 
   // Draw the scene to the pointlight's depth buffer
-  scene->render_pointlights_shadow_map(pointlight_depth_opaque_shader, pointlight_depth_full_transparency_shader, nullptr);
+  scene->render_pointlights_shadow_map(pointlight_depth_shaders);
 
   // Draw the scene to our framebuffer
   //glBindFramebuffer(GL_FRAMEBUFFER, qt_framebuffer);
@@ -400,25 +394,34 @@ void OpenGLWindow::paintGL() {
     scene->draw_light(light_shader);
 
     // Draw the objects
-    object_opaque_shader->use();
-    object_opaque_shader->setVec3("camera_position", camera->position);
-    object_opaque_shader->setMat4("view", view);
+    object_shaders.opaque->use();
+    object_shaders.opaque->setVec3("camera_position", camera->position);
+    object_shaders.opaque->setMat4("view", view);
 
     int texture_unit = 0;
-    texture_unit = scene->set_skybox_settings("skybox", object_opaque_shader, texture_unit);
-    texture_unit = scene->set_dirlight_settings("dirlights", object_opaque_shader, texture_unit);
-    texture_unit = scene->set_light_settings("lights", object_opaque_shader, texture_unit);
+    texture_unit = scene->set_skybox_settings("skybox", object_shaders.opaque, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.opaque, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_shaders.opaque, texture_unit);
 
-    object_full_transparency_shader->use();
-    object_full_transparency_shader->setVec3("camera_position", camera->position);
-    object_full_transparency_shader->setMat4("view", view);
+    object_shaders.full_transparency->use();
+    object_shaders.full_transparency->setVec3("camera_position", camera->position);
+    object_shaders.full_transparency->setMat4("view", view);
 
     texture_unit = 0;
-    texture_unit = scene->set_skybox_settings("skybox", object_full_transparency_shader, texture_unit);
-    texture_unit = scene->set_dirlight_settings("dirlights", object_full_transparency_shader, texture_unit);
-    texture_unit = scene->set_light_settings("lights", object_full_transparency_shader, texture_unit);
+    texture_unit = scene->set_skybox_settings("skybox", object_shaders.full_transparency, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.full_transparency, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_shaders.full_transparency, texture_unit);
 
-    scene->draw_objects(object_opaque_shader, object_full_transparency_shader, nullptr, true, texture_unit);
+    object_shaders.partial_transparency->use();
+    object_shaders.partial_transparency->setVec3("camera_position", camera->position);
+    object_shaders.partial_transparency->setMat4("view", view);
+
+    texture_unit = 0;
+    texture_unit = scene->set_skybox_settings("skybox", object_shaders.partial_transparency, texture_unit);
+    texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);
+    texture_unit = scene->set_light_settings("lights", object_shaders.partial_transparency, texture_unit);
+
+    scene->draw_objects(object_shaders, true, texture_unit);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
@@ -575,10 +578,12 @@ void OpenGLWindow::paintGL() {
 void OpenGLWindow::update_perspective_matrix() {
   // Update perspective matrices
   projection = glm::perspective(glm::radians(fov), width()/float(height()), 0.1f, 100.0f);
-  object_opaque_shader->use();
-  object_opaque_shader->setMat4("projection", projection);
-  object_full_transparency_shader->use();
-  object_full_transparency_shader->setMat4("projection", projection);
+  object_shaders.opaque->use();
+  object_shaders.opaque->setMat4("projection", projection);
+  object_shaders.full_transparency->use();
+  object_shaders.full_transparency->setMat4("projection", projection);
+  object_shaders.partial_transparency->use();
+  object_shaders.partial_transparency->setMat4("projection", projection);
   light_shader->use();
   light_shader->setMat4("projection", projection);
   skybox_shader->use();

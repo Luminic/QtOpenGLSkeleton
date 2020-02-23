@@ -72,17 +72,10 @@ private:
   float angle;
   glm::mat4 projection;
 
-  Shader *dirlight_depth_opaque_shader = nullptr;
-  Shader *dirlight_depth_full_transparency_shader = nullptr;
-  Shader *dirlight_depth_partial_transparency_shader = nullptr;
+  Shader_Opacity_Triplet dirlight_depth_shaders;
+  Shader_Opacity_Triplet pointlight_depth_shaders;
 
-  Shader *pointlight_depth_opaque_shader = nullptr;
-  Shader *pointlight_depth_full_transparency_shader = nullptr;
-  Shader *pointlight_depth_partial_transparency_shader = nullptr;
-
-  Shader *object_opaque_shader = nullptr;
-  Shader *object_full_transparency_shader = nullptr;
-  Shader *object_partial_transparency_shader = nullptr;
+  Shader_Opacity_Triplet object_shaders;
 
   Shader *light_shader = nullptr;
   Shader *skybox_shader = nullptr;

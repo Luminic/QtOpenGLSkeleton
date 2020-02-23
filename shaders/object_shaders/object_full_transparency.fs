@@ -75,6 +75,7 @@ uniform Light lights[2];
 uniform vec3 camera_position;
 
 #define SHADOW_BIAS 0.001f
+#define MAXIMUM_BRIGHTNESS 50.0f
 
 float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
@@ -257,7 +258,7 @@ void main() {
 	}
 
 	vec3 total_color = vec3(lighting_color+reflection_color);
-	total_color = clamp(total_color, 0.0f.xxx, 1.0f.xxx);
+	total_color = clamp(total_color, 0.0f.xxx, MAXIMUM_BRIGHTNESS.xxx);
 
 	// Final result
   frag_color = vec4(total_color, 1.0f);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);

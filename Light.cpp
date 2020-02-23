@@ -26,6 +26,6 @@ void Light::draw(Shader *shader, glm::mat4 model, bool use_material, int texture
   if (visible) {
     shader->use();
     shader->setVec3("color", color);
-    Node::draw(shader, nullptr, nullptr, model, use_material, texture_unit);
+    Node::draw(shader, nullptr, nullptr, nullptr, model, use_material, texture_unit);
   }
 }

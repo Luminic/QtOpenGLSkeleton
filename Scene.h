@@ -5,7 +5,6 @@
 #include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
-#include <list>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -35,12 +34,20 @@ enum Display_Types {
 };
 
 struct Transparent_Draw {
-  Shader* shader;
-  glm::mat4 model;
-  bool use_material;
-  int texture_unit;
-
   Mesh* mesh;
+  glm::mat4 model;
+};
+
+struct Shader_Opacity_Triplet {
+  Shader* opaque = nullptr;
+  Shader* full_transparency = nullptr;
+  Shader* partial_transparency = nullptr;
+
+  void delete_shaders() {
+    delete opaque;
+    delete full_transparency;
+    delete partial_transparency;
+  }
 };
 
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
@@ -59,15 +66,15 @@ public:
   void draw_skybox(Shader *shader);
   int set_skybox_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
 
-  void render_dirlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader);
+  void render_dirlights_shadow_map(Shader_Opacity_Triplet shaders);
   int set_dirlight_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_dirlight(Shader *shader);
 
-  void render_pointlights_shadow_map(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader);
+  void render_pointlights_shadow_map(Shader_Opacity_Triplet shaders);
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 
-  void draw_objects(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, bool use_material, int texture_unit=0);
+  void draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit=0);
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;
@@ -121,11 +128,6 @@ protected:
   std::vector<std::shared_ptr<PointLight>> pointlights;
 
   std::vector<std::shared_ptr<Node>> nodes;
-  // Transparent objects wil be added to these lists to be drawn later
-  // Opaque objects will be drawn first, then objects w/ fully transparent parts, then objects w/ partially transparent parts
-  // These lists will be cleared after every draw
-  std::list<Transparent_Draw> fully_transparent_draw;
-  std::list<Transparent_Draw> partially_transparent_draw;
 
 private:
   float angle;

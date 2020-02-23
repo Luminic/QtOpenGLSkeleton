@@ -6,12 +6,15 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Mesh.h"
 #include "Shader.h"
+
+struct Transparent_Draw;
 
 class Node : public QObject {
   Q_OBJECT
@@ -22,7 +25,7 @@ public:
 
   std::string name;
 
-  virtual void draw(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
+  virtual void draw(Shader* opaque_shader, Shader* full_transparency_shader=nullptr, Shader* partial_transparency_shader=nullptr, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
 
   // Getters & setters
   virtual glm::mat4 get_model_matrix();

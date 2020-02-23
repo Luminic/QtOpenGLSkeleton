@@ -14,7 +14,7 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 Node::~Node() {
 }
 
-void Node::draw(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, glm::mat4 model, bool use_material, int texture_unit) {
+void Node::draw(Shader* opaque_shader, Shader* full_transparency_shader, Shader* partial_transparency_shader, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
   if (visible) {
     model *= get_model_matrix();
     opaque_shader->use();
@@ -23,6 +23,7 @@ void Node::draw(Shader* opaque_shader, Shader* full_transparency_shader, Shader*
       full_transparency_shader->use();
       full_transparency_shader->setMat4("model", model);
     }
+
     for (unsigned int i=0; i<meshes.size(); i++) {
       if (meshes[i]->get_transparency() == OPAQUE)
         meshes[i]->draw(opaque_shader, use_material, texture_unit);
@@ -30,11 +31,11 @@ void Node::draw(Shader* opaque_shader, Shader* full_transparency_shader, Shader*
         Q_ASSERT_X(full_transparency_shader != nullptr, "Node::draw", "full_transparency_shader is null but it is needed");
         meshes[i]->draw(full_transparency_shader, use_material, texture_unit);
       } else {
-
+        Q_ASSERT_X(partial_transparency_shader != nullptr, "Node::draw", "partial_transparency_shader is null but it is needed");
       }
     }
     for (unsigned int i=0; i<child_nodes.size(); i++) {
-      child_nodes[i]->draw(opaque_shader, full_transparency_shader, partial_transparency_shader, model, use_material, texture_unit);
+      child_nodes[i]->draw(opaque_shader, full_transparency_shader, partial_transparency_shader, partially_transparent_meshes, model, use_material, texture_unit);
     }
   }
 }
