@@ -153,7 +153,7 @@ void Scene::draw_light(Shader *shader) {
 void Scene::draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit) {
   std::vector<Transparent_Draw> partially_transparent_meshes;
   for (auto node : nodes) {
-    node->draw(shaders.opaque, shaders.full_transparency, shaders.partial_transparency, &partially_transparent_meshes, glm::mat4(1.0f), use_material, texture_unit);
+    node->draw(shaders, &partially_transparent_meshes, glm::mat4(1.0f), use_material, texture_unit);
   }
 }
 

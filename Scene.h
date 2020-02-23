@@ -38,18 +38,6 @@ struct Transparent_Draw {
   glm::mat4 model;
 };
 
-struct Shader_Opacity_Triplet {
-  Shader* opaque = nullptr;
-  Shader* full_transparency = nullptr;
-  Shader* partial_transparency = nullptr;
-
-  void delete_shaders() {
-    delete opaque;
-    delete full_transparency;
-    delete partial_transparency;
-  }
-};
-
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 

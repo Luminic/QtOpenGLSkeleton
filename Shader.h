@@ -28,4 +28,16 @@ public:
   void setMat4(const char *name, const glm::mat4 &mat);
 };
 
+struct Shader_Opacity_Triplet {
+  Shader* opaque = nullptr;
+  Shader* full_transparency = nullptr;
+  Shader* partial_transparency = nullptr;
+
+  void delete_shaders() {
+    delete opaque;
+    delete full_transparency;
+    delete partial_transparency;
+  }
+};
+
 #endif

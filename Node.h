@@ -25,7 +25,7 @@ public:
 
   std::string name;
 
-  virtual void draw(Shader* opaque_shader, Shader* full_transparency_shader=nullptr, Shader* partial_transparency_shader=nullptr, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
+  virtual void draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
 
   // Getters & setters
   virtual glm::mat4 get_model_matrix();
