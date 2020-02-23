@@ -205,6 +205,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
       }
       break;
     case Qt::Key_F2:{
+      if (!paused)
+        pause();
+        
       QFileDialog dialog(this);
       dialog.setWindowTitle("Save Screenshot");
       dialog.setFileMode(QFileDialog::AnyFile);
