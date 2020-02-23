@@ -74,7 +74,7 @@ uniform Light lights[2];
 
 uniform vec3 camera_position;
 
-const float BIAS = 0.001f;
+#define SHADOW_BIAS 0.001f
 
 float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
@@ -90,7 +90,7 @@ float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 		for (int x=-1; x<=1; x++) {
 			for (int y=-1; y<=1; y++) {
 				float pcf_depth = texture(dirlight.shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
-				shadow += current_depth > pcf_depth+BIAS ? 1.0f : 0.0f;
+				shadow += current_depth > pcf_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 			}
 		}
 		shadow /= 9.0f;
@@ -98,7 +98,7 @@ float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 		return shadow;
 	} else {
 		float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
-		return current_depth > closest_depth+BIAS ? 1.0f : 0.0f;
+		return current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 	}
 }
 
@@ -129,7 +129,7 @@ float in_pointlight_shadow(Light pointlight, vec3 position, bool use_pcf) {
 	for (int i=0; i<pointlight.samples; i++) {
 		float closest_depth = texture(pointlight.shadow_cubemap, position_to_light+sample_offset_directions[i]*pointlight.sample_radius).r;
 		closest_depth *= 45.0f;
-		shadow += current_depth > closest_depth+BIAS ? 1.0f : 0.0f;
+		shadow += current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 	}
 	shadow /= pointlight.samples;
 
@@ -198,7 +198,7 @@ void main() {
 	if (texture(material.opacity_map, fs_in.texture_coordinate).a <= 0.05f) {
 		discard;
 	}
-	
+
 	vec3 fragment_normal = normalize(fs_in.normal);
 	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
 

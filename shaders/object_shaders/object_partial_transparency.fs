@@ -22,6 +22,8 @@ struct Material {
   sampler2D roughness_map;
   sampler2D metalness_map;
 
+	sampler2D opacity_map; // Only exists in the full transparency & partial transparency shaders
+
 	vec3 color;
 	float ambient;
   float diffuse;
@@ -72,6 +74,8 @@ uniform Light lights[2];
 
 uniform vec3 camera_position;
 
+#define SHADOW_BIAS 0.001f
+
 float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
@@ -86,7 +90,7 @@ float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 		for (int x=-1; x<=1; x++) {
 			for (int y=-1; y<=1; y++) {
 				float pcf_depth = texture(dirlight.shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
-				shadow += current_depth > pcf_depth ? 1.0f : 0.0f;
+				shadow += current_depth > pcf_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 			}
 		}
 		shadow /= 9.0f;
@@ -94,7 +98,7 @@ float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
 		return shadow;
 	} else {
 		float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
-		return current_depth > closest_depth ? 1.0f : 0.0f;
+		return current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 	}
 }
 
@@ -125,7 +129,7 @@ float in_pointlight_shadow(Light pointlight, vec3 position, bool use_pcf) {
 	for (int i=0; i<pointlight.samples; i++) {
 		float closest_depth = texture(pointlight.shadow_cubemap, position_to_light+sample_offset_directions[i]*pointlight.sample_radius).r;
 		closest_depth *= 45.0f;
-		shadow += current_depth > closest_depth ? 1.0f : 0.0f;
+		shadow += current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
 	}
 	shadow /= pointlight.samples;
 
@@ -144,6 +148,7 @@ vec3 calculate_dirlight(DirLight dirlight, vec3 ambient_color, vec3 albedo_color
 
 	vec3 dirlight_direction = normalize(dirlight.direction);
   vec3 dirlight_halfway_direction = normalize(dirlight_direction+camera_direction);
+	fragment_normal = fragment_normal * sign(dot(fragment_normal, camera_direction));
 
 	// Ambient lighting
 	vec3 ambient = ambient_color * dirlight.ambient * dirlight.color;
@@ -163,6 +168,7 @@ vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, ve
 
 	vec3 light_direction = normalize(light.position-fs_in.fragment_position);
   vec3 halfway_direction = normalize(light_direction+camera_direction);
+	fragment_normal = fragment_normal * sign(dot(fragment_normal, camera_direction));
 
 	// Ambient lighting
 	vec3 ambient = ambient_color * light.ambient * light.color;
@@ -189,20 +195,26 @@ float linear_depth(float depth) {
 }
 
 void main() {
+	if (texture(material.opacity_map, fs_in.texture_coordinate).a <= 0.05f) {
+		discard;
+	}
+
 	vec3 fragment_normal = normalize(fs_in.normal);
 	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
 
   // Get the colors for everything
 
   float roughness = material.roughness;
-  if (material.use_roughness_map)
+  if (material.use_roughness_map) {
     roughness *= length(texture(material.roughness_map, fs_in.texture_coordinate).rgb)/1.73f;
+	}
 
   float shininess = pow(2,(roughness)*10);
 
   float metalness = material.metalness;
-  if (material.use_metalness_map)
+  if (material.use_metalness_map) {
     metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
+	}
 
   vec3 diffuse = vec3(0.0f);
   if (material.number_albedo_maps == 0) {
@@ -245,7 +257,7 @@ void main() {
 	}
 
 	vec3 total_color = vec3(lighting_color+reflection_color);
-	total_color = clamp(total_color, 0.0f.xxx, 10.0f.xxx);
+	total_color = clamp(total_color, 0.0f.xxx, 1.0f.xxx);
 
 	// Final result
   frag_color = vec4(total_color, 1.0f);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);

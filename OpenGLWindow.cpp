@@ -267,7 +267,7 @@ void OpenGLWindow::load_shaders() {
 
   object_opaque_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
   object_full_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
-  // object_partial_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
+  object_partial_transparency_shader->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
 
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");

@@ -27,18 +27,18 @@ void main() {
   } else if (brightness <= bloom_threshold_lower) {
     bloom_color = vec4(0.0f.xxx, 1.0f);
   } else {
-    float a = bloom_threshold_lower;
-    float b = bloom_threshold_upper;
-    float x = brightness;
-    float pi = 3.1415926535f;
+    #define a bloom_threshold_lower
+    #define b bloom_threshold_upper
+    #define x brightness
+    #define pi 3.1415926535f
 
     float interpolate;
     if (bloom_interpolation == 0) { // Linear interpolation
       interpolate = (x-a)/(b-a);
     }
     else { // Sinusoidal interpolation
-      float s = pi/(b-a);
-      float o = (b+a)/2;
+      #define s pi/(b-a)
+      #define o (b+a)/2
       interpolate = sin((x-o)*s)/2.0f+0.5f;
     }
     bloom_color = vec4(col*interpolate, 1.0f);
