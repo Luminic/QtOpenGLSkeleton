@@ -1,6 +1,7 @@
 #include <QDebug>
 
 #include "Node.h"
+#include "Scene.h"
 
 Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation) :
   transformation(transformation),
@@ -23,6 +24,12 @@ void Node::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* p
       shaders.full_transparency->use();
       shaders.full_transparency->setMat4("model", model);
     }
+    // Partially transparent objects should only be drawn immediately for shadow maps
+    // For normal rendering, they should be rendered later
+    if ((!use_material) && shaders.partial_transparency != nullptr) {
+      shaders.partial_transparency->use();
+      shaders.partial_transparency->setMat4("model", model);
+    }
 
     for (unsigned int i=0; i<meshes.size(); i++) {
       if (meshes[i]->get_transparency() == OPAQUE)
@@ -32,6 +39,12 @@ void Node::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* p
         meshes[i]->draw(shaders.full_transparency, use_material, texture_unit);
       } else {
         Q_ASSERT_X(shaders.partial_transparency != nullptr, "Node::draw", "shaders.partial_transparency is null but it is needed");
+        Q_ASSERT_X(partially_transparent_meshes != nullptr, "Node::draw", "partially_transparent_meshes is null but it is needed");
+        if (!use_material) {
+          meshes[i]->draw(shaders.partial_transparency, use_material, texture_unit);
+        } else {
+          partially_transparent_meshes->push_back(Transparent_Draw{meshes[i].get(), model, texture_unit});
+        }
       }
     }
     for (unsigned int i=0; i<child_nodes.size(); i++) {

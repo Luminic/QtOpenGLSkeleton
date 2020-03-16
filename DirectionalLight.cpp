@@ -52,7 +52,7 @@ void DirectionalLight::initialize_depth_framebuffer(unsigned int depth_map_width
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void DirectionalLight::bind_dirlight_framebuffer(Shader* depth_shader) {
+void DirectionalLight::bind_dirlight_framebuffer() {
   glViewport(0, 0, depth_map_width, depth_map_height);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_framebuffer);
 
@@ -69,7 +69,9 @@ void DirectionalLight::bind_dirlight_framebuffer(Shader* depth_shader) {
     glm::vec3(0.0f, 1.0f, 0.0f)
   );
   dirlight_space = sunlight_projection*sunlight_view;
+}
 
+void DirectionalLight::set_light_space(Shader* depth_shader) {
   depth_shader->use();
   depth_shader->setMat4("light_space", dirlight_space);
 }

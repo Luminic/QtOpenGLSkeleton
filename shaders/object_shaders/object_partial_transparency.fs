@@ -262,6 +262,6 @@ void main() {
 	total_color = clamp(total_color, 0.0f.xxx, MAXIMUM_BRIGHTNESS.xxx);
 
 	// Final result
-  frag_color = vec4(total_color, opacity);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);
+  frag_color = vec4(texture(material.albedo_map[0], fs_in.texture_coordinate).rgb, opacity);
 	volumetric_color = frag_color;
 }

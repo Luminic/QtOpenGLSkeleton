@@ -41,7 +41,17 @@ void Settings::set_scene(Scene *scene, const char *name) {
   create_option_group("Bloom Multiplier:", &scene->bloom_multiplier, 0.0, 5.0, 0.05, 2, Post_Processing_box, Post_Processing_layout, 6);
   create_option_group("Bloom Offset:", &scene->bloom_offset, -2.0, 6.0, 0.1, 1, Post_Processing_box, Post_Processing_layout, 8);
   create_option_group("Bloom Applications:", &scene->bloom_applications, 1.0, 10.0, 1.0, 0, Post_Processing_box, Post_Processing_layout, 10);
-  Scene_layout->addWidget(Post_Processing_box, 0, 1);
+  Scene_layout->addWidget(Post_Processing_box, 0, 0, -1, 1);
+
+  QGroupBox *Sky_box = new QGroupBox(this);
+  QGridLayout *Sky_layout = new QGridLayout(Sky_box);
+  create_option_group("Skybox Multiplier:", &scene->skybox_multiplier, 0.0, 10.0, 0.5, 1, Sky_box, Sky_layout, 0);
+  Scene_layout->addWidget(Sky_box, 0, 1);
+
+  QGroupBox *Misc_box = new QGroupBox(this);
+  QGridLayout *Misc_layout = new QGridLayout(Misc_box);
+  create_option_group("Display Type:", &scene->display_type, 0.0, 5.0, 1.0, 0, Misc_box, Misc_layout, 0);
+  Scene_layout->addWidget(Misc_box, 1, 1);
 
   QGroupBox *AA_box = new QGroupBox(tr("Anti-Aliasing"), this);
   QGridLayout *AA_layout = new QGridLayout(AA_box);
@@ -59,12 +69,7 @@ void Settings::set_scene(Scene *scene, const char *name) {
       none_button->setChecked(true);
       break;
   }
-  Scene_layout->addWidget(AA_box, 1, 1);
-
-  QGroupBox *Misc_box = new QGroupBox(this);
-  QGridLayout *Misc_layout = new QGridLayout(Misc_box);
-  create_option_group("Display Type:", &scene->display_type, 0.0, 5.0, 1.0, 0, Misc_box, Misc_layout, 0);
-  Scene_layout->addWidget(Misc_box, 1, 0);
+  Scene_layout->addWidget(AA_box, 2, 1);
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Scene_widget);

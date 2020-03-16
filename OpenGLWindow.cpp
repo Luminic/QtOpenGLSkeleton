@@ -80,7 +80,7 @@ void OpenGLWindow::initializeGL() {
   load_shaders();
 
   camera = new Camera();
-  camera->exposure = 1.6f;
+  camera->exposure = 2.72f;
   camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
   settings->set_camera(camera);
 
@@ -92,7 +92,8 @@ void OpenGLWindow::initializeGL() {
   dirlight->x_view_size = 35;
   dirlight->y_view_size = 35;
   dirlight->initialize_depth_framebuffer(2048,2048);
-  dirlight->ambient = 0.5f;
+  dirlight->color = glm::vec3(3.5f);
+  dirlight->ambient = 0.8f;
   dirlight->diffuse = 2.5f;
   dirlight->specular = 2.5f;
   dirlight->set_visibility(false);
@@ -102,6 +103,7 @@ void OpenGLWindow::initializeGL() {
   dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
   dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
   dirlight->initialize_depth_framebuffer(2048,2048);
+  dirlight->color = glm::vec3(0.0f);
   dirlight->ambient = 0.5f;
   dirlight->diffuse = 2.5f;
   dirlight->specular = 2.5f;
@@ -120,7 +122,7 @@ void OpenGLWindow::initializeGL() {
   for (int i=0; i<2; i++) {
     PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
     light->initialize_depth_framebuffer(1024,1024);
-    light->color = glm::vec3(1.5);
+    light->color = glm::vec3(4.5);
     scene->add_pointlight(std::shared_ptr<PointLight>(light));
   }
 
@@ -188,6 +190,28 @@ void OpenGLWindow::initializeGL() {
     scene->add_node(std::shared_ptr<Node>(n));
   }
 
+  std::shared_ptr<Mesh> window = std::make_shared<Mesh>();
+  window->initialize_plane(false);
+  window->material = new Material();
+  window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
+  window->material->opacity_map.type = OPACITY_MAP;
+  window->set_transparency(PARTIAL_TRANSPARENCY);
+  window->material = Scene::is_material_loaded(window->material);
+
+  glm::vec3 window_positions[5] = {
+    glm::vec3( 4.0f,-2.5f, 0.0f),
+    glm::vec3( 6.0f,-2.5f,-1.0f),
+    glm::vec3( 2.0f,-2.5f, 4.0f),
+    glm::vec3(-1.0f,-2.5f, 3.0f),
+    glm::vec3(-3.0f,-2.5f, 4.0f),
+  };
+
+  for (int i=0; i<5; i++) {
+    Node* window_n = new Node(glm::mat4(1.0f), window_positions[i]);
+    window_n->add_mesh(window);
+    scene->add_node(std::shared_ptr<Node>(window_n));
+  }
+
   Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();
   floor_mesh->initialize_plane(true, 3.0f);
@@ -232,11 +256,11 @@ void OpenGLWindow::initializeGL() {
 void OpenGLWindow::load_shaders() {
   dirlight_depth_shaders.opaque = new Shader();
   dirlight_depth_shaders.full_transparency = new Shader();
-  // dirlight_depth_partial_transparency_shader = new Shader();
+  dirlight_depth_shaders.partial_transparency = new Shader();
 
   pointlight_depth_shaders.opaque = new Shader();
   pointlight_depth_shaders.full_transparency = new Shader();
-  // pointlight_depth_partial_transparency_shader = new Shader();
+  pointlight_depth_shaders.partial_transparency = new Shader();
 
   object_shaders.opaque = new Shader();
   object_shaders.full_transparency = new Shader();
@@ -252,11 +276,11 @@ void OpenGLWindow::load_shaders() {
 
   dirlight_depth_shaders.opaque->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_opaque.fs");
   dirlight_depth_shaders.full_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
-  // dirlight_depth_partial_transparency_shader->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
+  dirlight_depth_shaders.partial_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
   pointlight_depth_shaders.opaque->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   pointlight_depth_shaders.full_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
-  // pointlight_depth_partial_transparency_shader->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+  pointlight_depth_shaders.partial_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
 
   object_shaders.opaque->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
   object_shaders.full_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
@@ -421,7 +445,7 @@ void OpenGLWindow::paintGL() {
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.partial_transparency, texture_unit);
 
-    scene->draw_objects(object_shaders, true, texture_unit);
+    scene->draw_objects(object_shaders, true, texture_unit, camera->position);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)

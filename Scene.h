@@ -36,6 +36,7 @@ enum Display_Types {
 struct Transparent_Draw {
   Mesh* mesh;
   glm::mat4 model;
+  int texture_unit;
 };
 
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
@@ -62,7 +63,7 @@ public:
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 
-  void draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit=0);
+  void draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit=0, glm::vec3 camera_position = glm::vec3(0.0f));
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;
@@ -90,7 +91,7 @@ public:
 
   Mesh *skybox;
 
-  glm::vec3 background_color;
+  float skybox_multiplier;
 
   float bloom_multiplier;
   float bloom_offset;

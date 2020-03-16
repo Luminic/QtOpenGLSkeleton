@@ -24,13 +24,12 @@ void main() {
   }
   if (do_exposure) {
     col *= exposure;
-    col = max(0.0f.xxx, col-0.004.xxx);
-    col = (col*(6.2.xxx*col+0.5.xxx))/(col*(6.2.xxx*col+1.7.xxx)+0.06.xxx);
+    col = col/(col+1.0f.xxx);
   }
   if (do_gamma_correction) {
     col = pow(col, vec3(1/2.2));
   }
-  
+
   frag_color = vec4(col, 1.0f);
 }
 

@@ -13,7 +13,8 @@ public:
   void set_object_settings(std::string name, Shader *shader);
 
   void initialize_depth_framebuffer(unsigned int depth_map_width=1024, unsigned int depth_map_height=1024);
-  void bind_dirlight_framebuffer(Shader* depth_shader);
+  void bind_dirlight_framebuffer();
+  void set_light_space(Shader* depth_shader);
 
   glm::mat4 get_model_matrix() override;
 

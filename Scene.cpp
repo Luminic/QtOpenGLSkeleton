@@ -2,6 +2,10 @@
 #include <QOpenGLDebugLogger>
 #include <QDebug>
 
+#include <algorithm>
+
+#include <glm/gtx/norm.hpp>
+
 #include "Scene.h"
 
 std::vector<Texture> Scene::loaded_textures;
@@ -10,13 +14,14 @@ std::vector<Material*> Scene::loaded_materials;
 Scene::Scene(QObject *parent) : QObject(parent) {
   initializeOpenGLFunctions();
 
-  background_color = glm::vec3(0.1, 0.1, 0.2);
   display_type = 0;
+
+  skybox_multiplier = 3.5f;
 
   bloom_multiplier = 0.2f;
   bloom_offset = 0.0f;
-  bloom_threshold_upper = 1.2f;
-  bloom_threshold_lower = 0.7f;
+  bloom_threshold_upper = 4.0f;
+  bloom_threshold_lower = 2.5f;
   bloom_interpolation = 1;
   bloom_applications = 10;
 
@@ -81,6 +86,8 @@ void Scene::update_scene() {
 }
 
 void Scene::draw_skybox(Shader *shader) {
+  shader->use();
+  shader->setFloat("skybox_multiplier", skybox_multiplier);
   skybox->draw(shader);
 }
 
@@ -95,8 +102,10 @@ int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_uni
 
 void Scene::render_dirlights_shadow_map(Shader_Opacity_Triplet shaders) {
   for (auto dirlight : dirlights) {
-    dirlight->bind_dirlight_framebuffer(shaders.opaque);
-    dirlight->bind_dirlight_framebuffer(shaders.full_transparency);
+    dirlight->bind_dirlight_framebuffer();
+    dirlight->set_light_space(shaders.opaque);
+    dirlight->set_light_space(shaders.full_transparency);
+    dirlight->set_light_space(shaders.partial_transparency);
     draw_objects(shaders, false);
   }
 }
@@ -124,8 +133,10 @@ void Scene::draw_dirlight(Shader *shader) {
 
 void Scene::render_pointlights_shadow_map(Shader_Opacity_Triplet shaders) {
   for (auto light : pointlights) {
-    light->bind_pointlight_framebuffer(shaders.opaque);
-    light->bind_pointlight_framebuffer(shaders.full_transparency);
+    light->bind_pointlight_framebuffer();
+    light->set_light_space(shaders.opaque);
+    light->set_light_space(shaders.full_transparency);
+    light->set_light_space(shaders.partial_transparency);
     draw_objects(shaders, false);
   }
 }
@@ -150,11 +161,25 @@ void Scene::draw_light(Shader *shader) {
   }
 }
 
-void Scene::draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit) {
+void Scene::draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit, glm::vec3 camera_position) {
   std::vector<Transparent_Draw> partially_transparent_meshes;
   for (auto node : nodes) {
     node->draw(shaders, &partially_transparent_meshes, glm::mat4(1.0f), use_material, texture_unit);
   }
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  std::sort(partially_transparent_meshes.begin(), partially_transparent_meshes.end(),
+    [&camera_position](Transparent_Draw& obj1, Transparent_Draw& obj2){
+      return glm::length2(camera_position-glm::vec3(obj1.model*glm::vec4(0.0f,0.0f,0.0f,1.0f))) >= glm::length2(camera_position-glm::vec3(obj2.model*glm::vec4(0.0f,0.0f,0.0f,1.0f)));
+    }
+  );
+
+  shaders.partial_transparency->use();
+  for (auto draw_call : partially_transparent_meshes) {
+    shaders.partial_transparency->setMat4("model", draw_call.model);
+    draw_call.mesh->draw(shaders.partial_transparency, true, draw_call.texture_unit);
+  }
+  glBlendFunc(GL_ONE, GL_ZERO);
 }
 
 Texture Scene::is_texture_loaded(std::string image_path) {

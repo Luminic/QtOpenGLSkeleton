@@ -43,27 +43,28 @@ void PointLight::initialize_depth_framebuffer(unsigned int depth_map_width, unsi
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void PointLight::bind_pointlight_framebuffer(Shader *depth_shader) {
+void PointLight::bind_pointlight_framebuffer() {
   glViewport(0, 0, depth_map_width, depth_map_height);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_framebuffer);
 
   glClear(GL_DEPTH_BUFFER_BIT);
 
-  depth_shader->use();
+
 
   glm::mat4 pointlight_projection = glm::perspective(glm::radians(90.0f), float(depth_map_width)/depth_map_height, near_plane, far_plane);
 
-  glm::mat4 pointlight_views[6] = {
-    pointlight_views[0] = glm::lookAt(position, position+glm::vec3( 1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f)),
-    pointlight_views[1] = glm::lookAt(position, position+glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f)),
-    pointlight_views[2] = glm::lookAt(position, position+glm::vec3( 0.0f, 1.0f, 0.0f), glm::vec3( 0.0f, 0.0f, 1.0f)),
-    pointlight_views[3] = glm::lookAt(position, position+glm::vec3( 0.0f,-1.0f, 0.0f), glm::vec3( 0.0f, 0.0f,-1.0f)),
-    pointlight_views[4] = glm::lookAt(position, position+glm::vec3( 0.0f, 0.0f, 1.0f), glm::vec3( 0.0f,-1.0f, 0.0f)),
-    pointlight_views[5] = glm::lookAt(position, position+glm::vec3( 0.0f, 0.0f,-1.0f), glm::vec3( 0.0f,-1.0f, 0.0f))
-  };
+  pointlight_views[0] = pointlight_projection*glm::lookAt(position, position+glm::vec3( 1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f));
+  pointlight_views[1] = pointlight_projection*glm::lookAt(position, position+glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3( 0.0f,-1.0f, 0.0f));
+  pointlight_views[2] = pointlight_projection*glm::lookAt(position, position+glm::vec3( 0.0f, 1.0f, 0.0f), glm::vec3( 0.0f, 0.0f, 1.0f));
+  pointlight_views[3] = pointlight_projection*glm::lookAt(position, position+glm::vec3( 0.0f,-1.0f, 0.0f), glm::vec3( 0.0f, 0.0f,-1.0f));
+  pointlight_views[4] = pointlight_projection*glm::lookAt(position, position+glm::vec3( 0.0f, 0.0f, 1.0f), glm::vec3( 0.0f,-1.0f, 0.0f));
+  pointlight_views[5] = pointlight_projection*glm::lookAt(position, position+glm::vec3( 0.0f, 0.0f,-1.0f), glm::vec3( 0.0f,-1.0f, 0.0f));
+}
 
+void PointLight::set_light_space(Shader* depth_shader) {
+  depth_shader->use();
   for (int i=0; i<6; i++) {
-    depth_shader->setMat4(("light_spaces["+std::to_string(i)+"]").c_str(), pointlight_projection*pointlight_views[i]);
+    depth_shader->setMat4(("light_spaces["+std::to_string(i)+"]").c_str(), pointlight_views[i]);
   }
   depth_shader->setVec3("pointlight_position", position);
   depth_shader->setFloat("far_plane", far_plane);
