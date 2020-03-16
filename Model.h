@@ -22,6 +22,7 @@ class Model : public Node {
 
 public:
   Model(const char *path);
+  Model(const char *path, const char* name);
   ~Model();
 
 protected:

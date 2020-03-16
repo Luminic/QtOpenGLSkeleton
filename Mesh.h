@@ -33,6 +33,8 @@ public:
   Mesh();
   ~Mesh();
 
+  std::string name;
+
   void initialize_cube(float texture_scale=1.0f);
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
   void initialize_buffers();
@@ -46,8 +48,6 @@ public:
   std::vector<unsigned int> indices;
 
   Material *material;
-
-  std::string name;
 
 protected:
   glm::mat4 transformation;

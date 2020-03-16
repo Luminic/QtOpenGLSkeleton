@@ -16,8 +16,14 @@ glm::mat4 aiMat_to_glmMat(const aiMatrix4x4* from) {
 }
 
 
-Model::Model(const char *path) {
+Model::Model(const char* path) {
   load_model(path);
+  name = path;
+}
+
+Model::Model(const char* path, const char* name) {
+  load_model(path);
+  this->name = name;
 }
 
 Model::~Model() {

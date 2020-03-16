@@ -127,20 +127,22 @@ void OpenGLWindow::initializeGL() {
   }
 
   for (unsigned int i=0; i<scene->get_pointlights().size(); i++) {
-    settings->set_point_light(scene->get_pointlights()[i].get(), ("Pointlight "+std::to_string(i)).c_str() );
+    settings->set_point_light(scene->get_pointlights()[i].get());
   }
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // nanosuit = new Model("models/raygun/raygun.fbx");
   //nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj");
+  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
   scene->add_node(std::shared_ptr<Node>(nanosuit));
+  settings->set_node(nanosuit);
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
+  cube->name = "default cube";
   cube->initialize_cube();
   cube->material = new Material();
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
@@ -164,11 +166,14 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<10; i++) {
     Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
+    n->name = "cube #" + std::to_string(i);
     n->add_mesh(cube);
     scene->add_node(std::shared_ptr<Node>(n));
+    settings->set_node(n);
   }
 
   std::shared_ptr<Mesh> grass = std::make_shared<Mesh>();
+  grass->name = "grass";
   grass->initialize_plane(false);
   grass->material = new Material();
   grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
@@ -186,11 +191,14 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<10; i++) {
     Node* n = new Node(glm::mat4(1.0f), grass_positions[i/2], glm::vec3(0.5f), glm::vec3(90.0f*(i%2),0.0f,0.0f));
+    n->name = "grass #" + std::to_string(i/2) + (i%2 ? 'b' : 'a');
     n->add_mesh(grass);
     scene->add_node(std::shared_ptr<Node>(n));
+    settings->set_node(n);
   }
 
   std::shared_ptr<Mesh> window = std::make_shared<Mesh>();
+  window->name = "window";
   window->initialize_plane(false);
   window->material = new Material();
   window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
@@ -208,12 +216,14 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<5; i++) {
     Node* window_n = new Node(glm::mat4(1.0f), window_positions[i]);
+    window_n->name = "window #" + std::to_string(i);
     window_n->add_mesh(window);
     scene->add_node(std::shared_ptr<Node>(window_n));
+    settings->set_node(window_n);
   }
 
-  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   Mesh* floor_mesh = new Mesh();
+  floor_mesh->name = "floor";
   floor_mesh->initialize_plane(true, 3.0f);
   floor_mesh->material = new Material();
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
@@ -223,10 +233,12 @@ void OpenGLWindow::initializeGL() {
   floor_mesh->material->roughness = 0.66f;
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
 
+  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
+  floor->name = "floor";
   floor->add_mesh(std::shared_ptr<Mesh>(floor_mesh));
   floor->set_scale(glm::vec3(14.0f,1.0f,7.0f));
   scene->add_node(std::shared_ptr<Node>(floor));
-
+  settings->set_node(floor);
 
   framebuffer_quad = new Mesh();
   framebuffer_quad->initialize_plane(false);

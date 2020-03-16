@@ -2,8 +2,10 @@
 #define SETTINGS_H
 
 #include <QTabWidget>
-#include <QGridLayout>
 #include <QGroupBox>
+#include <QScrollArea>
+#include <QGridLayout>
+#include <QVBoxLayout>
 
 #include <vector>
 
@@ -24,12 +26,12 @@ public:
   Settings();
   ~Settings();
 
-  void set_scene(Scene *scene, const char *name="Scene");
-  void set_camera(Camera *camera, const char *name="Camera");
-  void set_node(Node *node, const char *name="Node");
-  void set_point_light(PointLight *point_light, const char *name="Point Light");
-  void set_dirlight(DirectionalLight *sunlight, const char *name="Directional Light");
-  void set_material(Material *material, const char *name="Material");
+  void set_scene(Scene *scene);
+  void set_camera(Camera *camera);
+  void set_node(Node *node);
+  void set_point_light(PointLight *point_light);
+  void set_dirlight(DirectionalLight *sunlight);
+  void set_material(Material *material);
 
   // Helper functions
   std::vector<Material*> get_node_materials(Node *node);
@@ -41,6 +43,16 @@ public:
     QWidget *options_box=nullptr, QGridLayout *options_layout=nullptr, int y_pos=0
   );
 
+private:
+  void create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name);
+  // Node tab
+  std::vector<QScrollArea*> nodes;
+  QGroupBox* nodes_list = nullptr;
+  QVBoxLayout* nodes_list_layout = nullptr;
+  // Materials tab
+  std::vector<QScrollArea*> materials;
+  QGroupBox* materials_list = nullptr;
+  QVBoxLayout* materials_list_layout = nullptr;
 };
 
 #endif
