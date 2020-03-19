@@ -88,6 +88,7 @@ void OpenGLWindow::initializeGL() {
   settings->set_scene(scene);
 
   DirectionalLight* dirlight = new DirectionalLight(glm::vec3(-6.0f, 7.0f, -10.0f), glm::vec3(0.2f));
+  dirlight->name = "dirlight #0";
   dirlight->set_direction(glm::vec3(2.0f,-3.0f,4.0f));
   dirlight->x_view_size = 35;
   dirlight->y_view_size = 35;
@@ -101,6 +102,7 @@ void OpenGLWindow::initializeGL() {
   settings->set_dirlight(dirlight);
 
   dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  dirlight->name = "dirlight #1";
   dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
   dirlight->initialize_depth_framebuffer(2048,2048);
   dirlight->color = glm::vec3(0.0f);
@@ -121,6 +123,7 @@ void OpenGLWindow::initializeGL() {
 
   for (int i=0; i<2; i++) {
     PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
+    light->name = "light #" + std::to_string(i);
     light->initialize_depth_framebuffer(1024,1024);
     light->color = glm::vec3(4.5);
     scene->add_pointlight(std::shared_ptr<PointLight>(light));

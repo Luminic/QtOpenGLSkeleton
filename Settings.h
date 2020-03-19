@@ -6,6 +6,8 @@
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QVBoxLayout>
+#include <QTreeView>
+#include <QStandardItemModel>
 
 #include <vector>
 
@@ -28,7 +30,7 @@ public:
 
   void set_scene(Scene *scene);
   void set_camera(Camera *camera);
-  void set_node(Node *node);
+  void set_node(Node *node, QStandardItem* parent=nullptr);
   void set_point_light(PointLight *point_light);
   void set_dirlight(DirectionalLight *sunlight);
   void set_material(Material *material);
@@ -46,9 +48,9 @@ public:
 private:
   void create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name);
   // Node tab
-  std::vector<QScrollArea*> nodes;
-  QGroupBox* nodes_list = nullptr;
-  QVBoxLayout* nodes_list_layout = nullptr;
+  void set_up_nodes_tab();
+  QStandardItemModel* nodes_model = nullptr;
+
   // Materials tab
   std::vector<QScrollArea*> materials;
   QGroupBox* materials_list = nullptr;

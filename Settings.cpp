@@ -24,7 +24,8 @@ Settings::Settings() {
   resize(600,400);
   show();
 
-  create_list_tab(nodes_list, nodes_list_layout, "Nodes");
+  // create_list_tab(nodes_list, nodes_list_layout, "Nodes");
+  set_up_nodes_tab();
   create_list_tab(materials_list, materials_list_layout, "Materials");
 }
 
@@ -39,6 +40,22 @@ void Settings::create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const c
   scrolling->setWidgetResizable(true);
 
   addTab(scrolling, tr(name));
+}
+
+void Settings::set_up_nodes_tab() {
+  nodes_model = new QStandardItemModel();
+  nodes_model->setHorizontalHeaderLabels(QStringList(tr("Nodes Tree View")));
+
+  QTreeView *tree_view = new QTreeView(this);
+  tree_view->setModel(nodes_model);
+
+  connect(tree_view, &QTreeView::clicked, this,
+    [this](const QModelIndex &index){
+      this->nodes_model->itemFromIndex(index)->data().value<QScrollArea*>()->show();
+    }
+  );
+
+  addTab(tree_view, tr("Nodes"));
 }
 
 void Settings::set_scene(Scene *scene) {
@@ -128,7 +145,7 @@ std::vector<Material*> Settings::get_node_materials(Node *node) {
   return materials;
 }
 
-void Settings::set_node(Node *node) {
+void Settings::set_node(Node* node, QStandardItem* parent) {
   QWidget *Node_widget = new QWidget(this);
   QGridLayout *Node_layout = new QGridLayout(Node_widget);
 
@@ -165,18 +182,26 @@ void Settings::set_node(Node *node) {
   }
   Node_layout->addWidget(Material_box, 1, 1);
 
-  QScrollArea *Scrolling = new QScrollArea(this);
+  QScrollArea* Scrolling = new QScrollArea(this);
   Scrolling->setWindowFlags(Qt::Window);
+  Scrolling->setWindowTitle(node->name.c_str());
   Scrolling->setWidget(Node_widget);
   Scrolling->setWidgetResizable(true);
 
-  // addTab(Scrolling, tr(node->name.c_str()));
+  QStandardItem* item = new QStandardItem(QString(tr(node->name.c_str())));
+  QVariant item_data;
+  item_data.setValue(Scrolling);
+  item->setData(item_data);
 
-  QPushButton* node_button = new QPushButton(tr(node->name.c_str()), nodes_list);
-  connect(node_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
+  if (parent==nullptr) {
+    nodes_model->invisibleRootItem()->appendRow(item);
+  } else {
+    parent->appendRow(item);
+  }
 
-  nodes.push_back(Scrolling);
-  nodes_list_layout->addWidget(node_button);
+  for (auto child : node->get_child_nodes()) {
+    set_node(child.get(), item); // Recursively build the node tree
+  }
 }
 
 void Settings::set_point_light(PointLight *point_light) {
