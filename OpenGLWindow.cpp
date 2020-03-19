@@ -112,10 +112,6 @@ void OpenGLWindow::initializeGL() {
   scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
   settings->set_dirlight(dirlight);
 
-  // settings->set_node(scene->floor, "Floor");
-  // settings->set_node(scene->nanosuit, "Nanosuit");
-  // settings->set_point_light(scene->light, "Pointlight");
-
   glm::vec3 light_positions[2] = {
     glm::vec3( 2.4f, 1.9, 2.2f),
     glm::vec3(-5.0f, 2.2, 2.0f)
@@ -147,7 +143,7 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
   cube->initialize_cube();
-  cube->material = new Material();
+  cube->material = new Material("box");
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
   cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
   cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
@@ -178,7 +174,7 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> grass = std::make_shared<Mesh>();
   grass->name = "grass";
   grass->initialize_plane(false);
-  grass->material = new Material();
+  grass->material = new Material("grass");
   grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
   grass->material->opacity_map.type = OPACITY_MAP;
   grass->set_transparency(FULL_TRANSPARENCY);
@@ -192,18 +188,26 @@ void OpenGLWindow::initializeGL() {
     glm::vec3( 2.4f, -3.0f,  2.5f)
   };
 
-  for (int i=0; i<10; i++) {
-    Node* n = new Node(glm::mat4(1.0f), grass_positions[i/2], glm::vec3(0.5f), glm::vec3(90.0f*(i%2),0.0f,0.0f));
-    n->name = "grass #" + std::to_string(i/2) + (i%2 ? 'b' : 'a');
+  for (int i=0; i<5; i++) {
+    Node* n = new Node(glm::mat4(1.0f), grass_positions[i], glm::vec3(0.5f));
+    n->name = "grass #" + std::to_string(i) + 'a';
     n->add_mesh(grass);
+
+    Node* n2 = new Node();
+    n2->set_rotation(glm::vec3(90.0f,0.0f,0.0f));
+    n2->name = "grass #" + std::to_string(i) + 'b';
+    n2->add_mesh(grass);
+
     scene->add_node(std::shared_ptr<Node>(n));
+    n->add_child_node(std::shared_ptr<Node>(n2));
+
     settings->set_node(n);
   }
 
   std::shared_ptr<Mesh> window = std::make_shared<Mesh>();
   window->name = "window";
   window->initialize_plane(false);
-  window->material = new Material();
+  window->material = new Material("window");
   window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
   window->material->opacity_map.type = OPACITY_MAP;
   window->set_transparency(PARTIAL_TRANSPARENCY);
@@ -228,7 +232,7 @@ void OpenGLWindow::initializeGL() {
   Mesh* floor_mesh = new Mesh();
   floor_mesh->name = "floor";
   floor_mesh->initialize_plane(true, 3.0f);
-  floor_mesh->material = new Material();
+  floor_mesh->material = new Material("wooden planks");
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
   floor_mesh->material->ambient = 0.2f;
   floor_mesh->material->diffuse = 0.6f;

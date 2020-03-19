@@ -48,8 +48,13 @@ class Material : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:
+  Material(std::string name);
   Material();
   ~Material();
+  void init();
+
+  std::string name;
+  static int nr_materials_created;
 
   int set_materials(Shader *shader, int texture_unit=0);
   void set_opacity_map(Shader* shader, int texture_unit=0);

@@ -35,7 +35,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     "skyboxes/front.jpg",
     "skyboxes/back.jpg"
   };
-  skybox->material = new Material();
+  skybox->material = new Material("skybox");
   skybox->material->load_cubemap(faces);
 
   antialiasing = FXAA;

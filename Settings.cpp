@@ -177,6 +177,7 @@ void Settings::set_node(Node* node, QStandardItem* parent) {
     QPushButton *material_jump = new QPushButton(Material_box);
     if (material_ptr->textures.size() >= 1)
       material_jump->setIcon(QIcon(material_ptr->textures[0].path.c_str()));
+    material_jump->setText(tr(material_ptr->name.c_str()));
     connect(material_jump, &QPushButton::clicked, this, [=](){materials[material_ptr->index]->show();});
     Material_layout->addWidget(material_jump);
   }
@@ -289,7 +290,7 @@ void Settings::set_dirlight(DirectionalLight *dirlight) {
   addTab(Scrolling, tr(dirlight->name.c_str()));
 }
 
-void Settings::set_material(Material *material) {
+void Settings::set_material(Material* material) {
   QWidget *Material_widget = new QWidget(this);
   QGridLayout *Material_layout = new QGridLayout(Material_widget);
 
@@ -322,14 +323,14 @@ void Settings::set_material(Material *material) {
 
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWindowFlags(Qt::Window);
+  Scrolling->setWindowTitle(material->name.c_str());
   Scrolling->setWidget(Material_widget);
   Scrolling->setWidgetResizable(true);
 
   QPushButton* material_button = new QPushButton(materials_list);
   if (material->textures.size() >= 1)
     material_button->setIcon(QIcon(material->textures[0].path.c_str()));
-  else
-    material_button->setText(QStringLiteral("Material #%s").arg(materials.size()+1));
+  material_button->setText(tr(material->name.c_str()));
   connect(material_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
 
   material->index = materials.size();

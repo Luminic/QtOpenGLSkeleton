@@ -3,7 +3,21 @@
 #include "Material.h"
 #include "Scene.h"
 
+int Material::nr_materials_created = 0;
+
 Material::Material() {
+  this->name = "material #" + std::to_string(nr_materials_created);
+  init();
+}
+
+Material::Material(std::string name) : Material() {
+  this->name = name;
+  init();
+}
+
+void Material::init() {
+  nr_materials_created++;
+
   ambient = 0.2f;
   diffuse = 1.0f;
   specular = 1.0f;
