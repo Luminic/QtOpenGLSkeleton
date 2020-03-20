@@ -74,9 +74,6 @@ public:
   float specular; // 1.0f
   float roughness; // 1.0f
   float metalness; // 0.0
-
-  // For use with settings class
-  int index;
 };
 
 #endif

@@ -26,8 +26,6 @@ void Material::init() {
   roughness = 1.0f;
   metalness = 0.0f;
 
-  index = 0;
-
   opacity_map = {0, OPACITY_MAP, ""};
 
   initializeOpenGLFunctions();

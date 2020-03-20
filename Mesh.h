@@ -32,8 +32,10 @@ public:
   Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material);
   Mesh();
   ~Mesh();
+  void init();
 
   std::string name;
+  static int nr_meshes_created;
 
   void initialize_cube(float texture_scale=1.0f);
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
@@ -47,7 +49,7 @@ public:
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
 
-  Material *material;
+  Material* material = nullptr;
 
 protected:
   glm::mat4 transformation;

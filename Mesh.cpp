@@ -2,18 +2,24 @@
 
 #include "Mesh.h"
 
+int Mesh::nr_meshes_created = 0;
+
 Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material) :
   vertices(vertices),
   indices(indices),
   material(material)
 {
-  transparency = OPAQUE;
+  init();
   initialize_buffers();
 }
 
 Mesh::Mesh() {
-  material = nullptr;
+  init();
+}
+
+void Mesh::init() {
   transparency = OPAQUE;
+  name = "mesh #" + std::to_string(nr_meshes_created);
 }
 
 Mesh::~Mesh() {

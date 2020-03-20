@@ -10,6 +10,7 @@
 #include <QStandardItemModel>
 
 #include <vector>
+#include <unordered_map>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -30,10 +31,11 @@ public:
 
   void set_scene(Scene *scene);
   void set_camera(Camera *camera);
-  void set_node(Node *node, QStandardItem* parent=nullptr);
+  QStandardItem* set_node(Node* node, QStandardItem* parent=nullptr);
+  QStandardItem* set_mesh(Mesh* mesh);
+  QStandardItem* set_material(Material* material);
   void set_point_light(PointLight *point_light);
   void set_dirlight(DirectionalLight *sunlight);
-  void set_material(Material *material);
 
   // Helper functions
   std::vector<Material*> get_node_materials(Node *node);
@@ -51,8 +53,12 @@ private:
   void set_up_nodes_tab();
   QStandardItemModel* nodes_model = nullptr;
 
+  // Meshes
+  std::unordered_map<const char*, QScrollArea*> loaded_meshes;
+
   // Materials tab
-  std::vector<QScrollArea*> materials;
+  // std::vector<QScrollArea*> materials;
+  std::unordered_map<const char*, QScrollArea*> loaded_materials;
   QGroupBox* materials_list = nullptr;
   QVBoxLayout* materials_list_layout = nullptr;
 };

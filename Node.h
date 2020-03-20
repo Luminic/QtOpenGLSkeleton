@@ -24,6 +24,7 @@ public:
   ~Node();
 
   std::string name;
+  static int nr_nodes_created;
 
   virtual void draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
 

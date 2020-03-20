@@ -3,12 +3,15 @@
 #include "Node.h"
 #include "Scene.h"
 
+int Node::nr_nodes_created = 0;
+
 Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation) :
   transformation(transformation),
   position(position),
   scale(scale),
   rotation(rotation)
 {
+  name = "node #" + std::to_string(nr_nodes_created);
   visible = true;
 }
 

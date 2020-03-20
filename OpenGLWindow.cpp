@@ -250,11 +250,6 @@ void OpenGLWindow::initializeGL() {
   framebuffer_quad = new Mesh();
   framebuffer_quad->initialize_plane(false);
 
-  for (auto m : Scene::loaded_materials) {
-    settings->set_material(m);
-    qDebug() << m->textures[0].path.c_str();
-  }
-
   create_framebuffer();
   create_scene_framebuffer();
   create_ping_pong_framebuffer();

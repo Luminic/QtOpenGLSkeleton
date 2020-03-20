@@ -51,7 +51,7 @@ void Settings::set_up_nodes_tab() {
 
   connect(tree_view, &QTreeView::clicked, this,
     [this](const QModelIndex &index){
-      this->nodes_model->itemFromIndex(index)->data().value<QScrollArea*>()->show();
+      this->nodes_model->itemFromIndex(index)->data().value<QWidget*>()->show();
     }
   );
 
@@ -145,7 +145,7 @@ std::vector<Material*> Settings::get_node_materials(Node *node) {
   return materials;
 }
 
-void Settings::set_node(Node* node, QStandardItem* parent) {
+QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   QWidget *Node_widget = new QWidget(this);
   QGridLayout *Node_layout = new QGridLayout(Node_widget);
 
@@ -178,7 +178,7 @@ void Settings::set_node(Node* node, QStandardItem* parent) {
     if (material_ptr->textures.size() >= 1)
       material_jump->setIcon(QIcon(material_ptr->textures[0].path.c_str()));
     material_jump->setText(tr(material_ptr->name.c_str()));
-    connect(material_jump, &QPushButton::clicked, this, [=](){materials[material_ptr->index]->show();});
+    // connect(material_jump, &QPushButton::clicked, this, [=](){materials[material_ptr->index]->show();});
     Material_layout->addWidget(material_jump);
   }
   Node_layout->addWidget(Material_box, 1, 1);
@@ -196,13 +196,112 @@ void Settings::set_node(Node* node, QStandardItem* parent) {
 
   if (parent==nullptr) {
     nodes_model->invisibleRootItem()->appendRow(item);
-  } else {
-    parent->appendRow(item);
   }
 
   for (auto child : node->get_child_nodes()) {
-    set_node(child.get(), item); // Recursively build the node tree
+    item->appendRow(set_node(child.get(), item)); // Recursively build the node tree
   }
+
+  for (auto mesh : node->get_meshes()) {
+    item->appendRow(set_mesh(mesh.get()));
+  }
+
+  return item;
+}
+
+QStandardItem* Settings::set_mesh(Mesh* mesh) {
+  QStandardItem* mesh_item = new QStandardItem(QString(tr(mesh->name.c_str())));
+  mesh_item->setIcon(QIcon("textures/icons/mesh_icon.png"));
+  QVariant mesh_item_data;
+
+  auto it = loaded_meshes.find(mesh->name.c_str());
+  if (it != loaded_meshes.end()) {
+    // Use already created window if exists
+    mesh_item_data.setValue(it->second);
+  } else {
+    // Window Creation
+    QLabel* label = new QLabel(tr("Nothing to see here!"));
+
+    QScrollArea* Scrolling = new QScrollArea(this);
+    Scrolling->setWindowFlags(Qt::Window);
+    Scrolling->setWindowTitle(mesh->name.c_str());
+    Scrolling->setWidget(label);
+    Scrolling->setWidgetResizable(true);
+
+    mesh_item_data.setValue(Scrolling);
+    loaded_meshes[mesh->name.c_str()] = Scrolling;
+  }
+
+  if (mesh->material != nullptr) {
+    mesh_item->appendRow(set_material(mesh->material));
+  }
+
+  mesh_item->setData(mesh_item_data);
+  return mesh_item;
+}
+
+QStandardItem* Settings::set_material(Material* material) {
+  QStandardItem* material_item = new QStandardItem(QString(tr(material->name.c_str())));
+  if (material->textures.size() >= 1)
+    material_item->setIcon(QIcon(material->textures[0].path.c_str()));
+  QVariant material_item_data;
+
+  auto it = loaded_materials.find(material->name.c_str());
+  if (it != loaded_materials.end()) {
+    // Material was loaded before so use the already created window
+    material_item_data.setValue(it->second);
+  } else {
+    // Create the window
+    QWidget *Material_widget = new QWidget(this);
+    QGridLayout *Material_layout = new QGridLayout(Material_widget);
+
+    QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
+    QGridLayout *Color_Layout = new QGridLayout(Color_Box);
+    create_option_group("R:", &material->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
+    create_option_group("G:", &material->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
+    create_option_group("B:", &material->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
+    Material_layout->addWidget(Color_Box, 0, 0);
+
+    QGroupBox *Misc_box = new QGroupBox(tr("Material Properties"), this);
+    QGridLayout *Misc_layout = new QGridLayout(Misc_box);
+    create_option_group("Ambient:", &material->ambient, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 0);
+    create_option_group("Diffuse:", &material->diffuse, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 2);
+    create_option_group("Specular:", &material->specular, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 4);
+    create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 6);
+    create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 8);
+    Material_layout->addWidget(Misc_box, 0, 1);
+
+    if (material->textures.size() >= 1) {
+      QTabWidget *Image_container = new QTabWidget(this);
+      for (auto texture : material->textures) {
+        QLabel *texture_label = new QLabel(Image_container);
+        QPixmap texture_image(texture.path.c_str());
+        texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
+        Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
+      }
+      Material_layout->addWidget(Image_container, 1, 0, 1, -1);
+    }
+
+    QScrollArea *Scrolling = new QScrollArea(this);
+    Scrolling->setWindowFlags(Qt::Window);
+    Scrolling->setWindowTitle(material->name.c_str());
+    Scrolling->setWidget(Material_widget);
+    Scrolling->setWidgetResizable(true);
+
+    material_item_data.setValue(Scrolling);
+    loaded_materials[material->name.c_str()] = Scrolling;
+
+    // The material hasn't been loaded before so add it to the materials tab
+    QPushButton* material_button = new QPushButton(materials_list);
+    if (material->textures.size() >= 1)
+    material_button->setIcon(QIcon(material->textures[0].path.c_str()));
+    material_button->setText(tr(material->name.c_str()));
+    connect(material_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
+    materials_list_layout->addWidget(material_button);
+  }
+
+  material_item->setData(material_item_data);
+  return material_item;
 }
 
 void Settings::set_point_light(PointLight *point_light) {
@@ -288,54 +387,6 @@ void Settings::set_dirlight(DirectionalLight *dirlight) {
   Scrolling->setWidgetResizable(true);
 
   addTab(Scrolling, tr(dirlight->name.c_str()));
-}
-
-void Settings::set_material(Material* material) {
-  QWidget *Material_widget = new QWidget(this);
-  QGridLayout *Material_layout = new QGridLayout(Material_widget);
-
-  QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
-  QGridLayout *Color_Layout = new QGridLayout(Color_Box);
-  create_option_group("R:", &material->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
-  create_option_group("G:", &material->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
-  create_option_group("B:", &material->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 4);
-  Material_layout->addWidget(Color_Box, 0, 0);
-
-  QGroupBox *Misc_box = new QGroupBox(tr("Material Properties"), this);
-  QGridLayout *Misc_layout = new QGridLayout(Misc_box);
-  create_option_group("Ambient:", &material->ambient, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 0);
-  create_option_group("Diffuse:", &material->diffuse, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 2);
-  create_option_group("Specular:", &material->specular, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 4);
-  create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 6);
-  create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 8);
-  Material_layout->addWidget(Misc_box, 0, 1);
-
-  if (material->textures.size() >= 1) {
-    QTabWidget *Image_container = new QTabWidget(this);
-    for (auto texture : material->textures) {
-      QLabel *texture_label = new QLabel(Image_container);
-      QPixmap texture_image(texture.path.c_str());
-      texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
-      Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
-    }
-    Material_layout->addWidget(Image_container, 1, 0, 1, -1);
-  }
-
-  QScrollArea *Scrolling = new QScrollArea(this);
-  Scrolling->setWindowFlags(Qt::Window);
-  Scrolling->setWindowTitle(material->name.c_str());
-  Scrolling->setWidget(Material_widget);
-  Scrolling->setWidgetResizable(true);
-
-  QPushButton* material_button = new QPushButton(materials_list);
-  if (material->textures.size() >= 1)
-    material_button->setIcon(QIcon(material->textures[0].path.c_str()));
-  material_button->setText(tr(material->name.c_str()));
-  connect(material_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
-
-  material->index = materials.size();
-  materials.push_back(Scrolling);
-  materials_list_layout->addWidget(material_button);
 }
 
 template <typename T>
