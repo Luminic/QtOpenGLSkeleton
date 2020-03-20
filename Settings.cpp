@@ -185,7 +185,11 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
       material_jump->setIcon(QIcon(QPixmap::fromImage(material_ptr->textures[0].image)));
     }
     material_jump->setText(tr(material_ptr->name.c_str()));
-    // connect(material_jump, &QPushButton::clicked, this, [=](){materials[material_ptr->index]->show();});
+    connect(material_jump, &QPushButton::clicked, this,
+      [this, material_ptr](){
+        loaded_materials.find(material_ptr->name.c_str())->second->show();
+      }
+    );
     Material_layout->addWidget(material_jump);
   }
   Node_layout->addWidget(Material_box, 1, 1);
