@@ -57,10 +57,13 @@ private:
   std::unordered_map<const char*, QScrollArea*> loaded_meshes;
 
   // Materials tab
-  // std::vector<QScrollArea*> materials;
   std::unordered_map<const char*, QScrollArea*> loaded_materials;
   QGroupBox* materials_list = nullptr;
   QVBoxLayout* materials_list_layout = nullptr;
+
+  // Icons
+  void load_icons();
+  std::unordered_map<const char*, QIcon> icons;
 };
 
 #endif

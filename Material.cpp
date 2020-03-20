@@ -26,7 +26,7 @@ void Material::init() {
   roughness = 1.0f;
   metalness = 0.0f;
 
-  opacity_map = {0, OPACITY_MAP, ""};
+  opacity_map = {0, OPACITY_MAP, "", QImage()};
 
   initializeOpenGLFunctions();
 }
@@ -125,7 +125,9 @@ Texture Material::load_texture(const char *path, Image_Type type, ImageLoading::
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    qDebug() << "Loading" << path;
     QImage img = QImage(path);
+    texture.image = img;
     if (options & ImageLoading::Options::TRANSPARENCY) {
       img = img.convertToFormat(QImage::Format_RGBA8888);
     } else {

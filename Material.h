@@ -42,6 +42,7 @@ struct Texture {
   unsigned int id;
   Image_Type type;
   std::string path;
+  QImage image;
 };
 
 class Material : public QObject, protected QOpenGLFunctions_4_5_Core {

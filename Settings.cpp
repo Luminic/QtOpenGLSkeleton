@@ -24,12 +24,17 @@ Settings::Settings() {
   resize(600,400);
   show();
 
-  // create_list_tab(nodes_list, nodes_list_layout, "Nodes");
+  load_icons();
   set_up_nodes_tab();
   create_list_tab(materials_list, materials_list_layout, "Materials");
 }
 
 Settings::~Settings() {}
+
+void Settings::load_icons() {
+  icons["mesh"] = QIcon("textures/icons/mesh.png");
+  icons["material"] = QIcon("textures/icons/material.png");
+}
 
 void Settings::create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name) {
   widget = new QGroupBox(this);
@@ -175,8 +180,10 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   QVBoxLayout *Material_layout = new QVBoxLayout(Material_box);
   for (auto material_ptr : get_node_materials(node)) {
     QPushButton *material_jump = new QPushButton(Material_box);
-    if (material_ptr->textures.size() >= 1)
-      material_jump->setIcon(QIcon(material_ptr->textures[0].path.c_str()));
+    if (material_ptr->textures.size() >= 1) {
+      Q_ASSERT_X(material_ptr->textures[0].image.isNull() == false, "texture icons creation", "QImage is null");
+      material_jump->setIcon(QIcon(QPixmap::fromImage(material_ptr->textures[0].image)));
+    }
     material_jump->setText(tr(material_ptr->name.c_str()));
     // connect(material_jump, &QPushButton::clicked, this, [=](){materials[material_ptr->index]->show();});
     Material_layout->addWidget(material_jump);
@@ -211,7 +218,7 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
 
 QStandardItem* Settings::set_mesh(Mesh* mesh) {
   QStandardItem* mesh_item = new QStandardItem(QString(tr(mesh->name.c_str())));
-  mesh_item->setIcon(QIcon("textures/icons/mesh_icon.png"));
+  mesh_item->setIcon(icons.find("mesh")->second);
   QVariant mesh_item_data;
 
   auto it = loaded_meshes.find(mesh->name.c_str());
@@ -242,8 +249,12 @@ QStandardItem* Settings::set_mesh(Mesh* mesh) {
 
 QStandardItem* Settings::set_material(Material* material) {
   QStandardItem* material_item = new QStandardItem(QString(tr(material->name.c_str())));
-  if (material->textures.size() >= 1)
-    material_item->setIcon(QIcon(material->textures[0].path.c_str()));
+  if (material->textures.size() >= 1) {
+    Q_ASSERT_X(material->textures[0].image.isNull() == false, "texture icons creation", "QImage is null");
+    material_item->setIcon(QIcon(QPixmap::fromImage(material->textures[0].image)));
+  } else {
+    material_item->setIcon(icons.find("material")->second);
+  }
   QVariant material_item_data;
 
   auto it = loaded_materials.find(material->name.c_str());
@@ -275,7 +286,7 @@ QStandardItem* Settings::set_material(Material* material) {
       QTabWidget *Image_container = new QTabWidget(this);
       for (auto texture : material->textures) {
         QLabel *texture_label = new QLabel(Image_container);
-        QPixmap texture_image(texture.path.c_str());
+        QPixmap texture_image = QPixmap::fromImage(texture.image);
         texture_label->setPixmap(texture_image.scaled(500, 500, Qt::KeepAspectRatio));
         Image_container->addTab(texture_label, tr(Image_Type_String[texture.type]));
       }
@@ -294,7 +305,7 @@ QStandardItem* Settings::set_material(Material* material) {
     // The material hasn't been loaded before so add it to the materials tab
     QPushButton* material_button = new QPushButton(materials_list);
     if (material->textures.size() >= 1)
-    material_button->setIcon(QIcon(material->textures[0].path.c_str()));
+    material_button->setIcon(QIcon(QPixmap::fromImage(material->textures[0].image)));
     material_button->setText(tr(material->name.c_str()));
     connect(material_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
     materials_list_layout->addWidget(material_button);
