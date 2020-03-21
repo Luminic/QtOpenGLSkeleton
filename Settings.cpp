@@ -52,7 +52,25 @@ void Settings::set_up_nodes_tab() {
 
   connect(tree_view, &QTreeView::clicked, this,
     [this](const QModelIndex &index){
-      this->nodes_model->itemFromIndex(index)->data().value<QWidget*>()->show();
+      QStandardItem* item = this->nodes_model->itemFromIndex(index);
+      if (item->isCheckable()) {
+        if (item->data().canConvert<Node*>()) {
+          item->data().value<Node*>()->set_visibility(item->checkState() == Qt::CheckState::Checked);
+        }
+      }
+    }
+  );
+
+  connect(tree_view, &QTreeView::doubleClicked, this,
+    [this](const QModelIndex &index){
+      QVariant data = this->nodes_model->itemFromIndex(index)->data();
+      if (data.canConvert<Node*>()) {
+        loaded_nodes.find(data.value<Node*>()->name.c_str())->second->show();
+      } else if (data.canConvert<Mesh*>()) {
+        loaded_meshes.find(data.value<Mesh*>()->name.c_str())->second->show();
+      } else if (data.canConvert<Material*>()) {
+        loaded_materials.find(data.value<Material*>()->name.c_str())->second->show();
+      }
     }
   );
 
@@ -196,9 +214,13 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   Scrolling->setWidget(Node_widget);
   Scrolling->setWidgetResizable(true);
 
-  QStandardItem* item = new QStandardItem(QString(tr(node->name.c_str())));
+  loaded_nodes[node->name.c_str()] = Scrolling;
+
+  QStandardItem* item = new QStandardItem(tr(node->name.c_str()));
+  item->setCheckable(true);
+  item->setCheckState(node->visible ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
   QVariant item_data;
-  item_data.setValue(Scrolling);
+  item_data.setValue(node);
   item->setData(item_data);
 
   if (parent==nullptr) {
@@ -220,13 +242,10 @@ QStandardItem* Settings::set_mesh(Mesh* mesh) {
   QStandardItem* mesh_item = new QStandardItem(QString(tr(mesh->name.c_str())));
   mesh_item->setIcon(icons.find("mesh")->second);
   QVariant mesh_item_data;
+  mesh_item_data.setValue(mesh);
 
-  auto it = loaded_meshes.find(mesh->name.c_str());
-  if (it != loaded_meshes.end()) {
-    // Use already created window if exists
-    mesh_item_data.setValue(it->second);
-  } else {
-    // Window Creation
+  // Window Creation
+  if (loaded_meshes.find(mesh->name.c_str()) == loaded_meshes.end()) {
     QLabel* label = new QLabel(tr("Nothing to see here!"));
 
     QScrollArea* Scrolling = new QScrollArea(this);
@@ -235,7 +254,6 @@ QStandardItem* Settings::set_mesh(Mesh* mesh) {
     Scrolling->setWidget(label);
     Scrolling->setWidgetResizable(true);
 
-    mesh_item_data.setValue(Scrolling);
     loaded_meshes[mesh->name.c_str()] = Scrolling;
   }
 
@@ -256,12 +274,9 @@ QStandardItem* Settings::set_material(Material* material) {
     material_item->setIcon(icons.find("material")->second);
   }
   QVariant material_item_data;
+  material_item_data.setValue(material);
 
-  auto it = loaded_materials.find(material->name.c_str());
-  if (it != loaded_materials.end()) {
-    // Material was loaded before so use the already created window
-    material_item_data.setValue(it->second);
-  } else {
+  if (loaded_materials.find(material->name.c_str()) == loaded_materials.end()) {
     // Create the window
     QWidget *Material_widget = new QWidget(this);
     QGridLayout *Material_layout = new QGridLayout(Material_widget);
@@ -299,7 +314,6 @@ QStandardItem* Settings::set_material(Material* material) {
     Scrolling->setWidget(Material_widget);
     Scrolling->setWidgetResizable(true);
 
-    material_item_data.setValue(Scrolling);
     loaded_materials[material->name.c_str()] = Scrolling;
 
     // The material hasn't been loaded before so add it to the materials tab

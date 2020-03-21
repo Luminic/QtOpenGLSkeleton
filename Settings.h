@@ -158,6 +158,7 @@ private:
   // Node tab
   void set_up_nodes_tab();
   QStandardItemModel* nodes_model = nullptr;
+  std::unordered_map<const char*, QScrollArea*> loaded_nodes;
 
   // Meshes
   std::unordered_map<const char*, QScrollArea*> loaded_meshes;
