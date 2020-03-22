@@ -16,7 +16,7 @@ const char *Image_Type_String[] = {
   "Cube Map"
 };
 
-Settings::Settings() {
+Settings::Settings(QWidget* parent) : QTabWidget(parent) {
   resize(600,400);
   show();
 

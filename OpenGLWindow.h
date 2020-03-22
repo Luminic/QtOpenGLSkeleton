@@ -32,10 +32,10 @@ public:
 
   void update_perspective_matrix();
 
-  Camera *camera;
+  Camera *camera = nullptr;
 
-  Settings *settings;
-  Scene *scene;
+  Settings *settings = nullptr;
+  Scene *scene = nullptr;
 
   float fov;
 
@@ -67,9 +67,8 @@ private:
   unsigned int post_processing_framebuffer;
   unsigned int post_processing_colorbuffer;
 
-  Mesh *framebuffer_quad;
+  Mesh* framebuffer_quad = nullptr;
 
-  float angle;
   glm::mat4 projection;
 
   Shader_Opacity_Triplet dirlight_depth_shaders;
@@ -85,9 +84,9 @@ private:
   Shader *post_processing_shader = nullptr;
   Shader *antialiasing_shader = nullptr;
 
-  std::unordered_set<int> *keys_pressed;
-  int *delta_time;
-  QPoint *mouse_movement;
+  std::unordered_set<int> *keys_pressed = nullptr;
+  int* delta_time = nullptr;
+  QPoint* mouse_movement = nullptr;
 };
 
 #endif

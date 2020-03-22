@@ -7,6 +7,8 @@
 #include <QGroupBox>
 #include <QGridLayout>
 #include <QLabel>
+#include <QToolButton>
+
 #include <unordered_set>
 #include <vector>
 
@@ -28,7 +30,7 @@ public:
   QGroupBox *status_box;
   QLabel *fps_label;
 
-  QGroupBox *pause_menu;
+  QWidget *pause_menu;
   QLabel *pause_label;
 
   std::unordered_set<int> keys_pressed;

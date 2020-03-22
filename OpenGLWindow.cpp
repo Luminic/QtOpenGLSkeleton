@@ -12,16 +12,6 @@
 #include "OpenGLWindow.h"
 
 OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
-  // Declare all pointers as null just in case
-  settings = nullptr;
-  scene = nullptr;
-  framebuffer_quad = nullptr;
-
-  keys_pressed = nullptr;
-  delta_time = nullptr;
-  mouse_movement = nullptr;
-
-  angle = 0.0f;
   fov = 45.0f;
 }
 
@@ -75,7 +65,9 @@ void OpenGLWindow::initializeGL() {
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
 
-  settings = new Settings();
+  settings = new Settings(this);
+  settings->setWindowFlags(Qt::Window);
+  settings->setWindowTitle(tr("Settings"));
 
   load_shaders();
 
@@ -368,8 +360,6 @@ void OpenGLWindow::create_post_processing_framebuffer() {
 void OpenGLWindow::update_scene() {
   scene->update_scene();
   camera->update_cam();
-  angle++;
-  if (angle>=360) angle=0;
   update();
 }
 

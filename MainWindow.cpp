@@ -53,54 +53,54 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::create_pause_menu() {
-  pause_menu = new QGroupBox(this);
-  // pause_menu->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-  // pause_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  pause_menu = new QWidget(this);
+  pause_menu->setStyleSheet("background-color: rgba(0,0,0,75);");
+  pause_menu->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   QGridLayout *pause_layout = new QGridLayout(pause_menu);
-  pause_layout->setAlignment(Qt::AlignCenter | Qt::AlignCenter);
+  pause_layout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-  pause_label = new QLabel(tr("Paused"), pause_menu);
-  pause_label->setAlignment(Qt::AlignCenter | Qt::AlignCenter);
-  pause_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  pause_label->setFrameStyle(QFrame::Panel | QFrame::Raised);
-  pause_label->setLineWidth(3);
+  QToolButton* pause_button = new QToolButton(pause_menu);
+  pause_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
+  pause_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+  pause_button->setFixedSize(30,30);
+  pause_button->setIconSize(QSize(30,30));
+  pause_button->setIcon(QIcon("textures/icons/pause.png"));
 
-  QFont serifFont("Arial", 20, QFont::Bold);
-  pause_label->setFont(serifFont);
-  pause_label->setStyleSheet("QLabel { background-color : grey; color : black; }");
+  pause_layout->addWidget(pause_button, 0, 0, 1, 1);
+  connect(pause_button, &QPushButton::clicked, this, [this](){this->resume();});
 
-  pause_layout->addWidget(pause_label, 0, 0, 1, -1);
+  QToolButton* settings_button = new QToolButton(pause_menu);
+  settings_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
+  settings_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+  settings_button->setFixedSize(30,30);
+  settings_button->setIconSize(QSize(30,30));
+  settings_button->setIcon(QIcon("textures/icons/settings.png"));
 
+  pause_layout->addWidget(settings_button, 0, 1, 1, 1);
+  connect(settings_button, &QPushButton::clicked, this,
+    [this](){
+      if (this->GLWindow->settings != nullptr) {
+        this->GLWindow->settings->show();
+      }
+    }
+  );
 
-  // |       Resume      |
-  // | Options |  Stats  |
-  // |        Quit       |
+  QToolButton* movement_button = new QToolButton(pause_menu);
+  movement_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
+  movement_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+  movement_button->setFixedSize(30,30);
+  movement_button->setIconSize(QSize(30,30));
+  QIcon movement_icon;
+  movement_icon.addPixmap(QPixmap("textures/icons/movement.png"), QIcon::Normal, QIcon::Off);
+  movement_icon.addPixmap(QPixmap("textures/icons/movement_enabled.png"), QIcon::Normal, QIcon::On);
+  movement_button->setIcon(movement_icon);
+  movement_button->setCheckable(true);
 
-  QFont button_font("Arial", 16);
-
-  QPushButton *resume_button = new QPushButton(tr("Resume"), pause_menu);
-  resume_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  resume_button->setFont(button_font);
-  connect(resume_button, &QPushButton::clicked, this, [=](){resume();});
-  pause_layout->addWidget(resume_button, 1, 0, 1, -1);
-
-  QPushButton *options_button = new QPushButton(tr("Options"), pause_menu);
-  options_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  options_button->setFont(button_font);
-  pause_layout->addWidget(options_button, 2, 0, 1, 1);
-
-  QPushButton *stats_button = new QPushButton(tr("Statistics"), pause_menu);
-  stats_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  stats_button->setFont(button_font);
-  pause_layout->addWidget(stats_button, 2, 1, 1, 1);
-
-  QPushButton *quit_button = new QPushButton(tr("Quit"), pause_menu);
-  quit_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  quit_button->setFont(button_font);
-  connect(quit_button, &QPushButton::clicked, this, [](){QApplication::quit();});
-  pause_layout->addWidget(quit_button, 3, 0, 1, -1);
-
-
+  pause_layout->addWidget(movement_button, 0, 2, 1, 1);
+  connect(movement_button, &QPushButton::toggled, this,
+    [this](bool checked){
+    }
+  );
 
   pause_menu->show();
 }
@@ -149,7 +149,7 @@ void MainWindow::mainLoop() {
     GLWindow->update_scene();
   } else {// We don't want to update the scene but we want still want to draw the screen properly
     GLWindow->update();
-    pause_menu->setGeometry(QRect(QPoint(150,150),size()-QSize(300,300)));
+    pause_menu->setGeometry(QRect(QPoint(5,5),pause_menu->minimumSizeHint()));
   }
 }
 
@@ -207,7 +207,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     case Qt::Key_F2:{
       if (!paused)
         pause();
-        
+
       QFileDialog dialog(this);
       dialog.setWindowTitle("Save Screenshot");
       dialog.setFileMode(QFileDialog::AnyFile);

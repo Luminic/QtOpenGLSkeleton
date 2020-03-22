@@ -139,7 +139,7 @@ class Settings : public QTabWidget {
   Q_OBJECT
 
 public:
-  Settings();
+  Settings(QWidget* parent=nullptr);
   ~Settings();
 
   void set_scene(Scene *scene);
