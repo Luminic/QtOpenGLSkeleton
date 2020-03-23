@@ -15,7 +15,7 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   fov = 45.0f;
 }
 
-void OpenGLWindow::set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time) {
+void OpenGLWindow::set_inputs(const std::unordered_set<int>* keys_pressed, const QPoint* mouse_movement, const int* delta_time) {
   this->keys_pressed = keys_pressed;
   this->delta_time = delta_time;
   this->mouse_movement = mouse_movement;

@@ -7,6 +7,7 @@
 #include <QGroupBox>
 #include <QGridLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QToolButton>
 
 #include <unordered_set>
@@ -25,38 +26,45 @@ public:
   void pause();
   void resume();
 
-  QGridLayout *window_layout;
-
-  QGroupBox *status_box;
-  QLabel *fps_label;
-
-  QWidget *pause_menu;
-  QLabel *pause_label;
-
-  std::unordered_set<int> keys_pressed;
-  int delta_time;
-  QPoint mouse_movement;
-
-private slots:
+protected slots:
   void mainLoop();
 
-private:
-  OpenGLWindow *GLWindow;
+protected:
+  OpenGLWindow* GLWindow;
+  QGridLayout* window_layout;
 
+  QGroupBox* status_box;
+  QLabel* fps_label;
+
+  QWidget* pause_menu;
+  QGridLayout* pause_layout;
+  QLabel* pause_label;
+
+  QToolButton* pause_button;
+  QToolButton* settings_button;
+  QToolButton* movement_button;
+
+  int delta_time;
   QElapsedTimer *frame_time;
   std::vector<int> previous_frame_times;
   unsigned int current_pft_index;
   QTimer *timer;
+
+  QPoint previous_mouse_position; // Set to NULL if the mouse is not pressed
+  QPoint mouse_down_position; // Relative position where the left mouse button is first pressed (set to NULL when mouse button is released)
+  QPoint mouse_movement;
   bool first_mouse;
+  bool grab_to_turn;
+
+  std::unordered_set<int> keys_pressed;
 
   bool paused;
 
-protected:
   void closeEvent(QCloseEvent *event) override;
   void leaveEvent(QEvent *event) override;
-  void handleMouseMovement(); // I need to be sure that I handle the mouse movement *exactly* once per update
   void mouseMoveEvent(QMouseEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
+  void mouseReleaseEvent(QMouseEvent *event) override;
   // void wheelEvent(QWheelEvent *event) override;
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;

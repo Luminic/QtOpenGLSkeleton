@@ -24,10 +24,10 @@ class OpenGLWindow : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
 public:
-  OpenGLWindow(QWidget *parent=nullptr);
+  OpenGLWindow(QWidget* parent=nullptr);
   ~OpenGLWindow();
 
-  void set_inputs(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time);
+  void set_inputs(const std::unordered_set<int>* keys_pressed, const QPoint* mouse_movement, const int* delta_time);
   void update_scene();
 
   void update_perspective_matrix();
@@ -52,7 +52,6 @@ protected:
 
   void wheelEvent(QWheelEvent *event) override;
 
-private:
   unsigned int framebuffer;
   unsigned int renderbuffer;
   unsigned int colorbuffers[2];
@@ -84,9 +83,9 @@ private:
   Shader *post_processing_shader = nullptr;
   Shader *antialiasing_shader = nullptr;
 
-  std::unordered_set<int> *keys_pressed = nullptr;
-  int* delta_time = nullptr;
-  QPoint* mouse_movement = nullptr;
+  const std::unordered_set<int>* keys_pressed = nullptr;
+  const QPoint* mouse_movement = nullptr;
+  const int* delta_time = nullptr;
 };
 
 #endif

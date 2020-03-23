@@ -3,7 +3,6 @@
 #include <QString>
 #include <QVBoxLayout>
 #include <QFileDialog>
-#include <QPushButton>
 
 #include "MainWindow.h"
 
@@ -14,12 +13,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   paused = true;
 
   GLWindow = new OpenGLWindow(this);
+  GLWindow->set_inputs(&keys_pressed, &mouse_movement, &delta_time);
   // window_layout = new QGridLayout(this);
   // window_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
   setCentralWidget(GLWindow);
 
   first_mouse = true;
-  GLWindow->set_inputs(&keys_pressed, &mouse_movement, &delta_time);
 
   // Set up the status box
   status_box = new QGroupBox(tr("Status Box"), this);
@@ -56,10 +55,10 @@ void MainWindow::create_pause_menu() {
   pause_menu = new QWidget(this);
   pause_menu->setStyleSheet("background-color: rgba(0,0,0,75);");
   pause_menu->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-  QGridLayout *pause_layout = new QGridLayout(pause_menu);
+  pause_layout = new QGridLayout(pause_menu);
   pause_layout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-  QToolButton* pause_button = new QToolButton(pause_menu);
+  pause_button = new QToolButton(pause_menu);
   pause_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
   pause_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   pause_button->setFixedSize(30,30);
@@ -69,7 +68,7 @@ void MainWindow::create_pause_menu() {
   pause_layout->addWidget(pause_button, 0, 0, 1, 1);
   connect(pause_button, &QPushButton::clicked, this, [this](){this->resume();});
 
-  QToolButton* settings_button = new QToolButton(pause_menu);
+  settings_button = new QToolButton(pause_menu);
   settings_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
   settings_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   settings_button->setFixedSize(30,30);
@@ -85,7 +84,7 @@ void MainWindow::create_pause_menu() {
     }
   );
 
-  QToolButton* movement_button = new QToolButton(pause_menu);
+  movement_button = new QToolButton(pause_menu);
   movement_button->setStyleSheet("background-color: rgba(0,0,0,0); border: none;");
   movement_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   movement_button->setFixedSize(30,30);
@@ -99,6 +98,13 @@ void MainWindow::create_pause_menu() {
   pause_layout->addWidget(movement_button, 0, 2, 1, 1);
   connect(movement_button, &QPushButton::toggled, this,
     [this](bool checked){
+      grab_to_turn = checked;
+      if (checked) {
+        QCursor cursor(Qt::SizeAllCursor);
+        QApplication::setOverrideCursor(cursor);
+      } else {
+        QApplication::restoreOverrideCursor();
+      }
     }
   );
 
@@ -110,7 +116,7 @@ void MainWindow::pause() {
   releaseMouse();
   setMouseTracking(false);
   paused = true;
-  QCursor cursor(Qt::ArrowCursor);
+  movement_button->setChecked(false);
   QApplication::restoreOverrideCursor();
 
   pause_menu->show();
@@ -121,6 +127,7 @@ void MainWindow::resume() {
   grabMouse();
   setMouseTracking(true);
   paused = false;
+
   first_mouse = true;
   QCursor cursor(Qt::BlankCursor);
   QApplication::setOverrideCursor(cursor);
@@ -144,13 +151,14 @@ void MainWindow::mainLoop() {
   }
 
   //qDebug() << delta_time;
-  handleMouseMovement();
   if (!paused) {
-    GLWindow->update_scene();
-  } else {// We don't want to update the scene but we want still want to draw the screen properly
-    GLWindow->update();
+    QPoint screen_center(geometry().left()+geometry().width()/2, geometry().top()+geometry().height()/2);
+    QCursor::setPos(screen_center);
+  } else {
     pause_menu->setGeometry(QRect(QPoint(5,5),pause_menu->minimumSizeHint()));
   }
+  GLWindow->update_scene();
+  mouse_movement = QPoint(0,0);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -166,10 +174,9 @@ void MainWindow::leaveEvent(QEvent *event) {
   }
 }
 
-void MainWindow::handleMouseMovement() {
-  // This function should only be called once per update
-  // that is why I'm using my own class instead of the default mouseMoveEvent
+void MainWindow::mouseMoveEvent(QMouseEvent* event) {
   if (!paused) {
+    // The cursor will be moved to the screen center in the main loop
     QPoint screen_center(geometry().left()+geometry().width()/2, geometry().top()+geometry().height()/2);
     if (first_mouse) {
       first_mouse = false;
@@ -177,18 +184,28 @@ void MainWindow::handleMouseMovement() {
     } else {
       mouse_movement = QCursor::pos()-screen_center;
     }
-    QCursor::setPos(screen_center);
+  } else if (grab_to_turn) {
+    if (!previous_mouse_position.isNull()) {
+      mouse_movement += (event->pos() - previous_mouse_position) * 2;
+    } else {
+      mouse_movement += (event->pos() - mouse_down_position) * 2;
+    }
+    previous_mouse_position = event->pos();
   } else {
     mouse_movement = QPoint(0,0);
   }
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-  event->accept(); // I'm handling the mouse movement myself... just in another function
+  event->accept();
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-  event->ignore();
+  mouse_down_position = event->pos();
+  event->accept();
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
+  mouse_down_position = QPoint(0,0);
+  previous_mouse_position = QPoint(0,0);
+  event->accept();
 }
 
 

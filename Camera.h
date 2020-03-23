@@ -14,7 +14,7 @@ public:
   Camera(glm::vec3 position=glm::vec3(0.0f,0.0f,-3.0f), float yaw=0, float pitch=0);
   ~Camera();
 
-  void initialize_camera(std::unordered_set<int> *keys_pressed, QPoint *mouse_movement, int *delta_time);
+  void initialize_camera(const std::unordered_set<int>* keys_pressed, const QPoint* mouse_movement, const int* delta_time);
 
   void update_cam();
 
@@ -32,7 +32,7 @@ public:
 
   float exposure;
 
-private:
+protected:
   float friction_curve(float speed);
   float acceleration_multiplier(float speed);
   void update_direction();
@@ -49,9 +49,9 @@ private:
   float yaw;
   float pitch;
 
-  std::unordered_set<int> *keys_pressed;
-  QPoint *mouse_movement;
-  int *delta_time;
+  const std::unordered_set<int>* keys_pressed;
+  const QPoint* mouse_movement;
+  const int* delta_time;
 };
 
 #endif
