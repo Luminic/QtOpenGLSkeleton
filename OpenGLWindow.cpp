@@ -125,7 +125,8 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
   // Model* nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
+  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
+  Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
@@ -423,6 +424,7 @@ void OpenGLWindow::paintGL() {
 
     // Draw the objects
     object_shaders.opaque->use();
+    object_shaders.opaque->setFloat("skybox_multiplier", scene->skybox_multiplier);
     object_shaders.opaque->setVec3("camera_position", camera->position);
     object_shaders.opaque->setMat4("view", view);
 
@@ -432,6 +434,7 @@ void OpenGLWindow::paintGL() {
     texture_unit = scene->set_light_settings("lights", object_shaders.opaque, texture_unit);
 
     object_shaders.full_transparency->use();
+    object_shaders.full_transparency->setFloat("skybox_multiplier", scene->skybox_multiplier);
     object_shaders.full_transparency->setVec3("camera_position", camera->position);
     object_shaders.full_transparency->setMat4("view", view);
 
@@ -441,6 +444,7 @@ void OpenGLWindow::paintGL() {
     texture_unit = scene->set_light_settings("lights", object_shaders.full_transparency, texture_unit);
 
     object_shaders.partial_transparency->use();
+    object_shaders.partial_transparency->setFloat("skybox_multiplier", scene->skybox_multiplier);
     object_shaders.partial_transparency->setVec3("camera_position", camera->position);
     object_shaders.partial_transparency->setMat4("view", view);
 

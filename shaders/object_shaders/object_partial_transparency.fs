@@ -63,6 +63,7 @@ struct Light {
 };
 
 uniform samplerCube skybox;
+uniform float skybox_multiplier;
 
 uniform Material material;
 
@@ -228,18 +229,18 @@ void main() {
     diffuse *= material.diffuse * material.color;
   }
 
-  vec3 ambient = diffuse * material.ambient;
-  if (material.use_ambient_occlusion_map) {
-    //ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
-  }
-
   vec3 specular = vec3(material.specular);
   specular *= pow(roughness, 2);
 
   vec3 metal_tint = diffuse;
-  if (material.metalness >= 0.9f) {
+  if (metalness >= 0.9f) {
     specular *= normalize(diffuse) * 1.73;
     diffuse *= 1.0f-roughness;
+  }
+
+	vec3 ambient = diffuse * material.ambient;
+  if (material.use_ambient_occlusion_map) {
+    //ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
 
 	vec3 lighting_color = vec3(0.0f);
@@ -253,9 +254,9 @@ void main() {
 	}
 
 	vec3 reflection_color = vec3(0.0f);
-	if (material.metalness >= 0.9f) {
+	if (metalness >= 0.9f) {
 		vec3 R = reflect(-camera_direction, fragment_normal);
-		reflection_color = texture(skybox, R).rgb * roughness * metal_tint;
+		reflection_color = texture(skybox, R).rgb * skybox_multiplier * roughness * metal_tint;
 	}
 
 	vec3 total_color = vec3(lighting_color+reflection_color);
