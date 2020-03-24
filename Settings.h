@@ -46,16 +46,16 @@ public:
   void connect_slots_and_signals() {
     connect(slider, &QSlider::valueChanged, this,
       [this](int value){
-        spinbox->setValue(double(value)/conversion_factor);
+        setValue(double(value)/conversion_factor);
       }
     );
-    connect(spinbox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+    connect(spinbox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &Slider_Spinbox_Group::setValue);
+    connect(this, &Slider_Spinbox_Group::valueChanged, spinbox, &QDoubleSpinBox::setValue);
+    connect(this, &Slider_Spinbox_Group::valueChanged, slider,
       [this](double value){
         slider->setValue(int(value*conversion_factor));
       }
     );
-    connect(this, &Slider_Spinbox_Group::valueChanged, spinbox, &QDoubleSpinBox::setValue);
-    connect(spinbox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &Slider_Spinbox_Group::setValue);
   }
 
   int get_decimals() {return decimals;}
@@ -92,7 +92,7 @@ public:
 
 public slots:
   void setValue(double value) {
-    if (value != this->value) {
+    if (glm::abs(value-this->value) > 0.01) {
       emit valueChanged(value);
       this->value = value;
     }
