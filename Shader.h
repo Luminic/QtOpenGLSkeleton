@@ -38,6 +38,47 @@ struct Shader_Opacity_Triplet {
     delete full_transparency;
     delete partial_transparency;
   }
+
+  void setBool(const char *name, bool value) {
+    opaque->use();
+    opaque->setBool(name, value);
+    full_transparency->use();
+    full_transparency->setBool(name, value);
+    partial_transparency->use();
+    partial_transparency->setBool(name, value);
+  }
+  void setInt(const char *name, int value) {
+    opaque->use();
+    opaque->setInt(name, value);
+    full_transparency->use();
+    full_transparency->setInt(name, value);
+    partial_transparency->use();
+    partial_transparency->setInt(name, value);
+  }
+  void setFloat(const char *name, float value) {
+    opaque->use();
+    opaque->setFloat(name, value);
+    full_transparency->use();
+    full_transparency->setFloat(name, value);
+    partial_transparency->use();
+    partial_transparency->setFloat(name, value);
+  }
+  void setVec3(const char *name, const glm::vec3 &vec){
+    opaque->use();
+    opaque->setVec3(name, vec);
+    full_transparency->use();
+    full_transparency->setVec3(name, vec);
+    partial_transparency->use();
+    partial_transparency->setVec3(name, vec);
+  }
+  void setMat4(const char *name, const glm::mat4 &mat){
+    opaque->use();
+    opaque->setMat4(name, mat);
+    full_transparency->use();
+    full_transparency->setMat4(name, mat);
+    partial_transparency->use();
+    partial_transparency->setMat4(name, mat);
+  }
 };
 
 #endif

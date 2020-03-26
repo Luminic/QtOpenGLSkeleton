@@ -56,7 +56,9 @@ void OpenGLWindow::initializeGL() {
       [](const QOpenGLDebugMessage &message){
         if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
           qDebug() << message;
+          if (message.severity() == QOpenGLDebugMessage::HighSeverity) {
 
+          }
         }
       }
     );
@@ -423,32 +425,24 @@ void OpenGLWindow::paintGL() {
     scene->draw_light(light_shader);
 
     // Draw the objects
-    object_shaders.opaque->use();
-    object_shaders.opaque->setFloat("skybox_multiplier", scene->skybox_multiplier);
-    object_shaders.opaque->setVec3("camera_position", camera->position);
-    object_shaders.opaque->setMat4("view", view);
+    object_shaders.setFloat("skybox_multiplier", scene->skybox_multiplier);
+    object_shaders.setVec3("camera_position", camera->position);
+    object_shaders.setMat4("view", view);
 
     int texture_unit = 0;
+    object_shaders.opaque->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.opaque, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.opaque, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.opaque, texture_unit);
 
-    object_shaders.full_transparency->use();
-    object_shaders.full_transparency->setFloat("skybox_multiplier", scene->skybox_multiplier);
-    object_shaders.full_transparency->setVec3("camera_position", camera->position);
-    object_shaders.full_transparency->setMat4("view", view);
-
     texture_unit = 0;
+    object_shaders.full_transparency->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.full_transparency, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.full_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.full_transparency, texture_unit);
 
-    object_shaders.partial_transparency->use();
-    object_shaders.partial_transparency->setFloat("skybox_multiplier", scene->skybox_multiplier);
-    object_shaders.partial_transparency->setVec3("camera_position", camera->position);
-    object_shaders.partial_transparency->setMat4("view", view);
-
     texture_unit = 0;
+    object_shaders.partial_transparency->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.partial_transparency, texture_unit);

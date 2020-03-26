@@ -168,29 +168,33 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   QWidget *Node_widget = new QWidget(this);
   QGridLayout *Node_layout = new QGridLayout(Node_widget);
 
-  QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
+  Matrix_4x4_View* node_transformation = new Matrix_4x4_View(tr("Transformation Matrix"), Node_widget);
+  node_transformation->set_matrix(node->transformation);
+  Node_layout->addWidget(node_transformation, 0, 0);
+
+  QGroupBox *Position_box = new QGroupBox(tr("Position"), Node_widget);
   QGridLayout *Position_layout = new QGridLayout(Position_box);
   create_option_group("X:", &node->position.x, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 0);
   create_option_group("Y:", &node->position.y, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 1);
   create_option_group("Z:", &node->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 2);
-  Node_layout->addWidget(Position_box, 0, 0);
+  Node_layout->addWidget(Position_box, 0, 1);
 
-  QGroupBox *Scale_box = new QGroupBox(tr("Scale"), this);
+  QGroupBox *Scale_box = new QGroupBox(tr("Scale"), Node_widget);
   QGridLayout *Scale_layout = new QGridLayout(Scale_box);
   create_option_group("X:", &node->scale.x, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 0);
   create_option_group("Y:", &node->scale.y, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 1);
   create_option_group("Z:", &node->scale.z, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 2);
-  Node_layout->addWidget(Scale_box, 0, 1);
+  Node_layout->addWidget(Scale_box, 1, 0);
 
-  QGroupBox *Rotation_box = new QGroupBox(tr("Rotation"), this);
+  QGroupBox *Rotation_box = new QGroupBox(tr("Rotation"), Node_widget);
   QGridLayout *Rotation_layout = new QGridLayout(Rotation_box);
   create_option_group("Yaw:", &node->rotation.x, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 0);
   create_option_group("Pitch:", &node->rotation.y, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 1);
   create_option_group("Roll:", &node->rotation.z, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 2);
-  Node_layout->addWidget(Rotation_box, 1, 0);
+  Node_layout->addWidget(Rotation_box, 1, 1);
 
 
-  QGroupBox *Material_box = new QGroupBox(tr("Materials"), this);
+  QGroupBox *Material_box = new QGroupBox(tr("Materials"), Node_widget);
   QVBoxLayout *Material_layout = new QVBoxLayout(Material_box);
   for (auto material_ptr : get_node_materials(node)) {
     QPushButton *material_jump = new QPushButton(Material_box);
@@ -206,7 +210,7 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
     );
     Material_layout->addWidget(material_jump);
   }
-  Node_layout->addWidget(Material_box, 1, 1);
+  Node_layout->addWidget(Material_box, 2, 0, 1, -1);
 
   QScrollArea* Scrolling = new QScrollArea(this);
   Scrolling->setWindowFlags(Qt::Window);

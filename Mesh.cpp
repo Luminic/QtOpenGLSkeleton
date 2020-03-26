@@ -48,35 +48,35 @@ void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {
 
 void Mesh::initialize_cube(float texture_scale) {
   vertices = {
-    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(texture_scale, texture_scale)}), // right top front
-    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(0.0f, texture_scale)}), // left top front
-    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(texture_scale, 0.0f)}), // right bottom front
-    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(0.0f, 0.0f)}), // left bottom front
+    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // right top front
+    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // left top front
+    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // right bottom front
+    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,+0.0f,+1.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }), // left bottom front
     // Back
-    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(texture_scale, texture_scale)}), // right top back
-    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(0.0f, texture_scale)}), // left top back
-    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(texture_scale, 0.0f)}), // right bottom back
-    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(0.0f, 0.0f)}), // left bottom back
+    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // right top back
+    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // left top back
+    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // right bottom back
+    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,+0.0f,-1.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }), // left bottom back
     // Right
-    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, texture_scale)}), // right top back
-    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(0.0f, texture_scale)}), // right top front
-    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, 0.0f)}), // right bottom back
-    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(0.0f, 0.0f)}), // right bottom front
+    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // right top back
+    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // right top front
+    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // right bottom back
+    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+1.0f,+0.0f,+0.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }), // right bottom front
     // Left
-    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, texture_scale)}), // left top back
-    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(0.0f, texture_scale)}), // left top front
-    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, 0.0f)}), // left bottom back
-    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(0.0f, 0.0f)}), // left bottom front
+    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // left top back
+    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // left top front
+    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // left bottom back
+    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(-1.0f,+0.0f,+0.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }), // left bottom front
     // Top
-    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(texture_scale, texture_scale)}), // right top back
-    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(0.0f, texture_scale)}), // left top back
-    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(texture_scale, 0.0f)}), // right top front
-    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(0.0f, 0.0f)}), // left top front
+    Vertex({glm::vec3(+0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // right top back
+    Vertex({glm::vec3(-0.5f,+0.5f,-0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // left top back
+    Vertex({glm::vec3(+0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // right top front
+    Vertex({glm::vec3(-0.5f,+0.5f,+0.5f), glm::vec3(+0.0f,+1.0f,+0.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }), // left top front
     // Bottom
-    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(texture_scale, texture_scale)}), // right bottom back
-    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(0.0f, texture_scale)}), // left bottom back
-    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(texture_scale, 0.0f)}), // right bottom front
-    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(0.0f, 0.0f)}) // left bottom front
+    Vertex({glm::vec3(+0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(texture_scale, texture_scale), glm::ivec4(0), glm::vec4(0.0f) }), // right bottom back
+    Vertex({glm::vec3(-0.5f,-0.5f,-0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(0.0f, texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }), // left bottom back
+    Vertex({glm::vec3(+0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(texture_scale, 0.0f),          glm::ivec4(0), glm::vec4(0.0f) }), // right bottom front
+    Vertex({glm::vec3(-0.5f,-0.5f,+0.5f), glm::vec3(+0.0f,-1.0f,+0.0f), glm::vec2(0.0f, 0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }) // left bottom front
   };
   indices = {
     // Front
@@ -104,10 +104,10 @@ void Mesh::initialize_cube(float texture_scale) {
 void Mesh::initialize_plane(bool horizontal, float texture_scale) {
   if (horizontal) {
     vertices = {
-      Vertex({glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(0.0f,texture_scale)}),
-      Vertex({glm::vec3( 1.0f, 0.0f, 1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(texture_scale,texture_scale)}),
-      Vertex({glm::vec3(-1.0f, 0.0f,-1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(0.0f,0.0f)}),
-      Vertex({glm::vec3( 1.0f, 0.0f,-1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(texture_scale,0.0f)})
+      Vertex({glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(0.0f,texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3( 1.0f, 0.0f, 1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(texture_scale,texture_scale), glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3(-1.0f, 0.0f,-1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(0.0f,0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3( 1.0f, 0.0f,-1.0f), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(texture_scale,0.0f),          glm::ivec4(0), glm::vec4(0.0f) })
     };
     indices = {
       0, 1, 2,
@@ -115,10 +115,10 @@ void Mesh::initialize_plane(bool horizontal, float texture_scale) {
     };
   } else {
     vertices = {
-      Vertex({glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,texture_scale)}),
-      Vertex({glm::vec3( 1.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(texture_scale,texture_scale)}),
-      Vertex({glm::vec3(-1.0f,-1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f)}),
-      Vertex({glm::vec3( 1.0f,-1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(texture_scale,0.0f)})
+      Vertex({glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,texture_scale),          glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3( 1.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(texture_scale,texture_scale), glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3(-1.0f,-1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f),                   glm::ivec4(0), glm::vec4(0.0f) }),
+      Vertex({glm::vec3( 1.0f,-1.0f, 0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(texture_scale,0.0f),          glm::ivec4(0), glm::vec4(0.0f) })
     };
     indices = {
       2, 1, 0,
@@ -152,6 +152,12 @@ void Mesh::initialize_buffers() {
   // Texture Coordinate
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texture_coordinate));
   glEnableVertexAttribArray(2);
+  // Bone IDs
+  glVertexAttribIPointer(3, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, bone_ids));
+  glEnableVertexAttribArray(3);
+  // Bone Weights
+  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bone_weights));
+  glEnableVertexAttribArray(4);
 
   // Unbind vertex array
   glBindVertexArray(0);

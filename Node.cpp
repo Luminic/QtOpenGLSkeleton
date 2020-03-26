@@ -18,7 +18,27 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 Node::~Node() {
 }
 
+void Node::update_armature(Node* root_node, glm::mat4 parent_transformation) {
+  if (root_node == nullptr) {
+    root_node = this;
+  }
+
+  parent_transformation *= get_model_matrix();
+
+  if (bone_id >= 0) {
+    root_node->armature[bone_id].final_transform = parent_transformation*root_node->armature[bone_id].offset;
+  }
+
+  for (auto node : child_nodes) {
+    node->update_armature(root_node, parent_transformation);
+  }
+}
+
 void Node::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
+  for (unsigned int i=0; i<armature.size(); i++) {
+    shaders.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+  }
+
   if (visible) {
     model *= get_model_matrix();
     shaders.opaque->use();

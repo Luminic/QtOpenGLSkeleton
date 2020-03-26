@@ -20,6 +20,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 # Input
-HEADERS += MainWindow.h OpenGLWindow.h Shader.h Camera.h Settings.h Node.h Light.h DirectionalLight.h PointLight.h Model.h Mesh.h Scene.h Material.h
-SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp Shader.cpp Camera.cpp Settings.cpp Node.cpp Light.cpp DirectionalLight.cpp PointLight.cpp Model.cpp Mesh.cpp Scene.cpp Material.cpp
+HEADERS += MainWindow.h OpenGLWindow.h Shader.h Camera.h Settings.h Utility.h Node.h Light.h DirectionalLight.h PointLight.h Model.h Mesh.h Scene.h Material.h
+SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp Shader.cpp Camera.cpp Settings.cpp Utility.cpp Node.cpp Light.cpp DirectionalLight.cpp PointLight.cpp Model.cpp Mesh.cpp Scene.cpp Material.cpp
 LIBS += -lassimp
