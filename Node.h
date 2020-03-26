@@ -58,7 +58,9 @@ public:
   virtual void set_bone_id(int id) {bone_id = id;}
 
   virtual void set_visibility(bool v);
-  virtual bool get_visibility() {return visible;};
+  virtual bool get_visibility() {return visible;}
+
+  virtual const glm::mat4& get_root_inverse_model() {return root_inverse_model;}
 
 protected:
   friend class Settings;
@@ -77,6 +79,11 @@ protected:
   glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
 
   bool visible;
+
+  // The inverse of the final model matrix is stored here for the root node
+  // It is undefined for non root nodes
+  // If the inverse of a non-root node is needed, use inverse(get_model_matrix()) instead; this variable exists as a time saver
+  glm::mat4 root_inverse_model;
 };
 
 #endif

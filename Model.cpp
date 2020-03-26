@@ -31,7 +31,7 @@ Model::~Model() {
 
 void Model::load_model(std::string path) {
   Assimp::Importer importer;
-  const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_RemoveRedundantMaterials);
+  const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_RemoveRedundantMaterials);
   // Check if the model loaded correctly
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
     qDebug() << "ERROR::ASSIMP::" << importer.GetErrorString();
@@ -39,13 +39,20 @@ void Model::load_model(std::string path) {
   }
 
   directory = path.substr(0, path.find_last_of('/'));
-  child_nodes.push_back(std::shared_ptr<Node>(process_node(scene->mRootNode, scene)));
+
+  // child_nodes.push_back(std::shared_ptr<Node>(process_node(scene->mRootNode, scene)));
+  process_node(scene->mRootNode, scene, true);
   load_armature(this);
 }
 
-Node * Model::process_node(aiNode *node, const aiScene *scene) {
-  Node *my_node = new Node();
-  my_node->name = node->mName.C_Str();
+Node* Model::process_node(aiNode* node, const aiScene* scene, bool root) {
+  Node* my_node;
+  if (root) {
+    my_node = this;
+  } else {
+    my_node = new Node();
+    my_node->name = node->mName.C_Str();
+  }
   my_node->set_transformation(aiMat_to_glmMat(node->mTransformation));
 
   // Process the node's mesh (might be none)
@@ -110,8 +117,6 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
 
   // Load colors
   aiColor3D color(0.0f,0.0f,0.0f);
-  // material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-  // mesh_colors->ambient = glm::vec3(color.r,color.g,color.b);
   material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
   mesh_colors->color = glm::vec3(color.r,color.g,color.b);
 
@@ -131,14 +136,12 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
       Bone bone;
       bone.offset = aiMat_to_glmMat(mesh->mBones[i]->mOffsetMatrix);
       this->armature.push_back(bone);
-      // qDebug() << mesh->mBones[i]->mName.C_Str() << bone_index;
     } else {
       bone_index = (int) it->second;
     }
     for (unsigned int j=0; j<mesh->mBones[i]->mNumWeights; j++) {
       unsigned int vertex_id = mesh->mBones[i]->mWeights[j].mVertexId;
       float vertex_weight = mesh->mBones[i]->mWeights[j].mWeight;
-      // qDebug() << "Vertex id:" << vertex_id;
       for (int n=0; n<4; n++) {
         if (vertices[vertex_id].bone_weights[n] <= 0.001) {
           vertices[vertex_id].bone_ids[n] = bone_index;

@@ -21,12 +21,12 @@ Node::~Node() {
 void Node::update_armature(Node* root_node, glm::mat4 parent_transformation) {
   if (root_node == nullptr) {
     root_node = this;
+    root_inverse_model = inverse(get_model_matrix());
   }
-
   parent_transformation *= get_model_matrix();
 
   if (bone_id >= 0) {
-    root_node->armature[bone_id].final_transform = parent_transformation*root_node->armature[bone_id].offset;
+    root_node->armature[bone_id].final_transform = parent_transformation * root_node->armature[bone_id].offset * root_node->get_root_inverse_model();
   }
 
   for (auto node : child_nodes) {

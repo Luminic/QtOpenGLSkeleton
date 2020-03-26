@@ -19,7 +19,7 @@
 #include "Material.h"
 
 class Model : public Node {
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
   Model(const char *path);
@@ -28,7 +28,7 @@ public:
 
 protected:
   void load_model(std::string path);
-  Node* process_node(aiNode* node, const aiScene* scene);
+  Node* process_node(aiNode* node, const aiScene* scene, bool root=false);
   Mesh* process_mesh(aiMesh* mesh, const aiScene* scene);
   void load_material_textures(aiMaterial *mat, Material *mesh_material);
   void load_armature(Node* node);

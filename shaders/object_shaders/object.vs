@@ -31,8 +31,8 @@ void main() {
 		bone_transform += armature[vertex_ids[3]] * vertex_weights[3]/vertex_weight_total;
 	}
 
-	vs_out.fragment_position = vec3(model * bone_transform * vec4(vertex_position, 1.0f));
+	vs_out.fragment_position = vec3(bone_transform * model * vec4(vertex_position, 1.0f));
 	vs_out.texture_coordinate = vertex_texture_coordinate;
-	vs_out.normal = mat3(transpose(inverse(model*bone_transform))) * vertex_normal;
+	vs_out.normal = mat3(transpose(inverse(bone_transform*model))) * vertex_normal;
 	gl_Position = projection * view * vec4(vs_out.fragment_position, 1.0);
 }
