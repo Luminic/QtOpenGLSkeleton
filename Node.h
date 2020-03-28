@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QDebug>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -13,6 +14,7 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "NodeAnimation.h"
 
 struct Transparent_Draw;
 
@@ -31,11 +33,11 @@ public:
   std::string name;
   static int nr_nodes_created;
 
-  virtual void update_armature(Node* root_node=nullptr, glm::mat4 parent_transformation=glm::mat4(1.0f));
+  virtual void update_armature(int time, Node* root_node=nullptr, glm::mat4 parent_transformation=glm::mat4(1.0f));
   virtual void draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
 
   // Getters & setters
-  virtual glm::mat4 get_model_matrix();
+  virtual glm::mat4 get_model_matrix(bool use_transformation_matrix=true);
 
   virtual const std::vector<std::shared_ptr<Mesh>>& get_meshes() const {return meshes;}
   virtual void add_mesh(std::shared_ptr<Mesh> mesh);
@@ -55,7 +57,11 @@ public:
   virtual const glm::vec3& get_scale();
   virtual void set_rotation(glm::vec3 rot);
   virtual const glm::vec3& get_rotation();
+
   virtual void set_bone_id(int id) {bone_id = id;}
+
+  virtual NodeAnimation* get_animation() {return animation;}
+  virtual void set_animation(NodeAnimation* animation) {this->animation = animation;}
 
   virtual void set_visibility(bool v);
   virtual bool get_visibility() {return visible;}
@@ -68,10 +74,14 @@ protected:
   std::vector<std::shared_ptr<Mesh>> meshes;
   std::vector<std::shared_ptr<Node>> child_nodes;
 
-  std::vector<Bone> armature; // Only the root node should have this filled
-  // If the node is a bone node, this will be the index of the bone in armature (of the root node, not necessarily this node's armature)
+  // Only the root node should have this filled
+  // armature exsts so the all bone matrices can be sent to a shader
+  std::vector<Bone> armature;
+  // If the node is a bone node, this will be the index of the bone in armature (the root node's armature. This node's armature should be empty)
   // If the node is a plain node, this will be -1
   int bone_id = -1;
+
+  NodeAnimation* animation = nullptr;
 
   glm::mat4 transformation;
   glm::vec3 position;

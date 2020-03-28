@@ -5,7 +5,7 @@
 #include "Scene.h"
 
 
-glm::mat4 aiMat_to_glmMat(const aiMatrix4x4& from) {
+inline glm::mat4 aiMat_to_glmMat(const aiMatrix4x4& from) {
   glm::mat4 to(
     {{from.a1,from.b1,from.c1,from.d1}
     ,{from.a2,from.b2,from.c2,from.d2}
@@ -15,15 +15,22 @@ glm::mat4 aiMat_to_glmMat(const aiMatrix4x4& from) {
   return to;
 }
 
+inline glm::vec3 aiVector3D_to_glm_vec3(const aiVector3D& from) {
+  return glm::vec3(from.x, from.y, from.z);
+}
+
+inline glm::quat aiQuaternion_to_glm_quat(const aiQuaternion& from) {
+  return glm::quat(from.w, from.x, from.y, from.z);
+}
 
 Model::Model(const char* path) {
-  load_model(path);
   name = path;
+  load_model(path);
 }
 
 Model::Model(const char* path, const char* name) {
-  load_model(path);
   this->name = name;
+  load_model(path);
 }
 
 Model::~Model() {
@@ -40,9 +47,9 @@ void Model::load_model(std::string path) {
 
   directory = path.substr(0, path.find_last_of('/'));
 
-  // child_nodes.push_back(std::shared_ptr<Node>(process_node(scene->mRootNode, scene)));
   process_node(scene->mRootNode, scene, true);
   load_armature(this);
+  load_animations(scene);
 }
 
 Node* Model::process_node(aiNode* node, const aiScene* scene, bool root) {
@@ -53,6 +60,9 @@ Node* Model::process_node(aiNode* node, const aiScene* scene, bool root) {
     my_node = new Node();
     my_node->name = node->mName.C_Str();
   }
+  // Create a map from the node's ORIGINAL name to the node itself
+  loaded_nodes[std::string(node->mName.C_Str())] = my_node;
+
   my_node->set_transformation(aiMat_to_glmMat(node->mTransformation));
 
   // Process the node's mesh (might be none)
@@ -185,5 +195,51 @@ void Model::load_armature(Node* node) {
 
   for (auto child_node : node->get_child_nodes()) {
     load_armature(child_node.get());
+  }
+}
+
+void Model::load_animations(const aiScene* scene) {
+  qDebug() << scene->mNumAnimations << "animations found for" << name.c_str();
+  for (unsigned int i=0; i<scene->mNumAnimations; i++) {
+    qDebug() << "Loading animation" << scene->mAnimations[i]->mName.C_Str() << "with" << scene->mAnimations[0]->mNumChannels << "channels";
+    float tps = scene->mAnimations[i]->mTicksPerSecond >= 0.0001 ? scene->mAnimations[i]->mTicksPerSecond : 24.0f;
+    unsigned int duration = scene->mAnimations[i]->mDuration;
+    for (unsigned int j=0; j<scene->mAnimations[i]->mNumChannels; j++) {
+      const aiNodeAnim* animation = scene->mAnimations[i]->mChannels[j];
+      qDebug() << "--Loading channel" << animation->mNodeName.C_Str();
+
+      auto it = loaded_nodes.find(std::string(animation->mNodeName.C_Str()));
+      Q_ASSERT_X(it != loaded_nodes.end(), "loading animations", "node specified for animation does not exist");
+
+      NodeAnimation* my_animation = new NodeAnimation(tps, duration);
+      for (unsigned int n=0; n<animation->mNumPositionKeys; n++) {
+        my_animation->add_position_key(
+          VectorKey{
+            (float) animation->mPositionKeys[n].mTime,
+            aiVector3D_to_glm_vec3(animation->mPositionKeys[n].mValue)
+          }
+        );
+      }
+      for (unsigned int n=0; n<animation->mNumRotationKeys; n++) {
+        my_animation->add_rotation_key(
+          QuaternionKey{
+            (float) animation->mRotationKeys[n].mTime,
+            aiQuaternion_to_glm_quat(animation->mRotationKeys[n].mValue)
+          }
+        );
+      }
+      for (unsigned int n=0; n<animation->mNumScalingKeys; n++) {
+        my_animation->add_scale_key(
+          VectorKey{
+            (float) animation->mScalingKeys[n].mTime,
+            aiVector3D_to_glm_vec3(animation->mScalingKeys[n].mValue)
+          }
+        );
+      }
+
+      my_animation->verify();
+
+      it->second->set_animation(my_animation);
+    }
   }
 }

@@ -1,5 +1,9 @@
 #include <QDebug>
 
+#include <glm/gtx/quaternion.hpp>
+
+#include <cmath>
+
 #include "Node.h"
 #include "Scene.h"
 
@@ -16,21 +20,32 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 }
 
 Node::~Node() {
+  delete animation;
 }
 
-void Node::update_armature(Node* root_node, glm::mat4 parent_transformation) {
+void Node::update_armature(int time, Node* root_node, glm::mat4 parent_transformation) {
   if (root_node == nullptr) {
     root_node = this;
     root_inverse_model = inverse(get_model_matrix());
   }
-  parent_transformation *= get_model_matrix();
+
+  if (animation == nullptr) {
+    parent_transformation *= get_model_matrix();
+  } else {
+    float animation_time = time / 1000.0f * animation->get_tps();
+    animation_time = fmod(animation_time, animation->get_duration());
+    parent_transformation = glm::scale(parent_transformation, animation->interpolate_scale(animation_time));
+    parent_transformation *= glm::toMat4(animation->interpolate_rotation(animation_time));
+    parent_transformation = glm::translate(parent_transformation, animation->interpolate_position(animation_time));
+    parent_transformation *= get_model_matrix(false);
+  }
 
   if (bone_id >= 0) {
     root_node->armature[bone_id].final_transform = parent_transformation * root_node->armature[bone_id].offset * root_node->get_root_inverse_model();
   }
 
   for (auto node : child_nodes) {
-    node->update_armature(root_node, parent_transformation);
+    node->update_armature(time, root_node, parent_transformation);
   }
 }
 
@@ -77,8 +92,9 @@ void Node::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* p
 }
 
 // Getters & setters
-glm::mat4 Node::get_model_matrix() {
-  glm::mat4 model = glm::translate(transformation, position);
+glm::mat4 Node::get_model_matrix(bool use_transformation_matrix) {
+  glm::mat4 model = use_transformation_matrix ? transformation : glm::mat4(1.0f);
+  model = glm::translate(model, position);
   model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(0.0f,1.0f,0.0f));
   model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(1.0f,0.0f,0.0f));
   model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f,0.0f,1.0f));

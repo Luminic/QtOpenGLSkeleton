@@ -1,3 +1,6 @@
+#ifndef UTILITY_H
+#define UTILITY_H
+
 #include <QWidget>
 #include <QGroupBox>
 #include <QString>
@@ -91,3 +94,5 @@ protected:
   QGridLayout* layout;
   QDoubleSpinBox* values[4][4];
 };
+
+#endif

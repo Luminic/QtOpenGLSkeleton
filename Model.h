@@ -30,10 +30,12 @@ protected:
   void load_model(std::string path);
   Node* process_node(aiNode* node, const aiScene* scene, bool root=false);
   Mesh* process_mesh(aiMesh* mesh, const aiScene* scene);
-  void load_material_textures(aiMaterial *mat, Material *mesh_material);
+  void load_material_textures(aiMaterial* mat, Material* mesh_material);
   void load_armature(Node* node);
+  void load_animations(const aiScene* scene);
 
   std::unordered_map<std::string, unsigned int> loaded_bones;
+  std::unordered_map<std::string, Node*> loaded_nodes;
 
   std::string directory;
 

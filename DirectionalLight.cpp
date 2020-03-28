@@ -76,7 +76,8 @@ void DirectionalLight::set_light_space(Shader* depth_shader) {
   depth_shader->setMat4("light_space", dirlight_space);
 }
 
-glm::mat4 DirectionalLight::get_model_matrix() {
+glm::mat4 DirectionalLight::get_model_matrix(bool use_transformation_matrix) {
+  Q_UNUSED(use_transformation_matrix);
   glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
   if (direction.z == 0) direction.z = 0.000001;
   model = glm::rotate(model, glm::atan(direction.x,direction.z), glm::vec3(0.0f,1.0f,0.0f));
@@ -102,12 +103,14 @@ void DirectionalLight::set_direction(glm::vec3 dir) {
 }
 
 void DirectionalLight::set_scale(glm::vec3 sca) {
+  Q_UNUSED(sca);
   #ifdef QT_DEBUG
     qDebug() << "Setting scale is disabled for directional lights; use x_view_size and y_view_size instead";
   #endif
 }
 
 void DirectionalLight::set_rotation(glm::vec3 rot) {
+  Q_UNUSED(rot);
   #ifdef QT_DEBUG
     qDebug() << "Setting rotation is disabled for directional lights; use direction instead";
   #endif

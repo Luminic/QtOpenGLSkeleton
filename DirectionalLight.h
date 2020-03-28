@@ -16,7 +16,7 @@ public:
   void bind_dirlight_framebuffer();
   void set_light_space(Shader* depth_shader);
 
-  glm::mat4 get_model_matrix() override;
+  glm::mat4 get_model_matrix(bool use_transformation_matrix=true) override;
 
   glm::vec3 get_direction();
   void set_direction(float yaw, float pitch);
