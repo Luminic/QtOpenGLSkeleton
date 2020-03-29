@@ -8,6 +8,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <vector>
+#include <unordered_map>
 
 struct VectorKey {
   float animation_time;
@@ -31,12 +32,14 @@ struct QuaternionKey {
   bool operator>(const QuaternionKey& other) {return animation_time>other.animation_time;}
 };
 
-class NodeAnimation : public QObject {
+class NodeAnimationChannel : public QObject {
   Q_OBJECT;
 
 public:
-  NodeAnimation(float tps, unsigned int duration);
-  ~NodeAnimation();
+  NodeAnimationChannel(std::string name);
+  ~NodeAnimationChannel();
+
+  std::string name;
 
   virtual void verify();
 
@@ -53,17 +56,29 @@ public:
   virtual void add_rotation_key(QuaternionKey key) {rotation_keys.push_back(key);}
   virtual void add_scale_key(VectorKey key) {scale_keys.push_back(key);}
 
-  virtual float get_tps() {return tps;}
-  virtual unsigned int get_duration() {return duration;}
-
 protected:
+  friend class Settings;
   // These should be in chronological order
   std::vector<VectorKey> position_keys;
   std::vector<QuaternionKey> rotation_keys;
   std::vector<VectorKey> scale_keys;
+};
+
+class NodeAnimation : public QObject {
+  Q_OBJECT;
+
+public:
+  NodeAnimation(float tps, unsigned int duration, std::string name);
+  ~NodeAnimation();
+
+  NodeAnimationChannel* get_animation_channel_for(std::string node_name);
+
+  std::string name;
 
   float tps;
   unsigned int duration;
+
+  std::unordered_map<std::string, NodeAnimationChannel*> animation_channels;
 };
 
 #endif

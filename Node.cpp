@@ -20,7 +20,9 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 }
 
 Node::~Node() {
-  delete animation;
+  for (auto it : animations) {
+    delete it.second;
+  }
 }
 
 void Node::update_armature(int time, Node* root_node, glm::mat4 parent_transformation) {
@@ -29,14 +31,19 @@ void Node::update_armature(int time, Node* root_node, glm::mat4 parent_transform
     root_inverse_model = inverse(get_model_matrix());
   }
 
-  if (animation == nullptr) {
+  if (!animated) {
     parent_transformation *= get_model_matrix();
   } else {
-    float animation_time = time / 1000.0f * animation->get_tps();
-    animation_time = fmod(animation_time, animation->get_duration());
-    parent_transformation = glm::scale(parent_transformation, animation->interpolate_scale(animation_time));
-    parent_transformation *= glm::toMat4(animation->interpolate_rotation(animation_time));
-    parent_transformation = glm::translate(parent_transformation, animation->interpolate_position(animation_time));
+    auto it = root_node->animations.find(std::string("Armature|ArmatureAction"));
+    Q_ASSERT_X(it != root_node->animations.end(), "Finding animation", "Could not find requested animation");
+    NodeAnimation* node_animation = it->second;
+    NodeAnimationChannel* node_animation_channel = node_animation->get_animation_channel_for(this->name);
+
+    float animation_time = time / 1000.0f * node_animation->tps;
+    animation_time = fmod(animation_time, node_animation->duration);
+    parent_transformation = glm::translate(parent_transformation, node_animation_channel->interpolate_position(animation_time));
+    parent_transformation *= glm::toMat4(node_animation_channel->interpolate_rotation(animation_time));
+    parent_transformation = glm::scale(parent_transformation, node_animation_channel->interpolate_scale(animation_time));
     parent_transformation *= get_model_matrix(false);
   }
 

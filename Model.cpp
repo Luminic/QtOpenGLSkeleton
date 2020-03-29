@@ -152,13 +152,13 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
     for (unsigned int j=0; j<mesh->mBones[i]->mNumWeights; j++) {
       unsigned int vertex_id = mesh->mBones[i]->mWeights[j].mVertexId;
       float vertex_weight = mesh->mBones[i]->mWeights[j].mWeight;
-      for (int n=0; n<4; n++) {
+      for (int n=0; n<4; n++) { // The 5th bone is intentional to make sure that if there are too many bones an error is thrown
         if (vertices[vertex_id].bone_weights[n] <= 0.001) {
           vertices[vertex_id].bone_ids[n] = bone_index;
           vertices[vertex_id].bone_weights[n] = vertex_weight;
           break;
         }
-        Q_ASSERT_X(n != 3, "Bone loading", "Too many bones for one vertex");
+        Q_ASSERT_X(n != 4, "Bone loading", "Too many bones for one vertex");
       }
     }
   }
@@ -201,19 +201,23 @@ void Model::load_armature(Node* node) {
 void Model::load_animations(const aiScene* scene) {
   qDebug() << scene->mNumAnimations << "animations found for" << name.c_str();
   for (unsigned int i=0; i<scene->mNumAnimations; i++) {
-    qDebug() << "Loading animation" << scene->mAnimations[i]->mName.C_Str() << "with" << scene->mAnimations[0]->mNumChannels << "channels";
     float tps = scene->mAnimations[i]->mTicksPerSecond >= 0.0001 ? scene->mAnimations[i]->mTicksPerSecond : 24.0f;
     unsigned int duration = scene->mAnimations[i]->mDuration;
+    std::string animation_name(scene->mAnimations[i]->mName.C_Str());
+
+    NodeAnimation* my_animation = new NodeAnimation(tps, duration, animation_name);
+    this->animations[animation_name] = my_animation;
+
     for (unsigned int j=0; j<scene->mAnimations[i]->mNumChannels; j++) {
       const aiNodeAnim* animation = scene->mAnimations[i]->mChannels[j];
-      qDebug() << "--Loading channel" << animation->mNodeName.C_Str();
 
       auto it = loaded_nodes.find(std::string(animation->mNodeName.C_Str()));
       Q_ASSERT_X(it != loaded_nodes.end(), "loading animations", "node specified for animation does not exist");
+      it->second->set_animated(true);
 
-      NodeAnimation* my_animation = new NodeAnimation(tps, duration);
+      NodeAnimationChannel* my_animation_channel = new NodeAnimationChannel(std::string(animation->mNodeName.C_Str()));
       for (unsigned int n=0; n<animation->mNumPositionKeys; n++) {
-        my_animation->add_position_key(
+        my_animation_channel->add_position_key(
           VectorKey{
             (float) animation->mPositionKeys[n].mTime,
             aiVector3D_to_glm_vec3(animation->mPositionKeys[n].mValue)
@@ -221,7 +225,7 @@ void Model::load_animations(const aiScene* scene) {
         );
       }
       for (unsigned int n=0; n<animation->mNumRotationKeys; n++) {
-        my_animation->add_rotation_key(
+        my_animation_channel->add_rotation_key(
           QuaternionKey{
             (float) animation->mRotationKeys[n].mTime,
             aiQuaternion_to_glm_quat(animation->mRotationKeys[n].mValue)
@@ -229,7 +233,7 @@ void Model::load_animations(const aiScene* scene) {
         );
       }
       for (unsigned int n=0; n<animation->mNumScalingKeys; n++) {
-        my_animation->add_scale_key(
+        my_animation_channel->add_scale_key(
           VectorKey{
             (float) animation->mScalingKeys[n].mTime,
             aiVector3D_to_glm_vec3(animation->mScalingKeys[n].mValue)
@@ -237,9 +241,9 @@ void Model::load_animations(const aiScene* scene) {
         );
       }
 
-      my_animation->verify();
+      my_animation_channel->verify();
 
-      it->second->set_animation(my_animation);
+      my_animation->animation_channels[std::string(animation->mNodeName.C_Str())] = my_animation_channel;
     }
   }
 }

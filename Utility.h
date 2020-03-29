@@ -86,11 +86,18 @@ public:
   Matrix_4x4_View(const glm::mat4& matrix, QWidget* parent=nullptr);
   ~Matrix_4x4_View(){}
 
+
+public slots:
   void set_matrix(const glm::mat4& matrix);
+  void set_value_at(unsigned int x, unsigned int y, float value);
+
+signals:
+  void value_changed(glm::mat4 value);
 
 protected:
   void init();
 
+  glm::mat4 matrix;
   QGridLayout* layout;
   QDoubleSpinBox* values[4][4];
 };

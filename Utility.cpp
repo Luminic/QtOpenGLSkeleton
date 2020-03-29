@@ -77,15 +77,36 @@ void Matrix_4x4_View::init() {
       values[x][y]->setDecimals(2);
       values[x][y]->setRange(-50.0,50.0);
       values[x][y]->setButtonSymbols(QAbstractSpinBox::NoButtons);
-      layout->addWidget(values[x][y], x, y);
+      layout->addWidget(values[x][y], y, x);
+      connect(values[x][y], QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+        [this, x, y](double new_value) {
+          set_value_at(x, y, new_value);
+        }
+      );
     }
   }
 }
 
 void Matrix_4x4_View::set_matrix(const glm::mat4& matrix) {
+  bool changed = false;
   for (unsigned int x=0; x<4; x++) {
     for (unsigned int y=0; y<4; y++) {
-      values[x][y]->setValue(matrix[x][y]);
+      if (glm::abs(this->matrix[x][y]-matrix[x][y]) >= 0.01) {
+        values[x][y]->setValue(matrix[x][y]);
+        changed = true;
+      }
     }
+  }
+  this->matrix = matrix;
+  if (changed == true) {
+    emit value_changed(matrix);
+  }
+}
+
+void Matrix_4x4_View::set_value_at(unsigned int x, unsigned int y, float value) {
+  if (glm::abs(matrix[x][y]-value) >= 0.01) {
+    matrix[x][y] = value;
+    values[x][y]->setValue(value);
+    emit value_changed(matrix);
   }
 }

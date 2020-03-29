@@ -38,6 +38,7 @@ public:
   QStandardItem* set_node(Node* node, QStandardItem* parent=nullptr);
   QStandardItem* set_mesh(Mesh* mesh);
   QStandardItem* set_material(Material* material);
+  QStandardItem* set_animation_channel(NodeAnimationChannel* animation);
   void set_point_light(PointLight *point_light);
   void set_dirlight(DirectionalLight *sunlight);
 
@@ -49,15 +50,18 @@ private:
   // Node tab
   void set_up_nodes_tab();
   QStandardItemModel* nodes_model = nullptr;
-  std::unordered_map<const char*, QScrollArea*> loaded_nodes;
+  std::unordered_map<Node*, QScrollArea*> loaded_nodes;
 
   // Meshes
-  std::unordered_map<const char*, QScrollArea*> loaded_meshes;
+  std::unordered_map<Mesh*, QScrollArea*> loaded_meshes;
 
   // Materials tab
-  std::unordered_map<const char*, QScrollArea*> loaded_materials;
+  std::unordered_map<Material*, QScrollArea*> loaded_materials;
   QGroupBox* materials_list = nullptr;
   QVBoxLayout* materials_list_layout = nullptr;
+
+  // Animations
+  std::unordered_map<NodeAnimationChannel*, QScrollArea*> loaded_animation_channels;
 
   // Icons
   void load_icons();

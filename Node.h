@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 #include <memory>
 #include <utility>
@@ -60,11 +61,11 @@ public:
 
   virtual void set_bone_id(int id) {bone_id = id;}
 
-  virtual NodeAnimation* get_animation() {return animation;}
-  virtual void set_animation(NodeAnimation* animation) {this->animation = animation;}
-
   virtual void set_visibility(bool v);
   virtual bool get_visibility() {return visible;}
+
+  void set_animated(bool animated) {this->animated = animated;};
+  bool get_animated() {return animated;};
 
   virtual const glm::mat4& get_root_inverse_model() {return root_inverse_model;}
 
@@ -81,7 +82,10 @@ protected:
   // If the node is a plain node, this will be -1
   int bone_id = -1;
 
-  NodeAnimation* animation = nullptr;
+  // Only the root node should have this filled
+  std::unordered_map<std::string, NodeAnimation*> animations;
+
+  bool animated = false;
 
   glm::mat4 transformation;
   glm::vec3 position;
