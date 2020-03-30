@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Node.h"
+#include "RootNode.h"
 #include "Mesh.h"
 #include "Model.h"
 #include "Shader.h"
@@ -73,10 +74,10 @@ public:
   static Material * is_material_loaded(Material *new_material); // Returns new_material if it is unique. Otherwise, it deletes new_material and returns a ptr to the loaded material
 
   // Getters and Setters
-  const std::vector<std::shared_ptr<Node>>& get_nodes() const {return nodes;}
+  const std::vector<std::shared_ptr<RootNode>>& get_nodes() const {return nodes;}
   unsigned int nodes_size() const {return nodes.size();}
-  std::shared_ptr<Node> get_node_at(unsigned int index) {return nodes[index];}
-  void add_node(std::shared_ptr<Node> node);
+  std::shared_ptr<RootNode> get_node_at(unsigned int index) {return nodes[index];}
+  void add_node(std::shared_ptr<RootNode> node);
   void delete_node_at(unsigned int index);
   void clear_nodes();
 
@@ -117,7 +118,7 @@ protected:
   std::vector<std::shared_ptr<DirectionalLight>> dirlights;
   std::vector<std::shared_ptr<PointLight>> pointlights;
 
-  std::vector<std::shared_ptr<Node>> nodes;
+  std::vector<std::shared_ptr<RootNode>> nodes;
 
   QElapsedTimer* timer;
 

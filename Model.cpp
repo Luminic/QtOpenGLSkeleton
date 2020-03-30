@@ -58,6 +58,7 @@ Node* Model::process_node(aiNode* node, const aiScene* scene, bool root) {
     my_node = this;
   } else {
     my_node = new Node();
+    my_node->root_node = this;
     my_node->name = node->mName.C_Str();
   }
   // Create a map from the node's ORIGINAL name to the node itself
@@ -139,7 +140,7 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
     int bone_index;
     auto it = loaded_bones.find(std::string(mesh->mBones[i]->mName.C_Str()));
     if (it == loaded_bones.end()) {
-      // The armature is contained be the root node
+      // The  is contained be the root node
       // Not the mesh's direct parent node (that is why I specifically use this-> even though it's unnecessary)
       bone_index = this->armature.size();
       loaded_bones[std::string(mesh->mBones[i]->mName.C_Str())] = bone_index;
@@ -206,44 +207,44 @@ void Model::load_animations(const aiScene* scene) {
     std::string animation_name(scene->mAnimations[i]->mName.C_Str());
 
     NodeAnimation* my_animation = new NodeAnimation(tps, duration, animation_name);
-    this->animations[animation_name] = my_animation;
+    this->animation[animation_name] = my_animation;
 
     for (unsigned int j=0; j<scene->mAnimations[i]->mNumChannels; j++) {
-      const aiNodeAnim* animation = scene->mAnimations[i]->mChannels[j];
+      const aiNodeAnim* ai_animation = scene->mAnimations[i]->mChannels[j];
 
-      auto it = loaded_nodes.find(std::string(animation->mNodeName.C_Str()));
+      auto it = loaded_nodes.find(std::string(ai_animation->mNodeName.C_Str()));
       Q_ASSERT_X(it != loaded_nodes.end(), "loading animations", "node specified for animation does not exist");
       it->second->set_animated(true);
 
-      NodeAnimationChannel* my_animation_channel = new NodeAnimationChannel(std::string(animation->mNodeName.C_Str()));
-      for (unsigned int n=0; n<animation->mNumPositionKeys; n++) {
+      NodeAnimationChannel* my_animation_channel = new NodeAnimationChannel(std::string(ai_animation->mNodeName.C_Str()));
+      for (unsigned int n=0; n<ai_animation->mNumPositionKeys; n++) {
         my_animation_channel->add_position_key(
           VectorKey{
-            (float) animation->mPositionKeys[n].mTime,
-            aiVector3D_to_glm_vec3(animation->mPositionKeys[n].mValue)
+            (float) ai_animation->mPositionKeys[n].mTime,
+            aiVector3D_to_glm_vec3(ai_animation->mPositionKeys[n].mValue)
           }
         );
       }
-      for (unsigned int n=0; n<animation->mNumRotationKeys; n++) {
+      for (unsigned int n=0; n<ai_animation->mNumRotationKeys; n++) {
         my_animation_channel->add_rotation_key(
           QuaternionKey{
-            (float) animation->mRotationKeys[n].mTime,
-            aiQuaternion_to_glm_quat(animation->mRotationKeys[n].mValue)
+            (float) ai_animation->mRotationKeys[n].mTime,
+            aiQuaternion_to_glm_quat(ai_animation->mRotationKeys[n].mValue)
           }
         );
       }
-      for (unsigned int n=0; n<animation->mNumScalingKeys; n++) {
+      for (unsigned int n=0; n<ai_animation->mNumScalingKeys; n++) {
         my_animation_channel->add_scale_key(
           VectorKey{
-            (float) animation->mScalingKeys[n].mTime,
-            aiVector3D_to_glm_vec3(animation->mScalingKeys[n].mValue)
+            (float) ai_animation->mScalingKeys[n].mTime,
+            aiVector3D_to_glm_vec3(ai_animation->mScalingKeys[n].mValue)
           }
         );
       }
 
       my_animation_channel->verify();
 
-      my_animation->animation_channels[std::string(animation->mNodeName.C_Str())] = my_animation_channel;
+      my_animation->animation_channels[std::string(ai_animation->mNodeName.C_Str())] = my_animation_channel;
     }
   }
 }

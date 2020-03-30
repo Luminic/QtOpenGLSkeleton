@@ -16,9 +16,10 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Node.h"
+#include "RootNode.h"
 #include "Material.h"
 
-class Model : public Node {
+class Model : public RootNode {
   Q_OBJECT;
 
 public:

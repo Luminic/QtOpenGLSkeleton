@@ -208,7 +208,7 @@ Material * Scene::is_material_loaded(Material *new_material) {
 }
 
 // Getters and Setters
-void Scene::add_node(std::shared_ptr<Node> node) {
+void Scene::add_node(std::shared_ptr<RootNode> node) {
   nodes.push_back(node);
 }
 

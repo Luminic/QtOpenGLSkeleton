@@ -14,8 +14,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Mesh.h"
-#include "Shader.h"
 #include "NodeAnimation.h"
+#include "Shader.h"
 
 struct Transparent_Draw;
 
@@ -24,17 +24,41 @@ struct Bone {
   glm::mat4 final_transform;
 };
 
+class RootNode;
+
 class Node : public QObject {
-  Q_OBJECT
+  Q_OBJECT;
+
+protected:
+  friend class Settings;
+
+  std::vector<std::shared_ptr<Mesh>> meshes;
+  std::vector<std::shared_ptr<Node>> child_nodes;
+
+  // If the node is a bone node, this will be the index of the bone in armature (the root node's armature)
+  // If the node is a plain node, this will be -1
+  int bone_id = -1;
+
+  bool animated = false;
+
+  glm::mat4 transformation;
+  glm::vec3 position;
+  glm::vec3 scale;
+  glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
+
+  bool visible;
 
 public:
-  Node(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
-  ~Node();
-
   std::string name;
   static int nr_nodes_created;
 
-  virtual void update_armature(int time, Node* root_node=nullptr, glm::mat4 parent_transformation=glm::mat4(1.0f));
+  // Should never be a nullptr
+  RootNode* root_node = nullptr;
+
+  Node(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
+  ~Node();
+
+  virtual void update_armature(int time, glm::mat4 parent_transformation);
   virtual void draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), bool use_material=true, int texture_unit=0);
 
   // Getters & setters
@@ -66,38 +90,6 @@ public:
 
   void set_animated(bool animated) {this->animated = animated;};
   bool get_animated() {return animated;};
-
-  virtual const glm::mat4& get_root_inverse_model() {return root_inverse_model;}
-
-protected:
-  friend class Settings;
-
-  std::vector<std::shared_ptr<Mesh>> meshes;
-  std::vector<std::shared_ptr<Node>> child_nodes;
-
-  // Only the root node should have this filled
-  // armature exsts so the all bone matrices can be sent to a shader
-  std::vector<Bone> armature;
-  // If the node is a bone node, this will be the index of the bone in armature (the root node's armature. This node's armature should be empty)
-  // If the node is a plain node, this will be -1
-  int bone_id = -1;
-
-  // Only the root node should have this filled
-  std::unordered_map<std::string, NodeAnimation*> animations;
-
-  bool animated = false;
-
-  glm::mat4 transformation;
-  glm::vec3 position;
-  glm::vec3 scale;
-  glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
-
-  bool visible;
-
-  // The inverse of the final model matrix is stored here for the root node
-  // It is undefined for non root nodes
-  // If the inverse of a non-root node is needed, use inverse(get_model_matrix()) instead; this variable exists as a time saver
-  glm::mat4 root_inverse_model;
 };
 
 #endif

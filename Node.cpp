@@ -19,23 +19,16 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
   visible = true;
 }
 
-Node::~Node() {
-  for (auto it : animations) {
-    delete it.second;
-  }
-}
+Node::~Node() {}
 
-void Node::update_armature(int time, Node* root_node, glm::mat4 parent_transformation) {
-  if (root_node == nullptr) {
-    root_node = this;
-    root_inverse_model = inverse(get_model_matrix());
-  }
+void Node::update_armature(int time, glm::mat4 parent_transformation) {
+  Q_ASSERT_X(root_node != nullptr, "Updating armature", "Root node is not set");
 
   if (!animated) {
     parent_transformation *= get_model_matrix();
   } else {
-    auto it = root_node->animations.find(std::string("Armature|ArmatureAction"));
-    Q_ASSERT_X(it != root_node->animations.end(), "Finding animation", "Could not find requested animation");
+    auto it = root_node->get_animation().find(std::string("Armature|ArmatureAction"));
+    Q_ASSERT_X(it != root_node->get_animation().end(), "Finding animation", "Could not find requested animation");
     NodeAnimation* node_animation = it->second;
     NodeAnimationChannel* node_animation_channel = node_animation->get_animation_channel_for(this->name);
 
@@ -48,19 +41,15 @@ void Node::update_armature(int time, Node* root_node, glm::mat4 parent_transform
   }
 
   if (bone_id >= 0) {
-    root_node->armature[bone_id].final_transform = parent_transformation * root_node->armature[bone_id].offset * root_node->get_root_inverse_model();
+    root_node->set_bone_final_transform(bone_id, parent_transformation);
   }
 
   for (auto node : child_nodes) {
-    node->update_armature(time, root_node, parent_transformation);
+    node->update_armature(time, parent_transformation);
   }
 }
 
 void Node::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
-  for (unsigned int i=0; i<armature.size(); i++) {
-    shaders.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
-  }
-
   if (visible) {
     model *= get_model_matrix();
     shaders.opaque->use();

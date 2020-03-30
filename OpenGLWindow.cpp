@@ -133,7 +133,7 @@ void OpenGLWindow::initializeGL() {
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
-  scene->add_node(std::shared_ptr<Node>(nanosuit));
+  scene->add_node(std::shared_ptr<RootNode>(nanosuit));
   settings->set_node(nanosuit);
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
@@ -160,10 +160,10 @@ void OpenGLWindow::initializeGL() {
   };
 
   for (int i=0; i<10; i++) {
-    Node* n = new Node(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
+    RootNode* n = new RootNode(glm::mat4(1.0f), cube_positions[i], glm::vec3(1.0f), glm::vec3(3.2f*i,4.6f*i,-7.0f*i));
     n->name = "cube #" + std::to_string(i);
     n->add_mesh(cube);
-    scene->add_node(std::shared_ptr<Node>(n));
+    scene->add_node(std::shared_ptr<RootNode>(n));
     settings->set_node(n);
   }
 
@@ -185,17 +185,18 @@ void OpenGLWindow::initializeGL() {
   };
 
   for (int i=0; i<5; i++) {
-    Node* n = new Node(glm::mat4(1.0f), grass_positions[i], glm::vec3(0.5f));
+    RootNode* n = new RootNode(glm::mat4(1.0f), grass_positions[i], glm::vec3(0.5f));
     n->name = "grass #" + std::to_string(i) + 'a';
     n->add_mesh(grass);
 
     Node* n2 = new Node();
+    n2->root_node = n;
     n2->set_rotation(glm::vec3(90.0f,0.0f,0.0f));
     n2->name = "grass #" + std::to_string(i) + 'b';
     n2->add_mesh(grass);
 
-    scene->add_node(std::shared_ptr<Node>(n));
     n->add_child_node(std::shared_ptr<Node>(n2));
+    scene->add_node(std::shared_ptr<RootNode>(n));
 
     settings->set_node(n);
   }
@@ -218,10 +219,10 @@ void OpenGLWindow::initializeGL() {
   };
 
   for (int i=0; i<5; i++) {
-    Node* window_n = new Node(glm::mat4(1.0f), window_positions[i]);
+    RootNode* window_n = new RootNode(glm::mat4(1.0f), window_positions[i]);
     window_n->name = "window #" + std::to_string(i);
     window_n->add_mesh(window);
-    scene->add_node(std::shared_ptr<Node>(window_n));
+    scene->add_node(std::shared_ptr<RootNode>(window_n));
     settings->set_node(window_n);
   }
 
@@ -236,11 +237,11 @@ void OpenGLWindow::initializeGL() {
   floor_mesh->material->roughness = 0.66f;
   floor_mesh->material = Scene::is_material_loaded(floor_mesh->material);
 
-  Node* floor = new Node(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
+  RootNode* floor = new RootNode(glm::mat4(1.0f), glm::vec3(0.0f,-3.5f,4.5f), glm::vec3(7.0f,1.0f,7.0f));
   floor->name = "floor";
   floor->add_mesh(std::shared_ptr<Mesh>(floor_mesh));
   floor->set_scale(glm::vec3(14.0f,1.0f,7.0f));
-  scene->add_node(std::shared_ptr<Node>(floor));
+  scene->add_node(std::shared_ptr<RootNode>(floor));
   settings->set_node(floor);
 
   framebuffer_quad = new Mesh();

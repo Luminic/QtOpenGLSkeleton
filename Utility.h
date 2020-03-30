@@ -3,10 +3,10 @@
 
 #include <QWidget>
 #include <QGroupBox>
-#include <QString>
 #include <QDoubleSpinBox>
 #include <QSlider>
 #include <QLabel>
+#include <QString>
 #include <QGridLayout>
 
 #include <glm/glm.hpp>
