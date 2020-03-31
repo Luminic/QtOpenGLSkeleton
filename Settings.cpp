@@ -216,7 +216,9 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
     material_jump->setText(tr(material_ptr->name.c_str()));
     connect(material_jump, &QPushButton::clicked, this,
       [this, material_ptr](){
-        loaded_materials.find(material_ptr)->second->show();
+        auto material_window = loaded_materials.find(material_ptr)->second;
+        material_window->show();
+        QApplication::setActiveWindow(material_window);
       }
     );
     Material_layout->addWidget(material_jump);
@@ -250,20 +252,26 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
     item->appendRow(set_mesh(mesh.get()));
   }
 
-  if (node->get_animated()) {
-    QGroupBox* animation_box = new QGroupBox(tr("Animations"), Node_widget);
-    QVBoxLayout* animation_layout = new QVBoxLayout(animation_box);
-    QPushButton* animation_jump = new QPushButton(animation_box);
-    animation_jump->setText(tr("Animation"));
-    // QStandardItem* animation = set_animation(node->animation);
-    // connect(animation_jump, &QPushButton::clicked, this,
-    //   [this, animation](){
-    //     loaded_animations.find(animation->data().value<NodeAnimationChannel*>())->second->show();
-    //   }
-    // );
-    animation_layout->addWidget(animation_jump);
-    Node_layout->addWidget(animation_box, 3, 0, 1, -1);
-    // item->appendRow(animation);
+  if (node->root_node == node) { // If the node is a root node
+    RootNode* root_node = dynamic_cast<RootNode*>(node);
+    if (root_node->animation.size() > 0) {
+      QGroupBox* animation_box = new QGroupBox(tr("Animations"), Node_widget);
+      QVBoxLayout* animation_layout = new QVBoxLayout(animation_box);
+      for (auto it : root_node->animation) {
+        QPushButton* animation_jump = new QPushButton(animation_box);
+        animation_jump->setText(tr(it.second->name.c_str()));
+        animation_layout->addWidget(animation_jump);
+
+        QScrollArea* animation_menu = set_animation(it.second);
+        connect(animation_jump, &QPushButton::clicked, this,
+          [animation_menu](){
+            animation_menu->show();
+            QApplication::setActiveWindow(animation_menu);
+          }
+        );
+      }
+      Node_layout->addWidget(animation_box, 3, 0, 1, -1);
+    }
   }
 
   return item;
@@ -352,7 +360,12 @@ QStandardItem* Settings::set_material(Material* material) {
     if (material->textures.size() >= 1)
     material_button->setIcon(QIcon(QPixmap::fromImage(material->textures[0].image)));
     material_button->setText(tr(material->name.c_str()));
-    connect(material_button, &QPushButton::clicked, this, [Scrolling](){Scrolling->show();});
+    connect(material_button, &QPushButton::clicked, this,
+      [Scrolling](){
+        Scrolling->show();
+        QApplication::setActiveWindow(Scrolling);
+      }
+    );
     materials_list_layout->addWidget(material_button);
   }
 
@@ -360,51 +373,69 @@ QStandardItem* Settings::set_material(Material* material) {
   return material_item;
 }
 
-QStandardItem* Settings::set_animation_channel(NodeAnimationChannel* animation) {
-  QStandardItem* animation_item = new QStandardItem(tr(animation->name.c_str()));
-  QVariant animation_item_data;
-  animation_item_data.setValue(animation);
+QScrollArea* Settings::set_animation(NodeAnimation* animation) {
+  QWidget* animation_widget = new QWidget(this);
+  QVBoxLayout* animation_layout = new QVBoxLayout(animation_widget);
 
-  if (loaded_animation_channels.find(animation) == loaded_animation_channels.end()) {
-    // Create the window
-    QWidget* animation_widget = new QWidget(this);
-    QGridLayout* animation_layout = new QGridLayout(animation_widget);
+  animation_layout->addWidget(new QLabel(tr("TPS: ")+QString::number(animation->tps)));
+  animation_layout->addWidget(new QLabel(tr("Duration: ")+QString::number(animation->duration)));
 
-    Q_ASSERT_X(animation->position_keys.size() > 0, "Animation settings", "Could not find any keys");
-
-    QGroupBox *position_box = new QGroupBox(tr("Position"), animation_widget);
-    QGridLayout *position_layout = new QGridLayout(position_box);
-    create_option_group("X:", &animation->position_keys[0].vector.x, -50.0, 50.0, 0.5, 2, position_box, position_layout, 0);
-    create_option_group("Y:", &animation->position_keys[0].vector.y, -50.0, 50.0, 0.5, 2, position_box, position_layout, 1);
-    create_option_group("Z:", &animation->position_keys[0].vector.z, -50.0, 50.0, 0.5, 2, position_box, position_layout, 2);
-    animation_layout->addWidget(position_box, 0, 0);
-
-    QGroupBox *scale_box = new QGroupBox(tr("Scale"), animation_widget);
-    QGridLayout *scale_layout = new QGridLayout(scale_box);
-    create_option_group("X:", &animation->scale_keys[0].vector.x, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 0);
-    create_option_group("Y:", &animation->scale_keys[0].vector.y, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 1);
-    create_option_group("Z:", &animation->scale_keys[0].vector.z, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 2);
-    animation_layout->addWidget(scale_box, 1, 0);
-
-    QGroupBox *rotation_box = new QGroupBox(tr("Rotation"), animation_widget);
-    QGridLayout *rotation_layout = new QGridLayout(rotation_box);
-    create_option_group("W:", &animation->rotation_keys[0].quaternion.w, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 0);
-    create_option_group("X:", &animation->rotation_keys[0].quaternion.x, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 1);
-    create_option_group("Y:", &animation->rotation_keys[0].quaternion.y, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 2);
-    create_option_group("Z:", &animation->rotation_keys[0].quaternion.z, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 3);
-    animation_layout->addWidget(rotation_box, 0, 1, 1, -1);
-
-    QScrollArea *scrolling = new QScrollArea(this);
-    scrolling->setWindowFlags(Qt::Window);
-    scrolling->setWindowTitle(tr(animation->name.c_str()));
-    scrolling->setWidget(animation_widget);
-    scrolling->setWidgetResizable(true);
-
-    loaded_animation_channels[animation] = scrolling;
+  for (auto it : animation->animation_channels) {
+    QScrollArea* animation_channel_menu = set_animation_channel(it.second);
+    QPushButton* animation_channel_button = new QPushButton(tr(it.first.c_str()), animation_widget);
+    animation_layout->addWidget(animation_channel_button);
+    connect(animation_channel_button, &QPushButton::clicked, this,
+      [animation_channel_menu]() {
+        animation_channel_menu->show();
+        QApplication::setActiveWindow(animation_channel_menu);
+      }
+    );
   }
 
-  animation_item->setData(animation_item_data);
-  return animation_item;
+  QScrollArea *scrolling = new QScrollArea(this);
+  scrolling->setWindowFlags(Qt::Window);
+  scrolling->setWindowTitle(animation->name.c_str());
+  scrolling->setWidget(animation_widget);
+  scrolling->setWidgetResizable(true);
+
+  return scrolling;
+}
+
+QScrollArea* Settings::set_animation_channel(NodeAnimationChannel* animation_channel) {
+  QWidget* animation_channel_widget = new QWidget(this);
+  QGridLayout* animation_channel_layout = new QGridLayout(animation_channel_widget);
+
+  Q_ASSERT_X(animation_channel->position_keys.size() > 0, "Animation settings", "Could not find any keys");
+
+  QGroupBox *position_box = new QGroupBox(tr("Position"), animation_channel_widget);
+  QGridLayout *position_layout = new QGridLayout(position_box);
+  create_option_group("X:", &animation_channel->position_keys[0].vector.x, -50.0, 50.0, 0.5, 2, position_box, position_layout, 0);
+  create_option_group("Y:", &animation_channel->position_keys[0].vector.y, -50.0, 50.0, 0.5, 2, position_box, position_layout, 1);
+  create_option_group("Z:", &animation_channel->position_keys[0].vector.z, -50.0, 50.0, 0.5, 2, position_box, position_layout, 2);
+  animation_channel_layout->addWidget(position_box, 0, 0);
+
+  QGroupBox *scale_box = new QGroupBox(tr("Scale"), animation_channel_widget);
+  QGridLayout *scale_layout = new QGridLayout(scale_box);
+  create_option_group("X:", &animation_channel->scale_keys[0].vector.x, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 0);
+  create_option_group("Y:", &animation_channel->scale_keys[0].vector.y, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 1);
+  create_option_group("Z:", &animation_channel->scale_keys[0].vector.z, -50.0, 50.0, 0.5, 2, scale_box, scale_layout, 2);
+  animation_channel_layout->addWidget(scale_box, 1, 0);
+
+  QGroupBox *rotation_box = new QGroupBox(tr("Rotation"), animation_channel_widget);
+  QGridLayout *rotation_layout = new QGridLayout(rotation_box);
+  create_option_group("W:", &animation_channel->rotation_keys[0].quaternion.w, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 0);
+  create_option_group("X:", &animation_channel->rotation_keys[0].quaternion.x, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 1);
+  create_option_group("Y:", &animation_channel->rotation_keys[0].quaternion.y, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 2);
+  create_option_group("Z:", &animation_channel->rotation_keys[0].quaternion.z, -1.0, 1.0, 1, 2, rotation_box, rotation_layout, 3);
+  animation_channel_layout->addWidget(rotation_box, 0, 1, 1, -1);
+
+  QScrollArea *scrolling = new QScrollArea(this);
+  scrolling->setWindowFlags(Qt::Window);
+  scrolling->setWindowTitle(tr(animation_channel->name.c_str()));
+  scrolling->setWidget(animation_channel_widget);
+  scrolling->setWidgetResizable(true);
+
+  return scrolling;
 }
 
 void Settings::set_point_light(PointLight *point_light) {

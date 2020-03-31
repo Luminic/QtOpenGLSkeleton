@@ -136,6 +136,9 @@ void OpenGLWindow::initializeGL() {
   scene->add_node(std::shared_ptr<RootNode>(nanosuit));
   settings->set_node(nanosuit);
 
+  nanosuit->set_current_animation("Armature|ArmatureAction");
+  nanosuit->start_animation();
+
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
   cube->initialize_cube();

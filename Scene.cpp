@@ -39,9 +39,6 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   skybox->material->load_cubemap(faces);
 
   antialiasing = FXAA;
-
-  timer = new QElapsedTimer();
-  timer->start();
 }
 
 Scene::~Scene() {
@@ -86,7 +83,7 @@ void Scene::update_color_buffers_size(int width, int height, int nr_colorbuffers
 
 void Scene::update_scene() {
   for (auto node : nodes) {
-    node->update_armature(timer->elapsed());
+    node->update();
   }
 }
 

@@ -2,7 +2,6 @@
 #define SCENE_H
 
 #include <QObject>
-#include <QElapsedTimer>
 #include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
@@ -119,8 +118,6 @@ protected:
   std::vector<std::shared_ptr<PointLight>> pointlights;
 
   std::vector<std::shared_ptr<RootNode>> nodes;
-
-  QElapsedTimer* timer;
 
 private:
   float angle;

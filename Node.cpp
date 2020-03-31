@@ -21,19 +21,14 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 
 Node::~Node() {}
 
-void Node::update_armature(int time, glm::mat4 parent_transformation) {
+void Node::update_armature(glm::mat4 parent_transformation, NodeAnimation* animation, int animation_time) {
   Q_ASSERT_X(root_node != nullptr, "Updating armature", "Root node is not set");
 
-  if (!animated) {
+  if (!(has_animation) || animation==nullptr) {
     parent_transformation *= get_model_matrix();
   } else {
-    auto it = root_node->get_animation().find(std::string("Armature|ArmatureAction"));
-    Q_ASSERT_X(it != root_node->get_animation().end(), "Finding animation", "Could not find requested animation");
-    NodeAnimation* node_animation = it->second;
-    NodeAnimationChannel* node_animation_channel = node_animation->get_animation_channel_for(this->name);
+    NodeAnimationChannel* node_animation_channel = animation->get_animation_channel_for(this->name);
 
-    float animation_time = time / 1000.0f * node_animation->tps;
-    animation_time = fmod(animation_time, node_animation->duration);
     parent_transformation = glm::translate(parent_transformation, node_animation_channel->interpolate_position(animation_time));
     parent_transformation *= glm::toMat4(node_animation_channel->interpolate_rotation(animation_time));
     parent_transformation = glm::scale(parent_transformation, node_animation_channel->interpolate_scale(animation_time));
@@ -45,7 +40,7 @@ void Node::update_armature(int time, glm::mat4 parent_transformation) {
   }
 
   for (auto node : child_nodes) {
-    node->update_armature(time, parent_transformation);
+    node->update_armature(parent_transformation, animation, animation_time);
   }
 }
 
