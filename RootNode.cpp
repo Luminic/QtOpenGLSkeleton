@@ -44,19 +44,27 @@ void RootNode::set_current_animation(std::string new_animation_name) {
   Q_ASSERT_X(it != animation.end(), "Setting current animation", "Could not find specified animation in animations map");
   current_animation_name=new_animation_name;
   current_animation = it->second;
+  emit animation_changed(current_animation);
   time_offset=0;
+}
+
+void RootNode::disable_animation() {
+  animation_status = Animation_Status::NO_ANIMATION;
+  emit animation_status_changed(animation_status);
 }
 
 void RootNode::start_animation() {
   Q_ASSERT_X(current_animation!=nullptr, "Start animation", "No current animation");
   timer->start();
   animation_status = Animation_Status::ANIMATED;
+  emit animation_status_changed(animation_status);
 }
 
 void RootNode::stop_animation() {
   if (animation_status == Animation_Status::ANIMATED) {
     time_offset += timer->elapsed();
     animation_status = Animation_Status::ANIMATION_PAUSED;
+    emit animation_status_changed(animation_status);
   }
 }
 

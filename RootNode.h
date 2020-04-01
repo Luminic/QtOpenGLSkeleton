@@ -45,11 +45,16 @@ public:
   virtual NodeAnimation* get_current_animation() {return current_animation;}
 
   // Note that time and animation time are different
-  virtual void disable_animation() {animation_status = Animation_Status::NO_ANIMATION;}
+  virtual void disable_animation();
   virtual void start_animation(); // Starts/resumes the animation
   virtual void stop_animation(); // Stops the animation. Offset is set to the current time.
+  virtual Animation_Status get_animation_status() {return animation_status;}
   virtual float get_animation_time(); // Will complain if current_animation is not set
   virtual void set_animation_time(float animation_time); // Will complain if current_animation is not set; Animation time is set to 0 when current_animation is set
+
+signals:
+  void animation_status_changed(Animation_Status new_status);
+  void animation_changed(NodeAnimation* new_animation);
 
 };
 

@@ -253,14 +253,48 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   }
 
   if (node->root_node == node) { // If the node is a root node
-    RootNode* root_node = dynamic_cast<RootNode*>(node);
+    RootNode* root_node = node->root_node;
     if (root_node->animation.size() > 0) {
-      QGroupBox* animation_box = new QGroupBox(tr("Animations"), Node_widget);
-      QVBoxLayout* animation_layout = new QVBoxLayout(animation_box);
+      QGroupBox* animation_box = new QGroupBox(tr("Animation"), Node_widget);
+      QGridLayout* animation_layout = new QGridLayout(animation_box);
+
+      auto animation_status_to_string = [](RootNode::Animation_Status animation_status) {
+        QString animation_status_string;
+        switch (animation_status) {
+          case RootNode::Animation_Status::NO_ANIMATION:
+          animation_status_string = "NO_ANIMATION";
+          break;
+          case RootNode::Animation_Status::ANIMATION_PAUSED:
+          animation_status_string = "ANIMATION_PAUSED";
+          break;
+          case RootNode::Animation_Status::ANIMATED:
+          animation_status_string = "ANIMATED";
+          break;
+        }
+        return animation_status_string;
+      };
+
+      QLabel* animation_status_label = new QLabel(tr("Current Animation Status: ")+animation_status_to_string(root_node->get_animation_status()));
+      animation_layout->addWidget(animation_status_label, 1, 0, 1, -1);
+      connect(root_node, &RootNode::animation_status_changed, this,
+        [=] (RootNode::Animation_Status new_animation_status) {
+          animation_status_label->setText(tr("Current Animation Status: ")+animation_status_to_string(new_animation_status));
+        }
+      );
+
+      QLabel* animation_name_label = new QLabel(tr("Current Animation: ")+tr(root_node->get_current_animation_name().c_str()));
+      animation_layout->addWidget(animation_name_label, 2, 0, 1, -1);
+      connect(root_node, &RootNode::animation_changed, this,
+        [=] (NodeAnimation* new_animation) {
+          animation_name_label->setText(tr("Current Animation: ")+tr(new_animation->name.c_str()));
+        }
+      );
+
+      unsigned int y_pos = 3;
       for (auto it : root_node->animation) {
         QPushButton* animation_jump = new QPushButton(animation_box);
         animation_jump->setText(tr(it.second->name.c_str()));
-        animation_layout->addWidget(animation_jump);
+        animation_layout->addWidget(animation_jump, ++y_pos, 0, 1, -1);
 
         QScrollArea* animation_menu = set_animation(it.second);
         connect(animation_jump, &QPushButton::clicked, this,
@@ -270,6 +304,7 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
           }
         );
       }
+
       Node_layout->addWidget(animation_box, 3, 0, 1, -1);
     }
   }
