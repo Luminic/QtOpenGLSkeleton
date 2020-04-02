@@ -274,23 +274,69 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
         return animation_status_string;
       };
 
-      QLabel* animation_status_label = new QLabel(tr("Current Animation Status: ")+animation_status_to_string(root_node->get_animation_status()));
+      QLabel* animation_status_label = new QLabel(tr("Current Animation Status: ")+animation_status_to_string(root_node->get_animation_status()), animation_box);
       animation_layout->addWidget(animation_status_label, 1, 0, 1, -1);
       connect(root_node, &RootNode::animation_status_changed, this,
-        [=] (RootNode::Animation_Status new_animation_status) {
+        [animation_status_label, animation_status_to_string] (RootNode::Animation_Status new_animation_status) {
           animation_status_label->setText(tr("Current Animation Status: ")+animation_status_to_string(new_animation_status));
         }
       );
 
-      QLabel* animation_name_label = new QLabel(tr("Current Animation: ")+tr(root_node->get_current_animation_name().c_str()));
+      QLabel* animation_name_label = new QLabel(tr("Current Animation: ")+tr(root_node->get_current_animation_name().c_str()), animation_box);
       animation_layout->addWidget(animation_name_label, 2, 0, 1, -1);
       connect(root_node, &RootNode::animation_changed, this,
-        [=] (NodeAnimation* new_animation) {
+        [animation_name_label] (NodeAnimation* new_animation) {
           animation_name_label->setText(tr("Current Animation: ")+tr(new_animation->name.c_str()));
         }
       );
 
-      unsigned int y_pos = 3;
+      QLabel* animation_time_label = new QLabel(tr("Animation Time: ")+QString::number(root_node->get_animation_time()), animation_box);
+      animation_layout->addWidget(animation_time_label, 3, 0, 1, -1);
+      connect(this, &Settings::updating, this,
+        [animation_time_label, root_node] () {
+          animation_time_label->setText(tr("Animation Time: ")+QString::number(root_node->get_animation_time()));
+        }
+      );
+
+      QSlider* animation_time_slider = new QSlider(Qt::Horizontal, animation_box);
+      animation_time_slider->setRange(0,100);
+      animation_layout->addWidget(animation_time_slider, 4, 0, 1, -1);
+      connect(this, &Settings::updating, this,
+        [animation_time_slider, root_node] () {
+          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
+            animation_time_slider->setValue(int(root_node->get_animation_time()/root_node->get_current_animation()->duration*100));
+          }
+        }
+      );
+      connect(animation_time_slider, &QSlider::valueChanged, this,
+        [root_node] (int value) {
+          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATION_PAUSED) {
+            root_node->set_animation_time(value/100.0f*root_node->get_current_animation()->duration);
+          }
+        }
+      );
+
+      QPushButton* play_pause_button = new QPushButton(tr("Play/Pause"), animation_box);
+      animation_layout->addWidget(play_pause_button, 5, 0, 1, 1);
+      connect(play_pause_button, &QPushButton::clicked, this,
+        [root_node] () {
+          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
+            root_node->stop_animation();
+          } else {
+            root_node->start_animation();
+          }
+        }
+      );
+
+      QPushButton* disable_animation_button = new QPushButton(tr("Disable Animation"), animation_box);
+      animation_layout->addWidget(disable_animation_button, 5, 1, 1, 1);
+      connect(disable_animation_button, &QPushButton::clicked, this,
+        [root_node] () {
+          root_node->disable_animation();
+        }
+      );
+
+      unsigned int y_pos = 5;
       for (auto it : root_node->animation) {
         QPushButton* animation_jump = new QPushButton(animation_box);
         animation_jump->setText(tr(it.second->name.c_str()));

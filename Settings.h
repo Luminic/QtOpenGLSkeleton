@@ -11,6 +11,7 @@
 #include <QVBoxLayout>
 #include <QTreeView>
 #include <QStandardItemModel>
+#include <QDebug>
 
 #include <vector>
 #include <unordered_map>
@@ -34,6 +35,8 @@ public:
   Settings(QWidget* parent=nullptr);
   ~Settings();
 
+  void update_settings() {emit updating();}
+
   void set_scene(Scene *scene);
   void set_camera(Camera *camera);
   QStandardItem* set_node(Node* node, QStandardItem* parent=nullptr);
@@ -46,6 +49,9 @@ public:
 
   // Helper functions
   std::vector<Material*> get_node_materials(Node *node);
+
+signals:
+  void updating(); // Only for internal use (with lambdas)
 
 private:
   void create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name);

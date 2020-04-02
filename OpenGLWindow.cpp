@@ -368,6 +368,7 @@ void OpenGLWindow::create_post_processing_framebuffer() {
 void OpenGLWindow::update_scene() {
   scene->update_scene();
   camera->update_cam();
+  settings->update_settings();
   update();
 }
 
