@@ -22,6 +22,12 @@ enum Image_Type {
   OPACITY_MAP // Only used when a mesh w/ transparent arts is drawn. Only the alpha value is used
 };
 
+enum Transparency {
+  OPAQUE = 0,                 // Everything is opaque
+  FULL_TRANSPARENCY = 1,      // Some parts are fully transparent (fragment discarding must be enabled)
+  PARTIAL_TRANSPARENCY = 2    // Some parts are partially transparent (fragment blending must be enabled)
+};
+
 namespace ImageLoading {
   enum Options : char {
     NONE            = 0,
@@ -46,24 +52,15 @@ struct Texture {
 };
 
 class Material : public QObject, protected QOpenGLFunctions_4_5_Core {
-  Q_OBJECT
+  Q_OBJECT;
+
+protected:
+  Shader_Opacity_Triplet color_shaders;
+  DepthShaderGroup depth_shaders;
 
 public:
-  Material(std::string name);
-  Material();
-  ~Material();
-  void init();
-
   std::string name;
   static int nr_materials_created;
-
-  int set_materials(Shader *shader, int texture_unit=0);
-  void set_opacity_map(Shader* shader, int texture_unit=0);
-
-  Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
-  Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
-
-  bool operator==(const Material& other_material);
 
   std::vector<Texture> textures;
   Texture opacity_map;
@@ -75,6 +72,26 @@ public:
   float specular; // 1.0f
   float roughness; // 1.0f
   float metalness; // 0.0
+
+  Material(std::string name, Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
+  Material(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
+  ~Material();
+
+  int draw(Shader::DrawType draw_type, Transparency transparency, int texture_unit);
+  void set_opacity_map(Shader* shader, int texture_unit=0);
+
+  Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
+  Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
+
+  bool operator==(const Material& other_material);
+
+  Shader_Opacity_Triplet get_color_shaders() {return color_shaders;}
+  DepthShaderGroup get_depth_shaders() {return depth_shaders;}
+
+protected:
+  // Helper functions
+  void init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
+  int set_textures(Shader* shader, int texture_unit=0);
 };
 
 #endif

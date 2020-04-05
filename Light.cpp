@@ -26,6 +26,9 @@ void Light::draw(Shader *shader, glm::mat4 model, bool use_material, int texture
   if (visible) {
     shader->use();
     shader->setVec3("color", color);
-    Node::draw(Shader_Opacity_Triplet{shader, nullptr, nullptr}, nullptr, model, use_material, texture_unit);
+    shader->setMat4("model", model*get_model_matrix());
+    for (auto mesh : meshes) {
+      mesh->simple_draw();
+    }
   }
 }

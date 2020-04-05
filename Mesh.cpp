@@ -25,21 +25,49 @@ void Mesh::init() {
 Mesh::~Mesh() {
 }
 
-void Mesh::draw(Shader *shader, bool use_material, int texture_unit) {
-  shader->use();
-
-  if (transparency != OPAQUE) {
-    Q_ASSERT_X(material != nullptr, "Setting transparency map for mesh", "material does not exist");
-    material->set_opacity_map(shader, texture_unit);
-    texture_unit++;
+void Mesh::draw(Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
+  Shader_Opacity_Triplet shader_triplet;
+  switch (draw_type) {
+    case Shader::DrawType::COLOR:
+      shader_triplet = material->get_color_shaders();
+      material->draw(draw_type, transparency, texture_unit);
+      break;
+    case Shader::DrawType::DEPTH_DIRLIGHT:
+      shader_triplet = material->get_depth_shaders().dirlight;
+      break;
+    case Shader::DrawType::DEPTH_POINTLIGHT:
+      shader_triplet = material->get_depth_shaders().pointlight;
+      break;
+  }
+  switch (transparency) {
+    case Transparency::OPAQUE:
+      shader_triplet.opaque->use();
+      shader_triplet.opaque->setMat4("model", model);
+      break;
+    case Transparency::FULL_TRANSPARENCY:
+      shader_triplet.full_transparency->use();
+      shader_triplet.full_transparency->setMat4("model", model);
+      break;
+    case Transparency::PARTIAL_TRANSPARENCY:
+      shader_triplet.partial_transparency->use();
+      shader_triplet.partial_transparency->setMat4("model", model);
+      break;
   }
 
-  if (use_material) {
-    Q_ASSERT_X(material != nullptr, "Setting materials for mesh", "material does not exist");
-    material->set_materials(shader, texture_unit);
-  }
+  // if (transparency != OPAQUE) {
+  //   material->set_opacity_map(shader, texture_unit);
+  //   texture_unit++;
+  // }
+  //
+  // if (use_material) {
+  //   material->set_materials(shader, texture_unit);
+  // }
 
   // Draw Mesh
+  simple_draw();
+}
+
+void Mesh::simple_draw() {
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
   glActiveTexture(GL_TEXTURE0);

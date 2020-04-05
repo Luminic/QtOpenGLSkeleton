@@ -41,10 +41,10 @@ struct Transparent_Draw {
 };
 
 class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
-  Scene(QObject *parent=nullptr);
+  Scene(Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders, QObject *parent=nullptr);
   ~Scene();
 
   void initialize_scene();
@@ -64,7 +64,7 @@ public:
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 
-  void draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit=0, glm::vec3 camera_position = glm::vec3(0.0f));
+  void draw_objects(Shader::DrawType draw_type, int texture_unit=0, glm::vec3 camera_position = glm::vec3(0.0f));
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;

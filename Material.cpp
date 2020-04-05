@@ -5,17 +5,20 @@
 
 int Material::nr_materials_created = 0;
 
-Material::Material() {
+Material::Material(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
   this->name = "material #" + std::to_string(nr_materials_created);
-  init();
+  init(color_shaders, depth_shaders);
 }
 
-Material::Material(std::string name) : Material() {
+Material::Material(std::string name, Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
   this->name = name;
-  init();
+  init(color_shaders, depth_shaders);
 }
 
-void Material::init() {
+void Material::init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
+  this->color_shaders = color_shaders;
+  this->depth_shaders = depth_shaders;
+
   nr_materials_created++;
 
   ambient = 0.2f;
@@ -34,16 +37,48 @@ void Material::init() {
 Material::~Material() {
 }
 
-int Material::set_materials(Shader *shader, int texture_unit) {
-  shader->use();
+int Material::draw(Shader::DrawType draw_type, Transparency transparency, int texture_unit) {
+  if (draw_type == Shader::DrawType::COLOR) {
+    Shader* shader;
+    switch (transparency) {
+      case Transparency::OPAQUE:
+        shader = color_shaders.opaque;
+        break;
+      case Transparency::FULL_TRANSPARENCY:
+        shader = color_shaders.full_transparency;
+        break;
+      case Transparency::PARTIAL_TRANSPARENCY:
+        shader = color_shaders.partial_transparency;
+        break;
+    }
 
+    shader->use();
+    texture_unit = set_textures(shader, texture_unit);
+
+    if (transparency != Transparency::OPAQUE && opacity_map.id != 0) {
+      glActiveTexture(GL_TEXTURE0+texture_unit);
+      glBindTexture(GL_TEXTURE_2D, opacity_map.id);
+      shader->setInt("material.opacity_map", texture_unit++);
+    }
+
+    shader->setVec3("material.color", color);
+    shader->setFloat("material.ambient", ambient);
+    shader->setFloat("material.diffuse", diffuse);
+    shader->setFloat("material.specular", specular);
+    shader->setFloat("material.roughness", roughness);
+    shader->setFloat("material.metalness", metalness);
+  }
+  return texture_unit;
+}
+
+int Material::set_textures(Shader* shader, int texture_unit) {
   int number_albedo_maps = 0;
   int number_ambient_occlusion_maps = 0;
   int number_roughness_maps = 0;
   int number_metalness_maps = 0;
 
   for (unsigned int i=0; i<textures.size(); i++) {
-    glActiveTexture(GL_TEXTURE0+(texture_unit));
+    glActiveTexture(GL_TEXTURE0+texture_unit);
     switch (textures[i].type) {
       case ALBEDO_MAP:
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
@@ -84,13 +119,6 @@ int Material::set_materials(Shader *shader, int texture_unit) {
   shader->setBool("material.use_ambient_occlusion_map", (number_ambient_occlusion_maps>=1));
   shader->setBool("material.use_roughness_map", (number_roughness_maps>=1));
   shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
-
-  shader->setVec3("material.color", color);
-  shader->setFloat("material.ambient", ambient);
-  shader->setFloat("material.diffuse", diffuse);
-  shader->setFloat("material.specular", specular);
-  shader->setFloat("material.roughness", roughness);
-  shader->setFloat("material.metalness", metalness);
 
   return texture_unit;
 }

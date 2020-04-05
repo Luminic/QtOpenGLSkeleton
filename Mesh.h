@@ -21,12 +21,6 @@ struct Vertex {
   glm::vec4 bone_weights;
 };
 
-enum Transparency {
-  OPAQUE = 0,                 // Everything is opaque
-  FULL_TRANSPARENCY = 1,      // Some parts are fully transparent (fragment discarding must be enabled)
-  PARTIAL_TRANSPARENCY = 2    // Some parts are partially transparent (fragment blending must be enabled)
-};
-
 class Mesh : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
 
@@ -43,7 +37,8 @@ public:
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
   void initialize_buffers();
 
-  void draw(Shader *shader, bool use_material=true, int texture_unit=0);
+  void draw(Shader::DrawType draw_type, const glm::mat4& model, int texture_unit=0);
+  void simple_draw(); // Just draws the object to the screen. The shader should be set before calling this.
 
   Transparency get_transparency() {return transparency;};
   void set_transparency(Transparency new_transparency) {transparency=new_transparency;};

@@ -3,7 +3,6 @@
 #include "RootNode.h"
 
 RootNode::RootNode(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation) : Node(transformation, position, scale, rotation) {
-  root_node = this;
 }
 
 RootNode::~RootNode() {
@@ -15,16 +14,36 @@ RootNode::~RootNode() {
 void RootNode::update() {
   root_inverse_model = inverse(get_model_matrix());
   if (armature.size() >= 1) {
-    update_armature(glm::mat4(1.0f), animation_status==Animation_Status::NO_ANIMATION ? nullptr : current_animation, get_animation_time());
+    update_armature(glm::mat4(1.0f), this, animation_status==Animation_Status::NO_ANIMATION ? nullptr : current_animation, get_animation_time());
   }
 }
 
-void RootNode::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
-  for (unsigned int i=0; i<armature.size(); i++) {
-    shaders.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) {
+  // If update_armature was called from this RootNode's update() function call the normal update_armature
+  if (root_node == this) {
+    Node::update_armature(parent_transformation, root_node, animation, animation_time);
   }
+  // If this RootNode is a part of another RootNode's hierarchy, this RootNode needs to still set its own armature
+  else {
+    update();
+  }
+}
 
-  Node::draw(shaders, partially_transparent_meshes, model, use_material, texture_unit);
+// void RootNode::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
+//   for (unsigned int i=0; i<armature.size(); i++) {
+//     shaders.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+//   }
+//
+//   Node::draw(shaders, partially_transparent_meshes, model, use_material, texture_unit);
+// }
+
+void RootNode::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
+  for (unsigned int i=0; i<armature.size(); i++) {
+    for (auto shader_triplet : relevant_color_shaders) {
+      shader_triplet.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+    }
+  }
+  Node::draw(draw_type, partially_transparent_meshes, model, texture_unit);
 }
 
 void RootNode::set_bone_final_transform(unsigned int bone_index, const glm::mat4& parent_transformation) {

@@ -252,8 +252,8 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
     item->appendRow(set_mesh(mesh.get()));
   }
 
-  if (node->root_node == node) { // If the node is a root node
-    RootNode* root_node = node->root_node;
+  RootNode* root_node = dynamic_cast<RootNode*>(node);
+  if (root_node != nullptr) { // If the node is a root node
     if (root_node->animation.size() > 0) {
       QGroupBox* animation_box = new QGroupBox(tr("Animation"), Node_widget);
       QGridLayout* animation_layout = new QGridLayout(animation_box);

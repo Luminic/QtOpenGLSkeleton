@@ -23,13 +23,17 @@ inline glm::quat aiQuaternion_to_glm_quat(const aiQuaternion& from) {
   return glm::quat(from.w, from.x, from.y, from.z);
 }
 
-Model::Model(const char* path) {
+Model::Model(const char* path, Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders) {
   name = path;
+  this->object_shaders = object_shaders;
+  this->depth_shaders = depth_shaders;
   load_model(path);
 }
 
-Model::Model(const char* path, const char* name) {
+Model::Model(const char* path, const char* name, Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders) {
   this->name = name;
+  this->object_shaders = object_shaders;
+  this->depth_shaders = depth_shaders;
   load_model(path);
 }
 
@@ -58,7 +62,6 @@ Node* Model::process_node(aiNode* node, const aiScene* scene, bool root) {
     my_node = this;
   } else {
     my_node = new Node();
-    my_node->root_node = this;
     my_node->name = node->mName.C_Str();
   }
   // Create a map from the node's ORIGINAL name to the node itself
@@ -121,7 +124,7 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
     }
   }
   // Load material
-  Material *mesh_colors = new Material();
+  Material *mesh_colors = new Material(object_shaders, depth_shaders);
   aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
   load_material_textures(material, mesh_colors);

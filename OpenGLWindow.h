@@ -70,10 +70,11 @@ protected:
 
   glm::mat4 projection;
 
-  Shader_Opacity_Triplet dirlight_depth_shaders;
-  Shader_Opacity_Triplet pointlight_depth_shaders;
+  // Shader_Opacity_Triplet dirlight_depth_shaders;
+  // Shader_Opacity_Triplet pointlight_depth_shaders;
 
   Shader_Opacity_Triplet object_shaders;
+  DepthShaderGroup depth_shaders;
 
   Shader *light_shader = nullptr;
   Shader *skybox_shader = nullptr;

@@ -10,9 +10,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 class Shader : public QObject, protected QOpenGLFunctions_4_5_Core {
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
+  enum DrawType {
+    COLOR = 0x0,
+    DEPTH_DIRLIGHT = 0x1,
+    DEPTH_POINTLIGHT = 0x2
+  };
+
   unsigned int ID;
 
   Shader();
@@ -80,5 +86,37 @@ struct Shader_Opacity_Triplet {
     partial_transparency->setMat4(name, mat);
   }
 };
+
+inline bool operator==(const Shader_Opacity_Triplet& lhs, const Shader_Opacity_Triplet& rhs) {
+  return lhs.opaque == rhs.opaque && lhs.full_transparency == rhs.full_transparency && lhs.partial_transparency == rhs.partial_transparency;
+}
+inline bool operator<(const Shader_Opacity_Triplet& lhs, const Shader_Opacity_Triplet& rhs) {
+  if (lhs.opaque->ID < rhs.opaque->ID) return true;
+  if (lhs.opaque->ID > rhs.opaque->ID) return false;
+  if (lhs.full_transparency->ID < rhs.full_transparency->ID) return true;
+  if (lhs.full_transparency->ID > rhs.full_transparency->ID) return false;
+  if (lhs.partial_transparency->ID < rhs.partial_transparency->ID) return true;
+  return false;
+}
+inline bool operator>(const Shader_Opacity_Triplet& lhs, const Shader_Opacity_Triplet& rhs) {
+  if (lhs < rhs) return false;
+  if (lhs == rhs) return false;
+  return true;
+}
+
+struct DepthShaderGroup {
+  Shader_Opacity_Triplet dirlight;
+  Shader_Opacity_Triplet pointlight;
+};
+
+inline bool operator==(const DepthShaderGroup& lhs, const DepthShaderGroup& rhs) {
+  return lhs.dirlight == rhs.dirlight && lhs.pointlight == rhs.pointlight;
+}
+inline bool operator<(const DepthShaderGroup& lhs, const DepthShaderGroup& rhs) {
+  if (lhs.dirlight < rhs.dirlight) return true;
+  if (lhs.dirlight > rhs.dirlight) return false;
+  if (lhs.pointlight < rhs.pointlight) return true;
+  return false;
+}
 
 #endif

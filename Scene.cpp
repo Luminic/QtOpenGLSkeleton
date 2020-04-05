@@ -11,7 +11,7 @@
 std::vector<Texture> Scene::loaded_textures;
 std::vector<Material*> Scene::loaded_materials;
 
-Scene::Scene(QObject *parent) : QObject(parent) {
+Scene::Scene(Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders, QObject *parent) : QObject(parent) {
   initializeOpenGLFunctions();
 
   display_type = 0;
@@ -35,7 +35,7 @@ Scene::Scene(QObject *parent) : QObject(parent) {
     "skyboxes/front.jpg",
     "skyboxes/back.jpg"
   };
-  skybox->material = new Material("skybox");
+  skybox->material = new Material("skybox", object_shaders, depth_shaders);
   skybox->material->load_cubemap(faces);
 
   antialiasing = FXAA;
@@ -90,7 +90,10 @@ void Scene::update_scene() {
 void Scene::draw_skybox(Shader *shader) {
   shader->use();
   shader->setFloat("skybox_multiplier", skybox_multiplier);
-  skybox->draw(shader);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->material->textures[0].id);
+  shader->setInt("skybox", 0);
+  skybox->simple_draw();
 }
 
 int Scene::set_skybox_settings(std::string name, Shader *shader, int texture_unit) {
@@ -108,7 +111,7 @@ void Scene::render_dirlights_shadow_map(Shader_Opacity_Triplet shaders) {
     dirlight->set_light_space(shaders.opaque);
     dirlight->set_light_space(shaders.full_transparency);
     dirlight->set_light_space(shaders.partial_transparency);
-    draw_objects(shaders, false);
+    draw_objects(Shader::DrawType::DEPTH_DIRLIGHT);
   }
 }
 
@@ -139,7 +142,7 @@ void Scene::render_pointlights_shadow_map(Shader_Opacity_Triplet shaders) {
     light->set_light_space(shaders.opaque);
     light->set_light_space(shaders.full_transparency);
     light->set_light_space(shaders.partial_transparency);
-    draw_objects(shaders, false);
+    draw_objects(Shader::DrawType::DEPTH_POINTLIGHT);
   }
 }
 
@@ -163,10 +166,10 @@ void Scene::draw_light(Shader *shader) {
   }
 }
 
-void Scene::draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int texture_unit, glm::vec3 camera_position) {
+void Scene::draw_objects(Shader::DrawType draw_type, int texture_unit, glm::vec3 camera_position) {
   std::vector<Transparent_Draw> partially_transparent_meshes;
   for (auto node : nodes) {
-    node->draw(shaders, &partially_transparent_meshes, glm::mat4(1.0f), use_material, texture_unit);
+    node->draw(draw_type, &partially_transparent_meshes, glm::mat4(1.0f), texture_unit);
   }
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -176,10 +179,10 @@ void Scene::draw_objects(Shader_Opacity_Triplet shaders, bool use_material, int 
     }
   );
 
-  shaders.partial_transparency->use();
+  // shaders.partial_transparency->use();
   for (auto draw_call : partially_transparent_meshes) {
-    shaders.partial_transparency->setMat4("model", draw_call.model);
-    draw_call.mesh->draw(shaders.partial_transparency, true, draw_call.texture_unit);
+    // shaders.partial_transparency->setMat4("model", draw_call.model);
+    draw_call.mesh->draw(draw_type, draw_call.model, draw_call.texture_unit);
   }
   glBlendFunc(GL_ONE, GL_ZERO);
 }

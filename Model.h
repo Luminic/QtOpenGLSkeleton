@@ -23,8 +23,8 @@ class Model : public RootNode {
   Q_OBJECT;
 
 public:
-  Model(const char *path);
-  Model(const char *path, const char* name);
+  Model(const char *path, Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders);
+  Model(const char *path, const char* name, Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders);
   ~Model();
 
 protected:
@@ -41,6 +41,9 @@ protected:
   std::string directory;
 
   std::vector<Texture> textures_loaded;
+
+  Shader_Opacity_Triplet object_shaders;
+  DepthShaderGroup depth_shaders;
 };
 
 #endif
