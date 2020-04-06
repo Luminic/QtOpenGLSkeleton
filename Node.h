@@ -57,7 +57,7 @@ public:
   static int nr_nodes_created;
 
   Node(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
-  ~Node();
+  virtual ~Node();
 
   // Traverse the node tree to update and return this node's relevant shaders (will update the relevant shaders in all children nodes)
   virtual const std::set<Shader_Opacity_Triplet>& update_relevant_color_shaders();

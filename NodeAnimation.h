@@ -44,7 +44,7 @@ protected:
 
 public:
   NodeAnimationChannel(std::string name);
-  ~NodeAnimationChannel();
+  virtual ~NodeAnimationChannel();
 
   std::string name;
 

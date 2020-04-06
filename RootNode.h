@@ -31,7 +31,7 @@ protected:
 
 public:
   RootNode(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
-  ~RootNode();
+  virtual ~RootNode();
 
   virtual void update();
   virtual void update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) override;
