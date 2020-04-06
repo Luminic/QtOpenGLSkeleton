@@ -70,19 +70,6 @@ void Node::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* parti
   if (visible) {
     model *= get_model_matrix();
 
-    // shaders.opaque->use();
-    // shaders.opaque->setMat4("model", model);
-    // if (shaders.full_transparency != nullptr) {
-    //   shaders.full_transparency->use();
-    //   shaders.full_transparency->setMat4("model", model);
-    // }
-    // // Partially transparent objects should only be drawn immediately for shadow maps
-    // // For normal rendering, they should be rendered later
-    // if ((!use_material) && shaders.partial_transparency != nullptr) {
-    //   shaders.partial_transparency->use();
-    //   shaders.partial_transparency->setMat4("model", model);
-    // }
-
     for (unsigned int i=0; i<meshes.size(); i++) {
       if (meshes[i]->get_transparency() == OPAQUE) {
         meshes[i]->draw(draw_type, model, texture_unit);

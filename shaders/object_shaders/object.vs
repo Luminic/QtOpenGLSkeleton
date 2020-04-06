@@ -6,6 +6,13 @@ layout(location=2) in vec2 vertex_texture_coordinate;
 layout(location=3) in ivec4 vertex_ids;
 layout(location=4) in vec4 vertex_weights;
 
+#define MAX_BONES 10
+
+// The size of armature is 64 * MAX_BONES
+// layout (std140, binding=0) uniform Armature {
+// 	mat4 armature[MAX_BONES];
+// };
+
 out VS_OUT {
 	vec3 fragment_position;
 	vec2 texture_coordinate;
@@ -16,7 +23,6 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-#define MAX_BONES 10
 uniform mat4 armature[MAX_BONES];
 
 void main() {

@@ -29,18 +29,16 @@ void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_n
   }
 }
 
-// void RootNode::draw(Shader_Opacity_Triplet shaders, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, bool use_material, int texture_unit) {
-//   for (unsigned int i=0; i<armature.size(); i++) {
-//     shaders.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
-//   }
-//
-//   Node::draw(shaders, partially_transparent_meshes, model, use_material, texture_unit);
-// }
-
 void RootNode::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
   for (unsigned int i=0; i<armature.size(); i++) {
     for (auto shader_triplet : relevant_color_shaders) {
+      // unsigned int armature_uniform_block_index = glGetUniformBlockIndex(shader_triplet.opaque.ID, "Armature");
+      // glUniformBlockBinding(shader_triplet.opaque.ID, armature_uniform_block_index, 0);
       shader_triplet.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+    }
+    for (auto depth_shader_group : relevant_depth_shaders) {
+      depth_shader_group.dirlight.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
+      depth_shader_group.pointlight.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
     }
   }
   Node::draw(draw_type, partially_transparent_meshes, model, texture_unit);

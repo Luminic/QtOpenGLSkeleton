@@ -78,7 +78,7 @@ public:
   ~Material();
 
   int draw(Shader::DrawType draw_type, Transparency transparency, int texture_unit);
-  void set_opacity_map(Shader* shader, int texture_unit=0);
+  void set_opacity_map(Shader* shader, int& texture_unit); // Assumes shader is already in use
 
   Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
   Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
@@ -91,7 +91,7 @@ public:
 protected:
   // Helper functions
   void init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
-  int set_textures(Shader* shader, int texture_unit=0);
+  void set_textures(Shader* shader, int& texture_unit);
 };
 
 #endif

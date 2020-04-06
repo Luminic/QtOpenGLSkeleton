@@ -47,21 +47,14 @@ void Mesh::draw(Shader::DrawType draw_type, const glm::mat4& model, int texture_
     case Transparency::FULL_TRANSPARENCY:
       shader_triplet.full_transparency->use();
       shader_triplet.full_transparency->setMat4("model", model);
+      material->set_opacity_map(shader_triplet.full_transparency, texture_unit);
       break;
     case Transparency::PARTIAL_TRANSPARENCY:
       shader_triplet.partial_transparency->use();
       shader_triplet.partial_transparency->setMat4("model", model);
+      material->set_opacity_map(shader_triplet.partial_transparency, texture_unit);
       break;
   }
-
-  // if (transparency != OPAQUE) {
-  //   material->set_opacity_map(shader, texture_unit);
-  //   texture_unit++;
-  // }
-  //
-  // if (use_material) {
-  //   material->set_materials(shader, texture_unit);
-  // }
 
   // Draw Mesh
   simple_draw();

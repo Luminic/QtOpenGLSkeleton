@@ -53,13 +53,7 @@ int Material::draw(Shader::DrawType draw_type, Transparency transparency, int te
     }
 
     shader->use();
-    texture_unit = set_textures(shader, texture_unit);
-
-    if (transparency != Transparency::OPAQUE && opacity_map.id != 0) {
-      glActiveTexture(GL_TEXTURE0+texture_unit);
-      glBindTexture(GL_TEXTURE_2D, opacity_map.id);
-      shader->setInt("material.opacity_map", texture_unit++);
-    }
+    set_textures(shader, texture_unit);
 
     shader->setVec3("material.color", color);
     shader->setFloat("material.ambient", ambient);
@@ -71,7 +65,7 @@ int Material::draw(Shader::DrawType draw_type, Transparency transparency, int te
   return texture_unit;
 }
 
-int Material::set_textures(Shader* shader, int texture_unit) {
+void Material::set_textures(Shader* shader, int& texture_unit) {
   int number_albedo_maps = 0;
   int number_ambient_occlusion_maps = 0;
   int number_roughness_maps = 0;
@@ -119,16 +113,17 @@ int Material::set_textures(Shader* shader, int texture_unit) {
   shader->setBool("material.use_ambient_occlusion_map", (number_ambient_occlusion_maps>=1));
   shader->setBool("material.use_roughness_map", (number_roughness_maps>=1));
   shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
-
-  return texture_unit;
 }
 
-void Material::set_opacity_map(Shader* shader, int texture_unit) {
-  Q_ASSERT_X(opacity_map.id != 0, "set_opacity_map", "no opacity map exists");
-  shader->use();
+void Material::set_opacity_map(Shader* shader, int& texture_unit) {
+  if (opacity_map.id == 0) {
+    return;
+  }
+
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_2D, opacity_map.id);
   shader->setInt("material.opacity_map", texture_unit);
+  texture_unit++;
 }
 
 Texture Material::load_texture(const char *path, Image_Type type, ImageLoading::Options options) {
