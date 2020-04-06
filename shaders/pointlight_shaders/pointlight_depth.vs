@@ -5,10 +5,14 @@ layout(location=2) in vec2 vertex_texture_coordinate;
 layout(location=3) in ivec4 vertex_ids;
 layout(location=4) in vec4 vertex_weights;
 
-uniform mat4 model;
-
 #define MAX_BONES 10
-uniform mat4 armature[MAX_BONES];
+
+// The size of armature is 64 * MAX_BONES
+layout (std140, binding=0) uniform Armature {
+	mat4 armature[MAX_BONES];
+};
+
+uniform mat4 model;
 
 out vec2 vert_texture_coordinate;
 

@@ -3,6 +3,8 @@
 
 #include "Shader.h"
 
+std::unordered_map<std::string, unsigned int> Shader::uniform_block_buffers;
+
 std::string textContent(QString path) {
     QFile file(path);
     file.open(QFile::ReadOnly | QFile::Text);

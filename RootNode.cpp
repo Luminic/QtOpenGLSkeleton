@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "RootNode.h"
 
 RootNode::RootNode(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation) : Node(transformation, position, scale, rotation) {
@@ -13,7 +15,7 @@ RootNode::~RootNode() {
 
 void RootNode::update() {
   root_inverse_model = inverse(get_model_matrix());
-  if (armature.size() >= 1) {
+  if (armature_offsets.size() >= 1) {
     update_armature(glm::mat4(1.0f), this, animation_status==Animation_Status::NO_ANIMATION ? nullptr : current_animation, get_animation_time());
   }
 }
@@ -30,22 +32,18 @@ void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_n
 }
 
 void RootNode::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
-  for (unsigned int i=0; i<armature.size(); i++) {
-    for (auto shader_triplet : relevant_color_shaders) {
-      // unsigned int armature_uniform_block_index = glGetUniformBlockIndex(shader_triplet.opaque.ID, "Armature");
-      // glUniformBlockBinding(shader_triplet.opaque.ID, armature_uniform_block_index, 0);
-      shader_triplet.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
-    }
-    for (auto depth_shader_group : relevant_depth_shaders) {
-      depth_shader_group.dirlight.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
-      depth_shader_group.pointlight.setMat4(("armature["+std::to_string(i)+"]").c_str(), armature[i].final_transform);
-    }
-  }
+  auto it = Shader::uniform_block_buffers.find("Armature");
+  Q_ASSERT_X(it != Shader::uniform_block_buffers.end(), "Setting armature UBO", "No UBO found");
+  Q_ASSERT_X(armature_final_transforms.size() <= 10, "Setting armature UBO", "Too many bones in armature");
+  glBindBuffer(GL_UNIFORM_BUFFER, it->second);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4)*armature_final_transforms.size(), armature_final_transforms.data());
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
   Node::draw(draw_type, partially_transparent_meshes, model, texture_unit);
 }
 
 void RootNode::set_bone_final_transform(unsigned int bone_index, const glm::mat4& parent_transformation) {
-  armature[bone_index].final_transform = parent_transformation * armature[bone_index].offset * root_inverse_model;
+  armature_final_transforms[bone_index] = parent_transformation * armature_offsets[bone_index] * root_inverse_model;
 }
 
 void RootNode::set_current_animation(std::string new_animation_name) {

@@ -9,7 +9,6 @@ Light::Light(glm::vec3 position, glm::vec3 scale, glm::vec3 color, float ambient
   diffuse(diffuse),
   specular(specular)
 {
-  initializeOpenGLFunctions();
 }
 
 Light::~Light() {

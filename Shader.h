@@ -5,6 +5,9 @@
 #include <QOpenGLWidget>
 #include <QString>
 
+#include <string>
+#include <unordered_map>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -13,6 +16,8 @@ class Shader : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
 public:
+  static std::unordered_map<std::string, unsigned int> uniform_block_buffers;
+
   enum DrawType {
     COLOR = 0x0,
     DEPTH_DIRLIGHT = 0x1,

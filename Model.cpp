@@ -145,11 +145,10 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
     if (it == loaded_bones.end()) {
       // The  is contained be the root node
       // Not the mesh's direct parent node (that is why I specifically use this-> even though it's unnecessary)
-      bone_index = this->armature.size();
+      bone_index = this->armature_offsets.size();
       loaded_bones[std::string(mesh->mBones[i]->mName.C_Str())] = bone_index;
-      Bone bone;
-      bone.offset = aiMat_to_glmMat(mesh->mBones[i]->mOffsetMatrix);
-      this->armature.push_back(bone);
+      this->armature_offsets.push_back(aiMat_to_glmMat(mesh->mBones[i]->mOffsetMatrix));
+      this->armature_final_transforms.push_back(glm::mat4(1.0f));
     } else {
       bone_index = (int) it->second;
     }

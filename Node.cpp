@@ -15,6 +15,7 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
   scale(scale),
   rotation(rotation)
 {
+  initializeOpenGLFunctions();
   name = "node #" + std::to_string(nr_nodes_created);
   visible = true;
 }

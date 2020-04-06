@@ -296,14 +296,42 @@ void OpenGLWindow::load_shaders() {
   depth_shaders.dirlight.full_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
   depth_shaders.dirlight.partial_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
+  unsigned int armature_ubo_index_opaque = glGetUniformBlockIndex(depth_shaders.dirlight.opaque->ID, "Armature");
+  unsigned int armature_ubo_index_full_transparency = glGetUniformBlockIndex(depth_shaders.dirlight.full_transparency->ID, "Armature");
+  unsigned int armature_ubo_index_partial_transparency = glGetUniformBlockIndex(depth_shaders.dirlight.partial_transparency->ID, "Armature");
+  glUniformBlockBinding(depth_shaders.dirlight.opaque->ID, armature_ubo_index_opaque, 0);
+  glUniformBlockBinding(depth_shaders.dirlight.full_transparency->ID, armature_ubo_index_full_transparency, 0);
+  glUniformBlockBinding(depth_shaders.dirlight.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
+
   depth_shaders.pointlight.opaque->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.full_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.partial_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+
+  armature_ubo_index_opaque = glGetUniformBlockIndex(depth_shaders.pointlight.opaque->ID, "Armature");
+  armature_ubo_index_full_transparency = glGetUniformBlockIndex(depth_shaders.pointlight.full_transparency->ID, "Armature");
+  armature_ubo_index_partial_transparency = glGetUniformBlockIndex(depth_shaders.pointlight.partial_transparency->ID, "Armature");
+  glUniformBlockBinding(depth_shaders.pointlight.opaque->ID, armature_ubo_index_opaque, 0);
+  glUniformBlockBinding(depth_shaders.pointlight.full_transparency->ID, armature_ubo_index_full_transparency, 0);
+  glUniformBlockBinding(depth_shaders.pointlight.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
 
   object_shaders.opaque->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
   object_shaders.full_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
   object_shaders.partial_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
 
+  armature_ubo_index_opaque = glGetUniformBlockIndex(object_shaders.opaque->ID, "Armature");
+  armature_ubo_index_full_transparency = glGetUniformBlockIndex(object_shaders.full_transparency->ID, "Armature");
+  armature_ubo_index_partial_transparency = glGetUniformBlockIndex(object_shaders.partial_transparency->ID, "Armature");
+  glUniformBlockBinding(object_shaders.opaque->ID, armature_ubo_index_opaque, 0);
+  glUniformBlockBinding(object_shaders.full_transparency->ID, armature_ubo_index_full_transparency, 0);
+  glUniformBlockBinding(object_shaders.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
+
+  unsigned int armature_ubo_id;
+  glGenBuffers(1, &armature_ubo_id);
+  glBindBuffer(GL_UNIFORM_BUFFER, armature_ubo_id);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*10, NULL, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  glBindBufferBase(GL_UNIFORM_BUFFER, 0, armature_ubo_id);
+  Shader::uniform_block_buffers["Armature"] = armature_ubo_id;
 
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");

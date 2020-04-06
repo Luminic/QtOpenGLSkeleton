@@ -12,7 +12,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 
-class Light : public Node, protected QOpenGLFunctions_4_5_Core {
+class Light : public Node {
   Q_OBJECT
 
 public:

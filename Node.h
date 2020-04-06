@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QOpenGLFunctions_4_5_Core>
 
 #include <vector>
 #include <set>
@@ -20,14 +21,9 @@
 
 struct Transparent_Draw;
 
-struct Bone {
-  glm::mat4 offset;
-  glm::mat4 final_transform;
-};
-
 class RootNode;
 
-class Node : public QObject {
+class Node : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
 protected:

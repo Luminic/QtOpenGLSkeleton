@@ -9,9 +9,9 @@ layout(location=4) in vec4 vertex_weights;
 #define MAX_BONES 10
 
 // The size of armature is 64 * MAX_BONES
-// layout (std140, binding=0) uniform Armature {
-// 	mat4 armature[MAX_BONES];
-// };
+layout (std140, binding=0) uniform Armature {
+	mat4 armature[MAX_BONES];
+};
 
 out VS_OUT {
 	vec3 fragment_position;
@@ -22,8 +22,6 @@ out VS_OUT {
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-
-uniform mat4 armature[MAX_BONES];
 
 void main() {
 	mat4 bone_transform;
