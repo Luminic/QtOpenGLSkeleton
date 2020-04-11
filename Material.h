@@ -54,10 +54,6 @@ struct Texture {
 class Material : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
-protected:
-  Shader_Opacity_Triplet color_shaders;
-  DepthShaderGroup depth_shaders;
-
 public:
   std::string name;
   static int nr_materials_created;
@@ -73,11 +69,11 @@ public:
   float roughness; // 1.0f
   float metalness; // 0.0
 
-  Material(std::string name, Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
-  Material(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
+  Material(std::string name);
+  Material();
   ~Material();
 
-  int draw(Shader::DrawType draw_type, Transparency transparency, int texture_unit);
+  int draw(Shader* shader, int texture_unit);
   void set_opacity_map(Shader* shader, int& texture_unit); // Assumes shader is already in use
 
   Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
@@ -85,12 +81,9 @@ public:
 
   bool operator==(const Material& other_material);
 
-  Shader_Opacity_Triplet get_color_shaders() {return color_shaders;}
-  DepthShaderGroup get_depth_shaders() {return depth_shaders;}
-
 protected:
   // Helper functions
-  void init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders);
+  void init();
   void set_textures(Shader* shader, int& texture_unit);
 };
 

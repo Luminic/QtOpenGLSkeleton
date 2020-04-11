@@ -78,7 +78,7 @@ void OpenGLWindow::initializeGL() {
   camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
   settings->set_camera(camera);
 
-  scene = new Scene(object_shaders, depth_shaders, this);
+  scene = new Scene(this);
   settings->set_scene(scene);
 
   DirectionalLight* dirlight = new DirectionalLight(glm::vec3(-6.0f, 7.0f, -10.0f), glm::vec3(0.2f));
@@ -129,7 +129,7 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
   // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
-  Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird", object_shaders, depth_shaders);
+  Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
@@ -142,7 +142,7 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
   cube->initialize_cube();
-  cube->material = new Material("box", object_shaders, depth_shaders);
+  cube->material = new Material("box");
   cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
   cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
   cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
@@ -173,7 +173,7 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> grass = std::make_shared<Mesh>();
   grass->name = "grass";
   grass->initialize_plane(false);
-  grass->material = new Material("grass", object_shaders, depth_shaders);
+  grass->material = new Material("grass");
   grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
   grass->material->opacity_map.type = OPACITY_MAP;
   grass->set_transparency(FULL_TRANSPARENCY);
@@ -206,7 +206,7 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> window = std::make_shared<Mesh>();
   window->name = "window";
   window->initialize_plane(false);
-  window->material = new Material("window", object_shaders, depth_shaders);
+  window->material = new Material("window");
   window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
   window->material->opacity_map.type = OPACITY_MAP;
   window->set_transparency(PARTIAL_TRANSPARENCY);
@@ -231,7 +231,7 @@ void OpenGLWindow::initializeGL() {
   Mesh* floor_mesh = new Mesh();
   floor_mesh->name = "floor";
   floor_mesh->initialize_plane(true, 3.0f);
-  floor_mesh->material = new Material("wooden planks", object_shaders, depth_shaders);
+  floor_mesh->material = new Material("wooden planks");
   floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
   floor_mesh->material->ambient = 0.2f;
   floor_mesh->material->diffuse = 0.6f;
@@ -248,11 +248,6 @@ void OpenGLWindow::initializeGL() {
 
   framebuffer_quad = new Mesh();
   framebuffer_quad->initialize_plane(false);
-
-  for (auto node : scene->get_nodes()) {
-    node->update_relevant_color_shaders();
-    node->update_relevant_depth_shaders();
-  }
 
   create_framebuffer();
   create_scene_framebuffer();
@@ -485,7 +480,7 @@ void OpenGLWindow::paintGL() {
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.partial_transparency, texture_unit);
 
-    scene->draw_objects(Shader::DrawType::COLOR, texture_unit, camera->position);
+    scene->draw_objects(object_shaders, Shader::DrawType::COLOR, texture_unit, camera->position);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)

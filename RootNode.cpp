@@ -31,7 +31,7 @@ void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_n
   }
 }
 
-void RootNode::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
+void RootNode::draw(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
   auto it = Shader::uniform_block_buffers.find("Armature");
   Q_ASSERT_X(it != Shader::uniform_block_buffers.end(), "Setting armature UBO", "No UBO found");
   Q_ASSERT_X(armature_final_transforms.size() <= 10, "Setting armature UBO", "Too many bones in armature");
@@ -39,7 +39,7 @@ void RootNode::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* p
   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4)*armature_final_transforms.size(), armature_final_transforms.data());
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  Node::draw(draw_type, partially_transparent_meshes, model, texture_unit);
+  Node::draw(shaders, draw_type, partially_transparent_meshes, model, texture_unit);
 }
 
 void RootNode::set_bone_final_transform(unsigned int bone_index, const glm::mat4& parent_transformation) {

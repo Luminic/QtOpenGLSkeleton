@@ -22,7 +22,7 @@ public:
   void set_object_settings(std::string name, Shader *shader);
 
   // No "override" because only one shader is needed (there is no transparency with light sources)
-  virtual void draw(Shader *shader, glm::mat4 model=glm::mat4(1.0f), bool use_material=false, int texture_unit=0);
+  virtual void draw(Shader *shader, glm::mat4 model=glm::mat4(1.0f));
 
   glm::vec3 color;
   float ambient;

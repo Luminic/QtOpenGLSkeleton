@@ -37,7 +37,7 @@ public:
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
   void initialize_buffers();
 
-  void draw(Shader::DrawType draw_type, const glm::mat4& model, int texture_unit=0);
+  void draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit=0);
   void simple_draw(); // Just draws the object to the screen. The shader should be set before calling this.
 
   Transparency get_transparency() {return transparency;};

@@ -26,28 +26,6 @@ class RootNode;
 class Node : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
-protected:
-  friend class Settings;
-
-  std::set<Shader_Opacity_Triplet> relevant_color_shaders;
-  std::set<DepthShaderGroup> relevant_depth_shaders;
-
-  std::vector<std::shared_ptr<Mesh>> meshes;
-  std::vector<std::shared_ptr<Node>> child_nodes;
-
-  // If the node is a bone node, this will be the index of the bone in armature (the root node's armature)
-  // If the node is a plain node, this will be -1
-  int bone_id = -1;
-
-  bool has_animation = false;
-
-  glm::mat4 transformation;
-  glm::vec3 position;
-  glm::vec3 scale;
-  glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
-
-  bool visible;
-
 public:
   std::string name;
   static int nr_nodes_created;
@@ -55,13 +33,9 @@ public:
   Node(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
   virtual ~Node();
 
-  // Traverse the node tree to update and return this node's relevant shaders (will update the relevant shaders in all children nodes)
-  virtual const std::set<Shader_Opacity_Triplet>& update_relevant_color_shaders();
-  virtual const std::set<DepthShaderGroup>& update_relevant_depth_shaders();
-
   // If NodeAnimation is a nullptr, bone matrix data is used instead of animation data (i.e. default bone pose is used)
   virtual void update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time);
-  virtual void draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), int texture_unit=0);
+  virtual void draw(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), int texture_unit=0);
 
   // Getters & setters
   virtual glm::mat4 get_model_matrix(bool use_transformation_matrix=true);
@@ -92,6 +66,25 @@ public:
 
   void set_animated(bool has_animation) {this->has_animation = has_animation;};
   bool get_animated() {return has_animation;};
+
+protected:
+  friend class Settings;
+
+  std::vector<std::shared_ptr<Mesh>> meshes;
+  std::vector<std::shared_ptr<Node>> child_nodes;
+
+  // If the node is a bone node, this will be the index of the bone in armature (the root node's armature)
+  // If the node is a plain node, this will be -1
+  int bone_id = -1;
+
+  bool has_animation = false;
+
+  glm::mat4 transformation;
+  glm::vec3 position;
+  glm::vec3 scale;
+  glm::vec3 rotation; // Yaw Pitch Roll represented by xyz
+
+  bool visible;
 };
 
 #endif

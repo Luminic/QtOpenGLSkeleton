@@ -35,13 +35,6 @@ struct QuaternionKey {
 class NodeAnimationChannel : public QObject {
   Q_OBJECT;
 
-protected:
-  friend class Settings;
-  // These should be in chronological order
-  std::vector<VectorKey> position_keys;
-  std::vector<QuaternionKey> rotation_keys;
-  std::vector<VectorKey> scale_keys;
-
 public:
   NodeAnimationChannel(std::string name);
   virtual ~NodeAnimationChannel();
@@ -62,6 +55,13 @@ public:
   virtual void add_position_key(VectorKey key) {position_keys.push_back(key);}
   virtual void add_rotation_key(QuaternionKey key) {rotation_keys.push_back(key);}
   virtual void add_scale_key(VectorKey key) {scale_keys.push_back(key);}
+
+protected:
+  friend class Settings;
+  // These should be in chronological order
+  std::vector<VectorKey> position_keys;
+  std::vector<QuaternionKey> rotation_keys;
+  std::vector<VectorKey> scale_keys;
 };
 
 class NodeAnimation : public QObject {

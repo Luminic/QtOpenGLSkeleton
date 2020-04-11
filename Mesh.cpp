@@ -25,35 +25,14 @@ void Mesh::init() {
 Mesh::~Mesh() {
 }
 
-void Mesh::draw(Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
-  Shader_Opacity_Triplet shader_triplet;
-  switch (draw_type) {
-    case Shader::DrawType::COLOR:
-      shader_triplet = material->get_color_shaders();
-      material->draw(draw_type, transparency, texture_unit);
-      break;
-    case Shader::DrawType::DEPTH_DIRLIGHT:
-      shader_triplet = material->get_depth_shaders().dirlight;
-      break;
-    case Shader::DrawType::DEPTH_POINTLIGHT:
-      shader_triplet = material->get_depth_shaders().pointlight;
-      break;
+void Mesh::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
+  shader->use();
+  shader->setMat4("model", model);
+  if (draw_type == Shader::DrawType::COLOR) {
+    material->draw(shader, texture_unit);
   }
-  switch (transparency) {
-    case Transparency::OPAQUE:
-      shader_triplet.opaque->use();
-      shader_triplet.opaque->setMat4("model", model);
-      break;
-    case Transparency::FULL_TRANSPARENCY:
-      shader_triplet.full_transparency->use();
-      shader_triplet.full_transparency->setMat4("model", model);
-      material->set_opacity_map(shader_triplet.full_transparency, texture_unit);
-      break;
-    case Transparency::PARTIAL_TRANSPARENCY:
-      shader_triplet.partial_transparency->use();
-      shader_triplet.partial_transparency->setMat4("model", model);
-      material->set_opacity_map(shader_triplet.partial_transparency, texture_unit);
-      break;
+  if (transparency != Transparency::OPAQUE) {
+    material->set_opacity_map(shader, texture_unit);
   }
 
   // Draw Mesh

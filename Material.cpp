@@ -5,20 +5,17 @@
 
 int Material::nr_materials_created = 0;
 
-Material::Material(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
+Material::Material() {
   this->name = "material #" + std::to_string(nr_materials_created);
-  init(color_shaders, depth_shaders);
+  init();
 }
 
-Material::Material(std::string name, Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
+Material::Material(std::string name) {
   this->name = name;
-  init(color_shaders, depth_shaders);
+  init();
 }
 
-void Material::init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth_shaders) {
-  this->color_shaders = color_shaders;
-  this->depth_shaders = depth_shaders;
-
+void Material::init() {
   nr_materials_created++;
 
   ambient = 0.2f;
@@ -37,31 +34,16 @@ void Material::init(Shader_Opacity_Triplet color_shaders, DepthShaderGroup depth
 Material::~Material() {
 }
 
-int Material::draw(Shader::DrawType draw_type, Transparency transparency, int texture_unit) {
-  if (draw_type == Shader::DrawType::COLOR) {
-    Shader* shader;
-    switch (transparency) {
-      case Transparency::OPAQUE:
-        shader = color_shaders.opaque;
-        break;
-      case Transparency::FULL_TRANSPARENCY:
-        shader = color_shaders.full_transparency;
-        break;
-      case Transparency::PARTIAL_TRANSPARENCY:
-        shader = color_shaders.partial_transparency;
-        break;
-    }
+int Material::draw(Shader* shader, int texture_unit) {
+  shader->use();
+  set_textures(shader, texture_unit);
 
-    shader->use();
-    set_textures(shader, texture_unit);
-
-    shader->setVec3("material.color", color);
-    shader->setFloat("material.ambient", ambient);
-    shader->setFloat("material.diffuse", diffuse);
-    shader->setFloat("material.specular", specular);
-    shader->setFloat("material.roughness", roughness);
-    shader->setFloat("material.metalness", metalness);
-  }
+  shader->setVec3("material.color", color);
+  shader->setFloat("material.ambient", ambient);
+  shader->setFloat("material.diffuse", diffuse);
+  shader->setFloat("material.specular", specular);
+  shader->setFloat("material.roughness", roughness);
+  shader->setFloat("material.metalness", metalness);
   return texture_unit;
 }
 

@@ -21,7 +21,7 @@ void Light::set_object_settings(std::string name, Shader *shader) {
   shader->setFloat((name+".specular").c_str(), specular);
 }
 
-void Light::draw(Shader *shader, glm::mat4 model, bool use_material, int texture_unit) {
+void Light::draw(Shader *shader, glm::mat4 model) {
   if (visible) {
     shader->use();
     shader->setVec3("color", color);

@@ -15,29 +15,13 @@ public:
     ANIMATED = 0x02 // Translate using animation data (animation is on)
   };
 
-protected:
-  friend class Settings;
-  // Armature exsts so the all bone matrices for this node tree can be sent to a shader
-  std::vector<glm::mat4> armature_offsets;
-  std::vector<glm::mat4> armature_final_transforms;
-
-  std::unordered_map<std::string, NodeAnimation*> animation;
-
-  glm::mat4 root_inverse_model;
-
-  Animation_Status animation_status = NO_ANIMATION;
-  NodeAnimation* current_animation = nullptr;
-  std::string current_animation_name = "";
-  QElapsedTimer* timer = new QElapsedTimer();
-  int time_offset;
-
 public:
   RootNode(glm::mat4 transformation=glm::mat4(1.0f), glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 rotation=glm::vec3(0.0f));
   virtual ~RootNode();
 
   virtual void update();
   virtual void update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) override;
-  virtual void draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), int texture_unit=0) override;
+  virtual void draw(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), int texture_unit=0) override;
 
   virtual const std::vector<glm::mat4>& get_armature_offsets() {return armature_offsets;}
   virtual const std::vector<glm::mat4>& get_armature_final_transforms() {return armature_final_transforms;}
@@ -60,6 +44,21 @@ signals:
   void animation_status_changed(Animation_Status new_status);
   void animation_changed(NodeAnimation* new_animation);
 
+protected:
+  friend class Settings;
+  // Armature exsts so the all bone matrices for this node tree can be sent to a shader
+  std::vector<glm::mat4> armature_offsets;
+  std::vector<glm::mat4> armature_final_transforms;
+
+  std::unordered_map<std::string, NodeAnimation*> animation;
+
+  glm::mat4 root_inverse_model;
+
+  Animation_Status animation_status = NO_ANIMATION;
+  NodeAnimation* current_animation = nullptr;
+  std::string current_animation_name = "";
+  QElapsedTimer* timer = new QElapsedTimer();
+  int time_offset;
 };
 
 #endif

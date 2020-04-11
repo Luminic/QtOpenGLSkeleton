@@ -36,6 +36,7 @@ enum Display_Types {
 
 struct Transparent_Draw {
   Mesh* mesh;
+  Shader* shader;
   glm::mat4 model;
   int texture_unit;
 };
@@ -44,7 +45,20 @@ class Scene : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
 public:
-  Scene(Shader_Opacity_Triplet object_shaders, DepthShaderGroup depth_shaders, QObject *parent=nullptr);
+  Mesh *skybox;
+
+  float skybox_multiplier;
+
+  float bloom_multiplier;
+  float bloom_offset;
+  float bloom_threshold_upper;
+  float bloom_threshold_lower;
+  int bloom_interpolation;
+  int bloom_applications;
+
+  Antialiasing_Types antialiasing;
+
+  Scene(QObject *parent=nullptr);
   ~Scene();
 
   void initialize_scene();
@@ -64,7 +78,7 @@ public:
   int set_light_settings(std::string name, Shader *shader, int texture_unit=0); // Returns the next free texture unit
   void draw_light(Shader *shader);
 
-  void draw_objects(Shader::DrawType draw_type, int texture_unit=0, glm::vec3 camera_position = glm::vec3(0.0f));
+  void draw_objects(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, int texture_unit=0, glm::vec3 camera_position = glm::vec3(0.0f));
 
   static std::vector<Texture> loaded_textures;
   static std::vector<Material*> loaded_materials;
@@ -90,18 +104,6 @@ public:
   void delete_pointlight_at(unsigned int index);
   void clear_pointlights();
 
-  Mesh *skybox;
-
-  float skybox_multiplier;
-
-  float bloom_multiplier;
-  float bloom_offset;
-  float bloom_threshold_upper;
-  float bloom_threshold_lower;
-  int bloom_interpolation;
-  int bloom_applications;
-
-  Antialiasing_Types antialiasing;
 
   /*
   Display Types:

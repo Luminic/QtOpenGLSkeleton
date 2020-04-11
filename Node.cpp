@@ -22,30 +22,6 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 
 Node::~Node() {}
 
-const std::set<Shader_Opacity_Triplet>& Node::update_relevant_color_shaders() {
-  relevant_color_shaders.clear();
-  for (auto child_node : child_nodes) {
-    auto child_shaders = child_node->update_relevant_color_shaders();
-    relevant_color_shaders.insert(child_shaders.begin(), child_shaders.end());
-  }
-  for (auto mesh : meshes) {
-    relevant_color_shaders.insert(mesh->material->get_color_shaders());
-  }
-  return relevant_color_shaders;
-}
-
-const std::set<DepthShaderGroup>& Node::update_relevant_depth_shaders() {
-  relevant_depth_shaders.clear();
-  for (auto child_node : child_nodes) {
-    auto child_shaders = child_node->update_relevant_depth_shaders();
-    relevant_depth_shaders.insert(child_shaders.begin(), child_shaders.end());
-  }
-  for (auto mesh : meshes) {
-    relevant_depth_shaders.insert(mesh->material->get_depth_shaders());
-  }
-  return relevant_depth_shaders;
-}
-
 void Node::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) {
   if (!(has_animation) || animation==nullptr) {
     parent_transformation *= get_model_matrix();
@@ -67,28 +43,28 @@ void Node::update_armature(glm::mat4 parent_transformation, RootNode* root_node,
   }
 }
 
-void Node::draw(Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
+void Node::draw(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes, glm::mat4 model, int texture_unit) {
   if (visible) {
     model *= get_model_matrix();
 
     for (unsigned int i=0; i<meshes.size(); i++) {
       if (meshes[i]->get_transparency() == OPAQUE) {
-        meshes[i]->draw(draw_type, model, texture_unit);
+        meshes[i]->draw(shaders.opaque, draw_type, model, texture_unit);
       }
       else if (meshes[i]->get_transparency() == FULL_TRANSPARENCY) {
-        meshes[i]->draw(draw_type, model, texture_unit);
+        meshes[i]->draw(shaders.full_transparency, draw_type, model, texture_unit);
       }
       else {
         if (draw_type != Shader::DrawType::COLOR) {
           Q_ASSERT_X(partially_transparent_meshes != nullptr, "Node::draw", "partially_transparent_meshes is null but it is needed");
-          meshes[i]->draw(draw_type, model, texture_unit);
+          meshes[i]->draw(shaders.partial_transparency, draw_type, model, texture_unit);
         } else {
-          partially_transparent_meshes->push_back(Transparent_Draw{meshes[i].get(), model, texture_unit});
+          partially_transparent_meshes->push_back(Transparent_Draw{meshes[i].get(), shaders.partial_transparency, model, texture_unit});
         }
       }
     }
     for (unsigned int i=0; i<child_nodes.size(); i++) {
-      child_nodes[i]->draw(draw_type, partially_transparent_meshes, model, texture_unit);
+      child_nodes[i]->draw(shaders, draw_type, partially_transparent_meshes, model, texture_unit);
     }
   }
 }
