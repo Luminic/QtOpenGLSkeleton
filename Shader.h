@@ -6,16 +6,34 @@
 #include <QString>
 
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+enum Image_Type {
+  UNKNOWN =               0x0,
+  ALBEDO_MAP =            0x1, // Should be in gamma space (will be converted into linear space)
+  AMBIENT_OCCLUSION_MAP = 0x1 << 1, // Should be in linear space
+  ROUGHNESS_MAP =         0x1 << 2, // Should be in linear space
+  METALNESS_MAP =         0x1 << 3, // Should be in linear space
+  CUBE_MAP =              0x1 << 4, // Should be in gamma space (will be converted into linear space)
+  OPACITY_MAP =           0x1 << 5 // Only used when a mesh w/ transparent arts is drawn. Only the alpha value is used
+};
+inline constexpr Image_Type operator|(Image_Type a, Image_Type b) {
+  return a = static_cast<Image_Type> (int(a) | int(b));
+}
+inline constexpr Image_Type operator&(Image_Type a, Image_Type b) {
+  return a = static_cast<Image_Type> (int(a) & int(b));
+}
+
 class Shader : public QObject, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT;
 
 public:
+  static unsigned int placeholder_texture;
   static std::unordered_map<std::string, unsigned int> uniform_block_buffers;
 
   enum DrawType {
@@ -29,7 +47,10 @@ public:
   Shader();
   ~Shader();
 
-  void loadShaders(const char *vertex_path, const char *fragment_path, const char *geometry_path="");
+  void loadShaders(const char* vertex_path, const char* fragment_path, const char* geometry_path="");
+  void initialize_placeholder_textures(Image_Type texture_types); // Input the types of images that the shaders have samplers for
+  void initialize_placeholder_2D_textures(std::vector<const char*> texture_names);
+  bool validate_program(); // Will return whether or not the program is valid. If invalid, a warning will be outputted to stdout
   void use();
 
   void setBool(const char *name, bool value);
@@ -48,6 +69,14 @@ struct Shader_Opacity_Triplet {
     delete opaque;
     delete full_transparency;
     delete partial_transparency;
+  }
+
+  bool validate_shader_programs() {
+    return (
+      opaque->validate_program() &&
+      full_transparency->validate_program() &&
+      partial_transparency->validate_program()
+    );
   }
 
   void setBool(const char *name, bool value) {

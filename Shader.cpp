@@ -2,7 +2,9 @@
 #include <QDebug>
 
 #include "Shader.h"
+#include "Material.h"
 
+unsigned int Shader::placeholder_texture = 0;
 std::unordered_map<std::string, unsigned int> Shader::uniform_block_buffers;
 
 std::string textContent(QString path) {
@@ -82,7 +84,45 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
     glGetProgramInfoLog(ID, 512, NULL, infoLog);
     qDebug() << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog;
   }
+}
 
+void Shader::initialize_placeholder_textures(Image_Type texture_types) {
+  if (Shader::placeholder_texture == 0) {
+    Shader::placeholder_texture = Material::static_load_texture("textures/placeholder_texture.png", Image_Type::ALBEDO_MAP).id;
+  }
+
+  use();
+  if (texture_types & Image_Type::ALBEDO_MAP) {
+    setInt("material.albedo_map", 0);
+  }
+  if (texture_types & Image_Type::AMBIENT_OCCLUSION_MAP) {
+    setInt("material.ambient_occlusion_map", 0);
+  }
+  if (texture_types & Image_Type::ROUGHNESS_MAP) {
+    setInt("material.roughness_map", 0);
+  }
+  if (texture_types & Image_Type::METALNESS_MAP) {
+    setInt("material.metalness_map", 0);
+  }
+  if (texture_types & Image_Type::OPACITY_MAP) {
+    setInt("material.opacity_map", 0);
+  }
+}
+
+void Shader::initialize_placeholder_2D_textures(std::vector<const char*> texture_names) {
+  if (Shader::placeholder_texture == 0) {
+    Shader::placeholder_texture = Material::static_load_texture("textures/placeholder_texture.png", Image_Type::ALBEDO_MAP).id;
+  }
+
+  use();
+  for (auto name : texture_names) {
+    setInt(name, 0);
+  }
+}
+
+bool Shader::validate_program() {
+  int success;
+  char infoLog[512];
   // Validate the program
   glValidateProgram(ID);
   glGetProgramiv(ID, GL_VALIDATE_STATUS, &success);
@@ -90,6 +130,7 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
     glGetProgramInfoLog(ID, 512, NULL, infoLog);
     qDebug() << "WARNING::SHADER::PROGRAM::VALIDATION_FAILED\n" << infoLog;
   }
+  return success;
 }
 
 void Shader::use() {

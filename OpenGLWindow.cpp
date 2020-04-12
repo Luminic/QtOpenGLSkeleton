@@ -127,17 +127,17 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
   // Model* nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
+  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
-  Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
+  // Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
   scene->add_node(std::shared_ptr<RootNode>(nanosuit));
   settings->set_node(nanosuit);
 
-  nanosuit->set_current_animation("Armature|ArmatureAction");
-  nanosuit->start_animation();
+  // nanosuit->set_current_animation("Armature|ArmatureAction");
+  // nanosuit->start_animation();
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
@@ -174,7 +174,7 @@ void OpenGLWindow::initializeGL() {
   grass->name = "grass";
   grass->initialize_plane(false);
   grass->material = new Material("grass");
-  grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
+  grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
   grass->material->opacity_map.type = OPACITY_MAP;
   grass->set_transparency(FULL_TRANSPARENCY);
   grass->material = Scene::is_material_loaded(grass->material);
@@ -207,7 +207,7 @@ void OpenGLWindow::initializeGL() {
   window->name = "window";
   window->initialize_plane(false);
   window->material = new Material("window");
-  window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED | ImageLoading::Options::ADD_TO_MATERIAL);
+  window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
   window->material->opacity_map.type = OPACITY_MAP;
   window->set_transparency(PARTIAL_TRANSPARENCY);
   window->material = Scene::is_material_loaded(window->material);
@@ -291,34 +291,24 @@ void OpenGLWindow::load_shaders() {
   depth_shaders.dirlight.full_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
   depth_shaders.dirlight.partial_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
-  unsigned int armature_ubo_index_opaque = glGetUniformBlockIndex(depth_shaders.dirlight.opaque->ID, "Armature");
-  unsigned int armature_ubo_index_full_transparency = glGetUniformBlockIndex(depth_shaders.dirlight.full_transparency->ID, "Armature");
-  unsigned int armature_ubo_index_partial_transparency = glGetUniformBlockIndex(depth_shaders.dirlight.partial_transparency->ID, "Armature");
-  glUniformBlockBinding(depth_shaders.dirlight.opaque->ID, armature_ubo_index_opaque, 0);
-  glUniformBlockBinding(depth_shaders.dirlight.full_transparency->ID, armature_ubo_index_full_transparency, 0);
-  glUniformBlockBinding(depth_shaders.dirlight.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
+  depth_shaders.dirlight.validate_shader_programs();
 
   depth_shaders.pointlight.opaque->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.full_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.partial_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
 
-  armature_ubo_index_opaque = glGetUniformBlockIndex(depth_shaders.pointlight.opaque->ID, "Armature");
-  armature_ubo_index_full_transparency = glGetUniformBlockIndex(depth_shaders.pointlight.full_transparency->ID, "Armature");
-  armature_ubo_index_partial_transparency = glGetUniformBlockIndex(depth_shaders.pointlight.partial_transparency->ID, "Armature");
-  glUniformBlockBinding(depth_shaders.pointlight.opaque->ID, armature_ubo_index_opaque, 0);
-  glUniformBlockBinding(depth_shaders.pointlight.full_transparency->ID, armature_ubo_index_full_transparency, 0);
-  glUniformBlockBinding(depth_shaders.pointlight.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
+  depth_shaders.pointlight.validate_shader_programs();
+
 
   object_shaders.opaque->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_opaque.fs");
   object_shaders.full_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_full_transparency.fs");
   object_shaders.partial_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
 
-  armature_ubo_index_opaque = glGetUniformBlockIndex(object_shaders.opaque->ID, "Armature");
-  armature_ubo_index_full_transparency = glGetUniformBlockIndex(object_shaders.full_transparency->ID, "Armature");
-  armature_ubo_index_partial_transparency = glGetUniformBlockIndex(object_shaders.partial_transparency->ID, "Armature");
-  glUniformBlockBinding(object_shaders.opaque->ID, armature_ubo_index_opaque, 0);
-  glUniformBlockBinding(object_shaders.full_transparency->ID, armature_ubo_index_full_transparency, 0);
-  glUniformBlockBinding(object_shaders.partial_transparency->ID, armature_ubo_index_partial_transparency, 0);
+  object_shaders.opaque->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP);
+  object_shaders.full_transparency->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP | Image_Type::OPACITY_MAP);
+  object_shaders.partial_transparency->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP | Image_Type::OPACITY_MAP);
+
+  object_shaders.validate_shader_programs();
 
   unsigned int armature_ubo_id;
   glGenBuffers(1, &armature_ubo_id);
@@ -329,12 +319,18 @@ void OpenGLWindow::load_shaders() {
   Shader::uniform_block_buffers["Armature"] = armature_ubo_id;
 
   light_shader->loadShaders("shaders/light_vertex.shader", "shaders/light_fragment.shader");
+  light_shader->validate_program();
   skybox_shader->loadShaders("shaders/skybox_vertex.shader", "shaders/skybox_fragment.shader");
+  skybox_shader->validate_program();
   scene_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/scene_fragment.shader");
+  scene_shader->validate_program();
 
   gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
+  gaussian_blur_shader->validate_program();
   post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/post_processing_fragment.shader");
+  post_processing_shader->validate_program();
   antialiasing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/antialiasing_fragment.shader");
+  antialiasing_shader->validate_program();
 }
 
 void OpenGLWindow::create_framebuffer() {
@@ -462,19 +458,19 @@ void OpenGLWindow::paintGL() {
     object_shaders.setVec3("camera_position", camera->position);
     object_shaders.setMat4("view", view);
 
-    int texture_unit = 0;
+    int texture_unit = 1;
     object_shaders.opaque->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.opaque, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.opaque, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.opaque, texture_unit);
 
-    texture_unit = 0;
+    texture_unit = 1;
     object_shaders.full_transparency->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.full_transparency, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.full_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.full_transparency, texture_unit);
 
-    texture_unit = 0;
+    texture_unit = 1;
     object_shaders.partial_transparency->use();
     texture_unit = scene->set_skybox_settings("skybox", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);

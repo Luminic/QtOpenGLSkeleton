@@ -11,14 +11,14 @@ in VS_OUT {
 
 struct Material {
   // Should be 0 and false by default
-  int number_albedo_maps;
+  bool use_albedo_map;
   bool use_ambient_occlusion_map;
   bool use_roughness_map; // Inverted (white is smooth and black is rough)
   bool use_metalness_map;
 
   // These should be uninitialized and unused by default
-  sampler2D albedo_map[1];
-  //sampler2D ambient_occlusion_map;
+  sampler2D albedo_map;
+  sampler2D ambient_occlusion_map;
   sampler2D roughness_map;
   sampler2D metalness_map;
 
@@ -218,15 +218,10 @@ void main() {
     metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
 	}
 
-  vec3 diffuse = vec3(0.0f);
-  if (material.number_albedo_maps == 0) {
-  	diffuse = material.diffuse * material.color;
-  } else {
-    for (int i=0; i<material.number_albedo_maps; i++) {
-      diffuse += texture(material.albedo_map[i], fs_in.texture_coordinate).rgb;
-    }
-    diffuse *= material.diffuse * material.color;
-  }
+  vec3 diffuse = material.diffuse * material.color;
+	if (material.use_albedo_map) {
+		diffuse *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
+	}
 
   vec3 specular = vec3(material.specular);
   specular *= pow(roughness, 2);
@@ -239,7 +234,7 @@ void main() {
 
 	vec3 ambient = diffuse * material.ambient;
   if (material.use_ambient_occlusion_map) {
-    //ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
+    ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
 
 	vec3 lighting_color = vec3(0.0f);

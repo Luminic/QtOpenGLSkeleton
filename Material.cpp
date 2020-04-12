@@ -53,16 +53,23 @@ void Material::set_textures(Shader* shader, int& texture_unit) {
   int number_roughness_maps = 0;
   int number_metalness_maps = 0;
 
+  #ifdef QT_DEBUG
+    // Set "Texture not found" texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, Shader::placeholder_texture);
+  #endif
+
   for (unsigned int i=0; i<textures.size(); i++) {
     glActiveTexture(GL_TEXTURE0+texture_unit);
     switch (textures[i].type) {
       case ALBEDO_MAP:
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
-        shader->setInt(("material.albedo_map["+std::to_string(number_albedo_maps)+"]").c_str(), texture_unit);
+        shader->setInt("material.albedo_map", texture_unit);
         number_albedo_maps++;
         break;
-      case AMBIENT_OCCLUSION_MAP: // AO maps are non-functional at the moment
+      case AMBIENT_OCCLUSION_MAP:
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        shader->setInt("material.ambient_occlusion_map", texture_unit);
         number_ambient_occlusion_maps++;
         break;
       case ROUGHNESS_MAP:
@@ -91,7 +98,7 @@ void Material::set_textures(Shader* shader, int& texture_unit) {
     texture_unit++;
   }
 
-  shader->setInt("material.number_albedo_maps", number_albedo_maps);
+  shader->setInt("material.use_albedo_map", (number_albedo_maps>=1));
   shader->setBool("material.use_ambient_occlusion_map", (number_ambient_occlusion_maps>=1));
   shader->setBool("material.use_roughness_map", (number_roughness_maps>=1));
   shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
@@ -109,26 +116,37 @@ void Material::set_opacity_map(Shader* shader, int& texture_unit) {
 }
 
 Texture Material::load_texture(const char *path, Image_Type type, ImageLoading::Options options) {
+  Texture texture = Material::static_load_texture(path, type, options);
+
+  textures.push_back(texture);
+
+  return texture;
+}
+
+Texture Material::static_load_texture(const char *path, Image_Type type, ImageLoading::Options options) {
+  QOpenGLFunctions_4_5_Core* gl_functions = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_5_Core>();
+  Q_ASSERT_X(gl_functions, "static_load_texture", "Could not get GL functions");
+
   Texture texture = Scene::is_texture_loaded(path);
   texture.type = type;
 
   if (texture.id == 0) {
     texture.path = path;
-    glActiveTexture(GL_TEXTURE0);
+    gl_functions->glActiveTexture(GL_TEXTURE0);
 
-    glGenTextures(1, &texture.id);
-    glBindTexture(GL_TEXTURE_2D, texture.id);
+    gl_functions->glGenTextures(1, &texture.id);
+    gl_functions->glBindTexture(GL_TEXTURE_2D, texture.id);
 
     if (options & ImageLoading::Options::CLAMPED) {
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     } else {
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl_functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     qDebug() << "Loading" << path;
     QImage img = QImage(path);
@@ -145,24 +163,21 @@ Texture Material::load_texture(const char *path, Image_Type type, ImageLoading::
     Q_ASSERT_X(img.isNull()==false, "image loading", path);
     if (type == ALBEDO_MAP) { // Convert gamma (SRGB) space into linear (RGB) space
       if (options & ImageLoading::Options::TRANSPARENCY) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+        gl_functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
       } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+        gl_functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
       }
     } else { // Non-albedo maps should already be in linear space
       if (options & ImageLoading::Options::TRANSPARENCY) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+        gl_functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
       } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
+        gl_functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, img.bits());
       }
     }
-    glGenerateMipmap(GL_TEXTURE_2D);
+    gl_functions->glGenerateMipmap(GL_TEXTURE_2D);
 
     Scene::loaded_textures.push_back(texture);
   }
-
-  if (options & ImageLoading::Options::ADD_TO_MATERIAL)
-    textures.push_back(texture);
 
   return texture;
 }

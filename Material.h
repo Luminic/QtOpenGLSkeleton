@@ -12,16 +12,6 @@
 
 #include "Shader.h"
 
-enum Image_Type {
-  UNKNOWN,
-  ALBEDO_MAP, // Should be in gamma space (will be converted into linear space)
-  AMBIENT_OCCLUSION_MAP, // Should be in linear space
-  ROUGHNESS_MAP, // Should be in linear space
-  METALNESS_MAP, // Should be in linear space
-  CUBE_MAP, // Should be in gamma space (will be converted into linear space)
-  OPACITY_MAP // Only used when a mesh w/ transparent arts is drawn. Only the alpha value is used
-};
-
 enum Transparency {
   OPAQUE = 0,                 // Everything is opaque
   FULL_TRANSPARENCY = 1,      // Some parts are fully transparent (fragment discarding must be enabled)
@@ -34,7 +24,6 @@ namespace ImageLoading {
     TRANSPARENCY    = 1 << 0,
     FLIP_ON_LOAD    = 1 << 1,
     CLAMPED         = 1 << 2,
-    ADD_TO_MATERIAL = 1 << 3
   };
   inline constexpr Options operator|(Options a, Options b) {
     return a = static_cast<Options> (int(a) | int(b));
@@ -76,7 +65,8 @@ public:
   int draw(Shader* shader, int texture_unit);
   void set_opacity_map(Shader* shader, int& texture_unit); // Assumes shader is already in use
 
-  Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::ADD_TO_MATERIAL);
+  Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::NONE);
+  static Texture static_load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::NONE);
   Texture load_cubemap(const std::vector<std::string>& faces, bool add_to_material=true);
 
   bool operator==(const Material& other_material);

@@ -20,8 +20,8 @@ Scene::Scene(QObject *parent) : QObject(parent) {
 
   bloom_multiplier = 0.2f;
   bloom_offset = 0.0f;
-  bloom_threshold_upper = 4.0f;
-  bloom_threshold_lower = 2.5f;
+  bloom_threshold_lower = 4.0;
+  bloom_threshold_upper = 5.0f;
   bloom_interpolation = 1;
   bloom_applications = 10;
 
