@@ -22,8 +22,8 @@ void OpenGLWindow::set_inputs(const std::unordered_set<int>* keys_pressed, const
 }
 
 OpenGLWindow::~OpenGLWindow() {
-  delete settings;
-  delete camera;
+  delete scene;
+
   delete framebuffer_quad;
 
   depth_shaders.dirlight.delete_shaders();
@@ -73,10 +73,9 @@ void OpenGLWindow::initializeGL() {
 
   load_shaders();
 
-  camera = new Camera();
-  camera->exposure = 2.72f;
-  camera->initialize_camera(keys_pressed, mouse_movement, delta_time);
-  settings->set_camera(camera);
+  camera.exposure = 2.72f;
+  camera.initialize_camera(keys_pressed, mouse_movement, delta_time);
+  settings->set_camera(&camera);
 
   scene = new Scene(this);
   settings->set_scene(scene);
@@ -127,9 +126,9 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
   // Model* nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
+  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
-  // Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
+  Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
   nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
   nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
@@ -390,7 +389,7 @@ void OpenGLWindow::create_post_processing_framebuffer() {
 
 void OpenGLWindow::update_scene() {
   scene->update_scene();
-  camera->update_cam();
+  camera.update_cam();
   settings->update_settings();
   update();
 }
@@ -418,7 +417,7 @@ void OpenGLWindow::paintGL() {
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  glm::mat4 view = camera->view_matrix();
+  glm::mat4 view = camera.view_matrix();
 
 
 
@@ -455,7 +454,7 @@ void OpenGLWindow::paintGL() {
 
     // Draw the objects
     object_shaders.setFloat("skybox_multiplier", scene->skybox_multiplier);
-    object_shaders.setVec3("camera_position", camera->position);
+    object_shaders.setVec3("camera_position", camera.position);
     object_shaders.setMat4("view", view);
 
     int texture_unit = 1;
@@ -476,7 +475,7 @@ void OpenGLWindow::paintGL() {
     texture_unit = scene->set_dirlight_settings("dirlights", object_shaders.partial_transparency, texture_unit);
     texture_unit = scene->set_light_settings("lights", object_shaders.partial_transparency, texture_unit);
 
-    scene->draw_objects(object_shaders, Shader::DrawType::COLOR, texture_unit, camera->position);
+    scene->draw_objects(object_shaders, Shader::DrawType::COLOR, texture_unit, camera.position);
   }
 
   // Combine the scene into the scene framebuffer (so post-processing can be done on the entire scene)
@@ -572,7 +571,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
 
       post_processing_shader->setBool("do_exposure", true);
-      post_processing_shader->setFloat("exposure", camera->exposure);
+      post_processing_shader->setFloat("exposure", camera.exposure);
 
       post_processing_shader->setBool("do_gamma_correction", false);
 

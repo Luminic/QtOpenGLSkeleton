@@ -32,7 +32,7 @@ public:
 
   void update_perspective_matrix();
 
-  Camera *camera = nullptr;
+  Camera camera;
 
   Settings *settings = nullptr;
   Scene *scene = nullptr;

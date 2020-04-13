@@ -45,7 +45,7 @@ protected:
   QToolButton* movement_button;
 
   int delta_time;
-  QElapsedTimer *frame_time;
+  QElapsedTimer frame_time;
   std::vector<int> previous_frame_times;
   unsigned int current_pft_index;
   QTimer *timer;

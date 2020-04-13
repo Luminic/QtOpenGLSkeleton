@@ -37,17 +37,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &MainWindow::mainLoop);
   timer->start(16);
-  frame_time = new QElapsedTimer();
   previous_frame_times = {16,16,16,16,16,16,16};
   current_pft_index = 0;
-  frame_time->start();
+  frame_time.start();
 
   // Show the main window (also shows child widget: GLWindow)
   show();
 }
 
 MainWindow::~MainWindow() {
-  delete frame_time;
   delete status_box;
 }
 
@@ -136,8 +134,8 @@ void MainWindow::resume() {
 }
 
 void MainWindow::mainLoop() {
-  delta_time = frame_time->elapsed();
-  frame_time->start();
+  delta_time = frame_time.elapsed();
+  frame_time.start();
 
   if (!status_box->isHidden()) {
     previous_frame_times[++current_pft_index] = delta_time;
