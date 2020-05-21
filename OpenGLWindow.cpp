@@ -126,7 +126,6 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
   // Model* nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
   Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
