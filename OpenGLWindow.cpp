@@ -94,33 +94,33 @@ void OpenGLWindow::initializeGL() {
   scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
   settings->set_dirlight(dirlight);
 
-  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
-  dirlight->name = "dirlight #1";
-  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
-  dirlight->initialize_depth_framebuffer(2048,2048);
-  dirlight->color = glm::vec3(0.0f);
-  dirlight->ambient = 0.5f;
-  dirlight->diffuse = 2.5f;
-  dirlight->specular = 2.5f;
-  scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
-  settings->set_dirlight(dirlight);
+  // dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  // dirlight->name = "dirlight #1";
+  // dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
+  // dirlight->initialize_depth_framebuffer(2048,2048);
+  // dirlight->color = glm::vec3(0.0f);
+  // dirlight->ambient = 0.5f;
+  // dirlight->diffuse = 2.5f;
+  // dirlight->specular = 2.5f;
+  // scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+  // settings->set_dirlight(dirlight);
 
-  glm::vec3 light_positions[2] = {
-    glm::vec3( 2.4f, 1.9, 2.2f),
-    glm::vec3(-5.0f, 2.2, 2.0f)
-  };
+  // glm::vec3 light_positions[2] = {
+  //   glm::vec3( 2.4f, 1.9, 2.2f),
+  //   glm::vec3(-5.0f, 2.2, 2.0f)
+  // };
 
-  for (int i=0; i<2; i++) {
-    PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
-    light->name = "light #" + std::to_string(i);
-    light->initialize_depth_framebuffer(1024,1024);
-    light->color = glm::vec3(4.5);
-    scene->add_pointlight(std::shared_ptr<PointLight>(light));
-  }
+  // for (int i=0; i<2; i++) {
+  //   PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
+  //   light->name = "light #" + std::to_string(i);
+  //   light->initialize_depth_framebuffer(1024,1024);
+  //   light->color = glm::vec3(4.5);
+  //   scene->add_pointlight(std::shared_ptr<PointLight>(light));
+  // }
 
-  for (unsigned int i=0; i<scene->get_pointlights().size(); i++) {
-    settings->set_point_light(scene->get_pointlights()[i].get());
-  }
+  // for (unsigned int i=0; i<scene->get_pointlights().size(); i++) {
+  //   settings->set_point_light(scene->get_pointlights()[i].get());
+  // }
 
   //nanosuit = new Model("models/parenting_test/parenting_test.fbx");
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
@@ -130,13 +130,13 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
   Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
-  nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
-  nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
+  nanosuit->set_rotation(glm::vec3(180.0f,270.0f,0.0f));
+  nanosuit->set_position(glm::vec3(0.0f,2.5f,-1.5f));
   scene->add_node(std::shared_ptr<RootNode>(nanosuit));
   settings->set_node(nanosuit);
 
-  // nanosuit->set_current_animation("Armature|ArmatureAction");
-  // nanosuit->start_animation();
+  nanosuit->set_current_animation("Armature|ArmatureAction");
+  nanosuit->start_animation();
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
@@ -523,6 +523,8 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->simple_draw();
 
+  /*
+
   // Create bloom effect with gaussian blur
   glViewport(0, 0, width()/2, height()/2);
   // Clear the buffers (if they aren't cleared it causes problems when window is resized)
@@ -557,6 +559,7 @@ void OpenGLWindow::paintGL() {
   }
 
   glBlendFunc(GL_ONE, GL_ZERO);
+  */
 
   glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
@@ -566,7 +569,7 @@ void OpenGLWindow::paintGL() {
 
   switch (scene->display_type) {
     case SCENE:
-      post_processing_shader->setBool("do_bloom", true);
+      post_processing_shader->setBool("do_bloom", false);
       post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
 
@@ -578,9 +581,9 @@ void OpenGLWindow::paintGL() {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      post_processing_shader->setInt("bloom_texture", 1);
+      // glActiveTexture(GL_TEXTURE1);
+      // glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
+      // post_processing_shader->setInt("bloom_texture", 1);
       break;
     case BLOOM:
       post_processing_shader->setBool("do_bloom", false);

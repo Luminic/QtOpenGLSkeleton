@@ -20,6 +20,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 # Input
-HEADERS += MainWindow.h OpenGLWindow.h Shader.h Camera.h Settings.h Utility.h Node.h RootNode.h NodeAnimation.h Light.h DirectionalLight.h PointLight.h Model.h Mesh.h Scene.h Material.h
-SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp Shader.cpp Camera.cpp Settings.cpp Utility.cpp Node.cpp RootNode.cpp NodeAnimation.cpp Light.cpp DirectionalLight.cpp PointLight.cpp Model.cpp Mesh.cpp Scene.cpp Material.cpp
+HEADERS += MainWindow.h OpenGLWindow.h \
+					 rendering/Scene.h rendering/Shader.h rendering/Camera.h \
+					 utility/Settings.h utility/Utility.h \
+					 entities/nodes/Node.h entities/nodes/RootNode.h entities/nodes/NodeAnimation.h entities/nodes/Model.h\
+					 entities/lights/Light.h entities/lights/DirectionalLight.h entities/lights/PointLight.h \
+					 entities/meshes/Mesh.h entities/meshes/Material.h
+
+SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp \
+           rendering/Scene.cpp rendering/Shader.cpp rendering/Camera.cpp \
+					 utility/Settings.cpp utility/Utility.cpp \
+					 entities/nodes/Node.cpp entities/nodes/RootNode.cpp entities/nodes/NodeAnimation.cpp entities/nodes/Model.cpp \
+					 entities/lights/Light.cpp entities/lights/DirectionalLight.cpp entities/lights/PointLight.cpp \
+					 entities/meshes/Mesh.cpp entities/meshes/Material.cpp
+
 LIBS += -lassimp

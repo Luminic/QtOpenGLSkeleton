@@ -11,14 +11,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Shader.h"
-#include "Camera.h"
-#include "Node.h"
-#include "Light.h"
-#include "Model.h"
-#include "Mesh.h"
-#include "Scene.h"
-#include "Settings.h"
+#include "rendering/Shader.h"
+#include "rendering/Camera.h"
+#include "rendering/Scene.h"
+#include "entities/nodes/Node.h"
+#include "entities/nodes/Model.h"
+#include "entities/lights/Light.h"
+#include "entities/meshes/Mesh.h"
+#include "utility/Settings.h"
 
 class OpenGLWindow : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core {
   Q_OBJECT
