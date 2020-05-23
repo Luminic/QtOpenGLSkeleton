@@ -52,18 +52,19 @@ public:
 
   // Defaults are in comments
   glm::vec3 color;
-  float ambient; // 0.2f
-  float diffuse; // 1.0f
-  float specular; // 1.0f
-  float roughness; // 1.0f
-  float metalness; // 0.0
+  float opacity;
+  float ambient;
+  float diffuse;
+  float specular;
+  float roughness;
+  float metalness;
 
   Material(std::string name);
   Material();
   ~Material();
 
   int draw(Shader* shader, int texture_unit);
-  void set_opacity_map(Shader* shader, int& texture_unit); // Assumes shader is already in use
+  void set_opacity(Shader* shader, int& texture_unit); // Assumes shader is already in use
 
   Texture load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::NONE);
   static Texture static_load_texture(const char *path, Image_Type type, ImageLoading::Options options=ImageLoading::Options::NONE);

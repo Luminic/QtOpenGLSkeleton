@@ -32,7 +32,7 @@ void Mesh::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& mod
     material->draw(shader, texture_unit);
   }
   if (transparency != Transparency::OPAQUE) {
-    material->set_opacity_map(shader, texture_unit);
+    material->set_opacity(shader, texture_unit);
   }
 
   // Draw Mesh
@@ -40,7 +40,7 @@ void Mesh::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& mod
 }
 
 void Mesh::simple_draw() {
-  glBindVertexArray(VAO);
+  glBindVertexArray(vao);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -131,16 +131,16 @@ void Mesh::initialize_plane(bool horizontal, float texture_scale) {
 void Mesh::initialize_buffers() {
   initializeOpenGLFunctions();
 
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
+  glGenVertexArrays(1, &vao);
+  glGenBuffers(1, &vbo);
+  glGenBuffers(1, &ebo);
 
-  glBindVertexArray(VAO);
+  glBindVertexArray(vao);
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
   // Position

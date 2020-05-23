@@ -29,8 +29,8 @@ Settings::Settings(QWidget* parent) : QTabWidget(parent) {
 Settings::~Settings() {}
 
 void Settings::load_icons() {
-  icons["mesh"] = QIcon("textures/icons/mesh.png");
-  icons["material"] = QIcon("textures/icons/material.png");
+  icons["mesh"] = QIcon("assets/textures/icons/mesh.png");
+  icons["material"] = QIcon("assets/textures/icons/material.png");
 }
 
 void Settings::create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name) {
@@ -73,7 +73,7 @@ void Settings::set_up_nodes_tab() {
       } else if (data.canConvert<Material*>()) {
         clicked_widget = loaded_materials.find(data.value<Material*>())->second;
       } else {
-        Q_ASSERT_X(0, "Double click on tree view", "invalid data: could not convert to a supported type");
+        qFatal("Double click on tree view: invalid data: could not convert to a supported type");
       }
       clicked_widget->show();
       QApplication::setActiveWindow(clicked_widget);

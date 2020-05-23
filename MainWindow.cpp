@@ -61,7 +61,7 @@ void MainWindow::create_pause_menu() {
   pause_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   pause_button->setFixedSize(30,30);
   pause_button->setIconSize(QSize(30,30));
-  pause_button->setIcon(QIcon("textures/icons/pause.png"));
+  pause_button->setIcon(QIcon("assets/textures/icons/pause.png"));
 
   pause_layout->addWidget(pause_button, 0, 0, 1, 1);
   connect(pause_button, &QPushButton::clicked, this, [this](){this->resume();});
@@ -71,7 +71,7 @@ void MainWindow::create_pause_menu() {
   settings_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
   settings_button->setFixedSize(30,30);
   settings_button->setIconSize(QSize(30,30));
-  settings_button->setIcon(QIcon("textures/icons/settings.png"));
+  settings_button->setIcon(QIcon("assets/textures/icons/settings.png"));
 
   pause_layout->addWidget(settings_button, 0, 1, 1, 1);
   connect(settings_button, &QPushButton::clicked, this,
@@ -88,8 +88,8 @@ void MainWindow::create_pause_menu() {
   movement_button->setFixedSize(30,30);
   movement_button->setIconSize(QSize(30,30));
   QIcon movement_icon;
-  movement_icon.addPixmap(QPixmap("textures/icons/movement.png"), QIcon::Normal, QIcon::Off);
-  movement_icon.addPixmap(QPixmap("textures/icons/movement_enabled.png"), QIcon::Normal, QIcon::On);
+  movement_icon.addPixmap(QPixmap("assets/textures/icons/movement.png"), QIcon::Normal, QIcon::Off);
+  movement_icon.addPixmap(QPixmap("assets/textures/icons/movement_enabled.png"), QIcon::Normal, QIcon::On);
   movement_button->setIcon(movement_icon);
   movement_button->setCheckable(true);
 

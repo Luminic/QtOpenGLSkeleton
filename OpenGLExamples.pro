@@ -22,6 +22,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # Input
 HEADERS += MainWindow.h OpenGLWindow.h \
 					 rendering/Scene.h rendering/Shader.h rendering/Camera.h \
+					 rendering/post_processing/GaussianBlur.h \
 					 utility/Settings.h utility/Utility.h \
 					 entities/nodes/Node.h entities/nodes/RootNode.h entities/nodes/NodeAnimation.h entities/nodes/Model.h\
 					 entities/lights/Light.h entities/lights/DirectionalLight.h entities/lights/PointLight.h \
@@ -29,6 +30,7 @@ HEADERS += MainWindow.h OpenGLWindow.h \
 
 SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp \
            rendering/Scene.cpp rendering/Shader.cpp rendering/Camera.cpp \
+					 rendering/post_processing/GaussianBlur.cpp rendering/post_processing/helpful_framebuffer_functions.cpp \
 					 utility/Settings.cpp utility/Utility.cpp \
 					 entities/nodes/Node.cpp entities/nodes/RootNode.cpp entities/nodes/NodeAnimation.cpp entities/nodes/Model.cpp \
 					 entities/lights/Light.cpp entities/lights/DirectionalLight.cpp entities/lights/PointLight.cpp \

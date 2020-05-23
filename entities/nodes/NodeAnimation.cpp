@@ -29,7 +29,7 @@ unsigned int NodeAnimationChannel::find_position_index(float animation_time) {
       return i;
     }
   }
-  Q_ASSERT_X(0, "Finding position at animation_time", "Could not find position");
+  qFatal("Finding position at animation_time: Could not find position");
 }
 
 unsigned int NodeAnimationChannel::find_rotation_index(float animation_time) {
@@ -38,7 +38,7 @@ unsigned int NodeAnimationChannel::find_rotation_index(float animation_time) {
       return i;
     }
   }
-  Q_ASSERT_X(0, "Finding rotation at animation_time", "Could not find rotation");
+  qFatal("Finding position at animation_time: Could not find rotation");
 }
 
 unsigned int NodeAnimationChannel::find_scale_index(float animation_time) {
@@ -47,7 +47,7 @@ unsigned int NodeAnimationChannel::find_scale_index(float animation_time) {
       return i;
     }
   }
-  Q_ASSERT_X(0, "Finding scale at animation_time", "Could not find scale");
+  qFatal("Finding position at animation_time: Could not find scale");
 }
 
 

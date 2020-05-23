@@ -51,9 +51,9 @@ public:
 protected:
   glm::mat4 transformation;
 
-  unsigned int VAO;
-  unsigned int VBO;
-  unsigned int EBO;
+  unsigned int vao;
+  unsigned int vbo;
+  unsigned int ebo;
 
   Transparency transparency;
 };

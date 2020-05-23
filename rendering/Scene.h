@@ -62,8 +62,6 @@ public:
   ~Scene();
 
   void initialize_scene();
-  void create_color_buffers(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]); // Creates color buffers for the currently bound framebuffer
-  void update_color_buffers_size(int width, int height, int nr_colorbuffers, unsigned int colorbuffers[]); // Resizes the color buffers
 
   void update_scene();
 

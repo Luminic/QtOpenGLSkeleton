@@ -88,7 +88,7 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
 
 void Shader::initialize_placeholder_textures(Image_Type texture_types) {
   if (Shader::placeholder_texture == 0) {
-    Shader::placeholder_texture = Material::static_load_texture("textures/placeholder_texture.png", Image_Type::ALBEDO_MAP).id;
+    Shader::placeholder_texture = Material::static_load_texture("assets/textures/placeholder_texture.png", Image_Type::ALBEDO_MAP).id;
   }
 
   use();

@@ -23,6 +23,7 @@ void Material::init() {
   specular = 1.0f;
 
   color = glm::vec3(1.0f);
+  opacity = 1.0f;
   roughness = 1.0f;
   metalness = 0.0f;
 
@@ -53,11 +54,9 @@ void Material::set_textures(Shader* shader, int& texture_unit) {
   int number_roughness_maps = 0;
   int number_metalness_maps = 0;
 
-  #ifdef QT_DEBUG
-    // Set "Texture not found" texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, Shader::placeholder_texture);
-  #endif
+  // Set "Texture not found" texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, Shader::placeholder_texture);
 
   for (unsigned int i=0; i<textures.size(); i++) {
     glActiveTexture(GL_TEXTURE0+texture_unit);
@@ -84,7 +83,7 @@ void Material::set_textures(Shader* shader, int& texture_unit) {
         break;
       case CUBE_MAP:
         glBindTexture(GL_TEXTURE_CUBE_MAP, textures[i].id);
-        shader->setInt("skybox", texture_unit);
+        shader->setInt("skybox", 0);
         break;
       case OPACITY_MAP:{
         #ifdef QT_DEBUG
@@ -104,14 +103,17 @@ void Material::set_textures(Shader* shader, int& texture_unit) {
   shader->setBool("material.use_metalness_map", (number_metalness_maps>=1));
 }
 
-void Material::set_opacity_map(Shader* shader, int& texture_unit) {
+void Material::set_opacity(Shader* shader, int& texture_unit) {
+  shader->setFloat("material.opacity", opacity);
   if (opacity_map.id == 0) {
+    shader->setBool("material.use_opacity_map", false);
     return;
   }
 
   glActiveTexture(GL_TEXTURE0+texture_unit);
   glBindTexture(GL_TEXTURE_2D, opacity_map.id);
   shader->setInt("material.opacity_map", texture_unit);
+  shader->setBool("material.use_opacity_map", true);
   texture_unit++;
 }
 
