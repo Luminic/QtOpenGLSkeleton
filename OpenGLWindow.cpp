@@ -36,7 +36,6 @@ OpenGLWindow::~OpenGLWindow() {
   delete light_shader;
   delete skybox_shader;
   delete scene_shader;
-  delete gaussian_blur_shader;
   delete post_processing_shader;
   delete antialiasing_shader;
 }
@@ -251,7 +250,6 @@ void OpenGLWindow::initializeGL() {
 
   create_framebuffer();
   create_scene_framebuffer();
-  create_ping_pong_framebuffer();
   create_post_processing_framebuffer();
   gaussian_blur.init(framebuffer_quad);
 
@@ -284,7 +282,6 @@ void OpenGLWindow::load_shaders() {
   skybox_shader = new Shader();
   scene_shader = new Shader();
 
-  gaussian_blur_shader = new Shader();
   post_processing_shader = new Shader();
   antialiasing_shader = new Shader();
 
@@ -335,8 +332,6 @@ void OpenGLWindow::load_shaders() {
   scene_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/scene_fragment.shader");
   scene_shader->validate_program();
 
-  gaussian_blur_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/gaussian_blur_fragment.shader");
-  gaussian_blur_shader->validate_program();
   post_processing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/post_processing_fragment.shader");
   post_processing_shader->validate_program();
   antialiasing_shader->loadShaders("shaders/framebuffer_vertex.shader", "shaders/antialiasing_fragment.shader");
@@ -372,19 +367,6 @@ void OpenGLWindow::create_scene_framebuffer() {
   create_color_buffers(800, 600, nr_color_buffers, scene_colorbuffers);
 
   Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void OpenGLWindow::create_ping_pong_framebuffer() {
-  glGenFramebuffers(1, &ping_pong_framebuffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
-
-  // Note: these colorbuffers should be attached when they will be used
-  // Their attachment locations here mean nothing
-  create_color_buffers(400, 300, 1, &bloom_colorbuffer);
-  // The ping pong colorbuffers should be created last so the drawbuffers is 2
-  create_color_buffers(400, 300, 2, ping_pong_colorbuffers);
-
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -534,45 +516,7 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->simple_draw();
 
-  /*
-
-  // Create bloom effect with gaussian blur
-  glViewport(0, 0, width()/2, height()/2);
-  // Clear the buffers (if they aren't cleared it causes problems when window is resized)
-  glBindFramebuffer(GL_FRAMEBUFFER, ping_pong_framebuffer);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[0], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, ping_pong_colorbuffers[1], 0);
-  glClear(GL_COLOR_BUFFER_BIT);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bloom_colorbuffer, 0);
-  glClearBufferfv(GL_COLOR, 1, glm::value_ptr(glm::vec4(0.0f,1.0f,0.0f,1.0f)));
-
-  gaussian_blur_shader->use();
-
-  bool horizontal=true;
-  for (int i=0; i<scene->bloom_applications; i++) {
-    gaussian_blur_shader->setBool("horizontal", horizontal);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ping_pong_colorbuffers[i%2], 0);
-
-    glActiveTexture(GL_TEXTURE0);
-    if (i==0) {
-      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[1]);
-      glBlendFunci(1, GL_ONE, GL_ZERO);
-    } else {
-      glBindTexture(GL_TEXTURE_2D, ping_pong_colorbuffers[(i+1)%2]);
-      glBlendFunci(1, GL_ONE, GL_ONE); // Add the individual blurs together
-    }
-    gaussian_blur_shader->setInt("image", 0);
-
-    framebuffer_quad->simple_draw();
-
-    horizontal = !horizontal;
-  }
-
-  glBlendFunc(GL_ONE, GL_ZERO);
-  */
-
-  unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[0], 2, width(), height());
+  // unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[0], 2, width(), height());
 
   glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
@@ -592,7 +536,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", false);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, blurred);//scene_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
       // glActiveTexture(GL_TEXTURE1);
       // glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
@@ -604,7 +548,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", true);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
       break;
     case BRIGHT:
@@ -671,12 +615,6 @@ void OpenGLWindow::resizeGL(int w, int h) {
   // Update scene texture
   nr_color_buffers = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
   update_color_buffers_size(w, h, nr_color_buffers, scene_colorbuffers);
-
-  // Update ping-pong textures
-  update_color_buffers_size(w/2, h/2, 2, ping_pong_colorbuffers);
-
-  // Update bloom texture
-  update_color_buffers_size(w/2, h/2, 1, &bloom_colorbuffer);
 
   // Update post-processing texture
   update_color_buffers_size(w, h, 1, &post_processing_colorbuffer);

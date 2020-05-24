@@ -60,19 +60,12 @@ protected:
   unsigned int scene_framebuffer;
   unsigned int scene_colorbuffers[2];
 
-  unsigned int ping_pong_framebuffer;
-  unsigned int ping_pong_colorbuffers[2]; // Half Resolution
-  unsigned int bloom_colorbuffer; // Half Resolution
-
   unsigned int post_processing_framebuffer;
   unsigned int post_processing_colorbuffer;
 
   Mesh* framebuffer_quad = nullptr;
 
   glm::mat4 projection;
-
-  // Shader_Opacity_Triplet dirlight_depth_shaders;
-  // Shader_Opacity_Triplet pointlight_depth_shaders;
 
   Shader_Opacity_Triplet object_shaders;
   DepthShaderGroup depth_shaders;
@@ -83,7 +76,6 @@ protected:
 
   GaussianBlur gaussian_blur;
 
-  Shader *gaussian_blur_shader = nullptr;
   Shader *post_processing_shader = nullptr;
   Shader *antialiasing_shader = nullptr;
 
