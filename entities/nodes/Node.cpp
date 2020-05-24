@@ -22,7 +22,7 @@ Node::Node(glm::mat4 transformation, glm::vec3 position, glm::vec3 scale, glm::v
 
 Node::~Node() {}
 
-void Node::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) {
+void Node::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, float animation_time) {
   if (!(has_animation) || animation==nullptr) {
     parent_transformation *= get_model_matrix();
   } else {

@@ -20,7 +20,7 @@ void RootNode::update() {
   }
 }
 
-void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) {
+void RootNode::update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, float animation_time) {
   // If update_armature was called from this RootNode's update() function call the normal update_armature
   if (root_node == this) {
     Node::update_armature(parent_transformation, root_node, animation, animation_time);

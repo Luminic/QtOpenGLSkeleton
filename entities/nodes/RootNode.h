@@ -20,7 +20,7 @@ public:
   virtual ~RootNode();
 
   virtual void update();
-  virtual void update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, int animation_time) override;
+  virtual void update_armature(glm::mat4 parent_transformation, RootNode* root_node, NodeAnimation* animation, float animation_time) override;
   virtual void draw(Shader_Opacity_Triplet shaders, Shader::DrawType draw_type, std::vector<Transparent_Draw>* partially_transparent_meshes=nullptr, glm::mat4 model=glm::mat4(1.0f), int texture_unit=0) override;
 
   virtual const std::vector<glm::mat4>& get_armature_offsets() {return armature_offsets;}

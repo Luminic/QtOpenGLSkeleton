@@ -53,6 +53,7 @@ unsigned int NodeAnimationChannel::find_scale_index(float animation_time) {
 
 glm::vec3 NodeAnimationChannel::interpolate_position(float animation_time) {
   Q_ASSERT_X(position_keys.size() > 0, "Position interpolation", "No position keys");
+  // qDebug() << animation_time;
   if (position_keys.size() == 1) {
     return position_keys[0].vector;
   }
