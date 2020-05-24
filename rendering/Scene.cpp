@@ -149,9 +149,11 @@ void Scene::draw_objects(Shader_Opacity_Triplet shaders, Shader::DrawType draw_t
     }
   );
 
+  glDepthMask(GL_FALSE);
   for (auto draw_call : partially_transparent_meshes) {
     draw_call.mesh->draw(draw_call.shader, draw_type, draw_call.model, draw_call.texture_unit);
   }
+  glDepthMask(GL_TRUE);
   glBlendFunc(GL_ONE, GL_ZERO);
 }
 

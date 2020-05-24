@@ -149,7 +149,7 @@ void OpenGLWindow::initializeGL() {
   cube->material = Scene::is_material_loaded(cube->material);
 
   glm::vec3 cube_positions[10] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 0.0f,  0.0f,  2.0f),
     glm::vec3( 2.0f,  5.0f,  17.0f),
     glm::vec3(-1.5f, -2.2f,  4.5f),
     glm::vec3(-3.8f, -2.0f,  14.3f),
@@ -168,6 +168,26 @@ void OpenGLWindow::initializeGL() {
     scene->add_node(std::shared_ptr<RootNode>(n));
     settings->set_node(n);
   }
+
+  Tesseract* tesseract = new Tesseract();
+  tesseract->rotate(0.2, rotation_4D::YW);
+  tesseract->project_to_3d();
+  std::shared_ptr<Mesh> tesseract_as_mesh(tesseract);
+  tesseract_as_mesh->name = "tesseract";
+  tesseract_as_mesh->material = new Material("tesseract");
+  tesseract_as_mesh->material->color = glm::vec3(1.0f,0.0f,0.0f);
+  tesseract_as_mesh->material->opacity = 0.5f;
+  tesseract_as_mesh->material->ambient = 1.0f;
+  tesseract_as_mesh->material->diffuse = 0.1f;
+  tesseract_as_mesh->material->specular = 0.0f;
+  tesseract_as_mesh->material->roughness = 0.0f;
+  tesseract_as_mesh->set_transparency(PARTIAL_TRANSPARENCY);
+  tesseract_as_mesh->material = Scene::is_material_loaded(tesseract_as_mesh->material);
+  RootNode* ts = new RootNode(glm::mat4(1.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f));
+  ts->name = "tesseract";
+  ts->add_mesh(tesseract_as_mesh);
+  scene->add_node(std::shared_ptr<RootNode>(ts));
+  settings->set_node(ts);
 
   std::shared_ptr<Mesh> grass = std::make_shared<Mesh>();
   grass->name = "grass";

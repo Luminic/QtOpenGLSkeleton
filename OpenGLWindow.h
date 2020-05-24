@@ -19,6 +19,7 @@
 #include "entities/nodes/Model.h"
 #include "entities/lights/Light.h"
 #include "entities/meshes/Mesh.h"
+#include "entities/meshes/shapes/Tesseract.h"
 #include "utility/Settings.h"
 
 class OpenGLWindow : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core {

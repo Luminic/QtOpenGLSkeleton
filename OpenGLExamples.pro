@@ -26,7 +26,8 @@ HEADERS += MainWindow.h OpenGLWindow.h \
 					 utility/Settings.h utility/Utility.h \
 					 entities/nodes/Node.h entities/nodes/RootNode.h entities/nodes/NodeAnimation.h entities/nodes/Model.h\
 					 entities/lights/Light.h entities/lights/DirectionalLight.h entities/lights/PointLight.h \
-					 entities/meshes/Mesh.h entities/meshes/DynamicMesh.h entities/meshes/Material.h
+					 entities/meshes/Mesh.h entities/meshes/DynamicMesh.h entities/meshes/Material.h \
+					 entities/meshes/shapes/Tesseract.h
 
 SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp \
            rendering/Scene.cpp rendering/Shader.cpp rendering/Camera.cpp \
@@ -34,6 +35,7 @@ SOURCES += main.cpp MainWindow.cpp OpenGLWindow.cpp \
 					 utility/Settings.cpp utility/Utility.cpp \
 					 entities/nodes/Node.cpp entities/nodes/RootNode.cpp entities/nodes/NodeAnimation.cpp entities/nodes/Model.cpp \
 					 entities/lights/Light.cpp entities/lights/DirectionalLight.cpp entities/lights/PointLight.cpp \
-					 entities/meshes/Mesh.cpp entities/meshes/DynamicMesh.cpp entities/meshes/Material.cpp
+					 entities/meshes/Mesh.cpp entities/meshes/DynamicMesh.cpp entities/meshes/Material.cpp \
+					 entities/meshes/shapes/Tesseract.cpp entities/meshes/shapes/rotations_4d.cpp \
 
 LIBS += -lassimp
