@@ -25,7 +25,7 @@ class Model : public RootNode {
 public:
   Model(const char *path);
   Model(const char *path, const char* name);
-  ~Model();
+  virtual ~Model();
 
 protected:
   void load_model(std::string path);

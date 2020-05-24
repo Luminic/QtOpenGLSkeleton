@@ -17,7 +17,7 @@ class Light : public Node {
 
 public:
   Light(glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 color=glm::vec3(1.0f), float ambient=0.2f, float diffuse=1.0f, float specular=1.0f);
-  ~Light();
+  virtual ~Light();
 
   void set_object_settings(std::string name, Shader *shader);
 

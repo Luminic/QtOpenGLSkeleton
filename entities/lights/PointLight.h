@@ -8,7 +8,7 @@ class PointLight : public Light {
 
 public:
   PointLight(glm::vec3 position=glm::vec3(0.0f), glm::vec3 scale=glm::vec3(1.0f), glm::vec3 color=glm::vec3(1.0f), float ambient=1.0f, float diffuse=1.0f, float specular=1.0f, float constant=1.0f, float linear=0.09f, float quadratic=0.032f);
-  ~PointLight();
+  virtual ~PointLight();
 
   void set_object_settings(std::string name, Shader *shader);
 

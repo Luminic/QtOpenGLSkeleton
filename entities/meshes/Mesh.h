@@ -27,7 +27,7 @@ class Mesh : public QObject, protected QOpenGLFunctions_4_5_Core {
 public:
   Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material);
   Mesh();
-  ~Mesh();
+  virtual ~Mesh();
 
   std::string name;
   static int nr_meshes_created;

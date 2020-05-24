@@ -18,7 +18,7 @@ class Tesseract : public DynamicMesh {
 
 public:
   Tesseract();
-  ~Tesseract();
+  virtual ~Tesseract();
 
   void reset_vertices();
   // 3D vertices will not be updated; project_to_3d should be called before rendering
