@@ -169,23 +169,21 @@ void OpenGLWindow::initializeGL() {
     settings->set_node(n);
   }
 
-  Tesseract* tesseract = new Tesseract();
-  tesseract->rotate(0.707, rotation_4D::YW);
+  tesseract = std::make_shared<Tesseract>();
   tesseract->project_to_3d();
-  std::shared_ptr<Mesh> tesseract_as_mesh(tesseract);
-  tesseract_as_mesh->name = "tesseract";
-  tesseract_as_mesh->material = new Material("tesseract");
-  tesseract_as_mesh->material->color = glm::vec3(0.4f,0.0f,1.0f);
-  tesseract_as_mesh->material->opacity = 0.4f;
-  tesseract_as_mesh->material->ambient = 1.0f;
-  tesseract_as_mesh->material->diffuse = 0.05f;
-  tesseract_as_mesh->material->specular = 0.0f;
-  tesseract_as_mesh->material->roughness = 0.0f;
-  tesseract_as_mesh->set_transparency(PARTIAL_TRANSPARENCY);
-  tesseract_as_mesh->material = Scene::is_material_loaded(tesseract_as_mesh->material);
+  tesseract->name = "tesseract";
+  tesseract->material = new Material("tesseract");
+  tesseract->material->color = glm::vec3(0.4f,0.0f,1.0f);
+  tesseract->material->opacity = 0.4f;
+  tesseract->material->ambient = 1.0f;
+  tesseract->material->diffuse = 0.05f;
+  tesseract->material->specular = 0.0f;
+  tesseract->material->roughness = 0.0f;
+  tesseract->set_transparency(PARTIAL_TRANSPARENCY);
+  tesseract->material = Scene::is_material_loaded(tesseract->material);
   RootNode* ts = new RootNode(glm::mat4(1.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f));
   ts->name = "tesseract";
-  ts->add_mesh(tesseract_as_mesh);
+  ts->add_mesh(tesseract);
   scene->add_node(std::shared_ptr<RootNode>(ts));
   settings->set_node(ts);
 
@@ -402,6 +400,7 @@ void OpenGLWindow::create_post_processing_framebuffer() {
 
 void OpenGLWindow::update_scene() {
   scene->update_scene();
+  tesseract->project_to_3d();
   camera.update_cam();
   settings->update_settings();
   update();

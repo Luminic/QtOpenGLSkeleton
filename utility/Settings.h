@@ -26,6 +26,7 @@
 #include "../entities/lights/Light.h"
 #include "../entities/lights/DirectionalLight.h"
 #include "../entities/meshes/Material.h"
+#include "../entities/meshes/shapes/Tesseract.h"
 #include "Utility.h"
 
 class Settings : public QTabWidget {
@@ -59,6 +60,9 @@ private:
   void set_up_nodes_tab();
   QStandardItemModel* nodes_model = nullptr;
   std::unordered_map<Node*, QScrollArea*> loaded_nodes;
+
+  QGroupBox* set_root_node(RootNode* root_node, QWidget* parent=nullptr);
+  QGroupBox* set_tesseract(Tesseract* tesseract, QWidget* parent=nullptr);
 
   // Meshes
   std::unordered_map<Mesh*, QScrollArea*> loaded_meshes;

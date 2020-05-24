@@ -54,6 +54,8 @@ protected:
 
   void wheelEvent(QWheelEvent *event) override;
 
+  std::shared_ptr<Tesseract> tesseract;
+
   unsigned int framebuffer;
   unsigned int renderbuffer;
   unsigned int colorbuffers[2];

@@ -53,6 +53,8 @@ public:
     slider->setSingleStep(int(step*conversion_factor));
   }
 
+  double get_value() {return value;}
+
 public slots:
   void setValue(double value);
 

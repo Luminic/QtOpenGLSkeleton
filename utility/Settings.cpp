@@ -174,6 +174,8 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   QWidget *Node_widget = new QWidget(this);
   QGridLayout *Node_layout = new QGridLayout(Node_widget);
 
+  unsigned int y_location = 0;
+
   Matrix_4x4_View* node_transformation = new Matrix_4x4_View(tr("Transformation Matrix"), Node_widget);
   node_transformation->set_matrix(node->transformation);
   connect(node_transformation, &Matrix_4x4_View::value_changed, this,
@@ -181,28 +183,28 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
       node->transformation = new_value;
     }
   );
-  Node_layout->addWidget(node_transformation, 0, 0);
+  Node_layout->addWidget(node_transformation, y_location, 0);
 
   QGroupBox *Position_box = new QGroupBox(tr("Position"), Node_widget);
   QGridLayout *Position_layout = new QGridLayout(Position_box);
   create_option_group("X:", &node->position.x, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 0);
   create_option_group("Y:", &node->position.y, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 1);
   create_option_group("Z:", &node->position.z, -50.0, 50.0, 0.5, 2, Position_box, Position_layout, 2);
-  Node_layout->addWidget(Position_box, 0, 1);
+  Node_layout->addWidget(Position_box, y_location++, 1);
 
   QGroupBox *Scale_box = new QGroupBox(tr("Scale"), Node_widget);
   QGridLayout *Scale_layout = new QGridLayout(Scale_box);
   create_option_group("X:", &node->scale.x, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 0);
   create_option_group("Y:", &node->scale.y, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 1);
   create_option_group("Z:", &node->scale.z, -50.0, 50.0, 0.5, 2, Scale_box, Scale_layout, 2);
-  Node_layout->addWidget(Scale_box, 1, 0);
+  Node_layout->addWidget(Scale_box, y_location, 0);
 
   QGroupBox *Rotation_box = new QGroupBox(tr("Rotation"), Node_widget);
   QGridLayout *Rotation_layout = new QGridLayout(Rotation_box);
   create_option_group("Yaw:", &node->rotation.x, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 0);
   create_option_group("Pitch:", &node->rotation.y, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 1);
   create_option_group("Roll:", &node->rotation.z, 0.0, 360.0, 1, 1, Rotation_box, Rotation_layout, 2);
-  Node_layout->addWidget(Rotation_box, 1, 1);
+  Node_layout->addWidget(Rotation_box, y_location++, 1);
 
 
   QGroupBox *Material_box = new QGroupBox(tr("Materials"), Node_widget);
@@ -223,7 +225,7 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
     );
     Material_layout->addWidget(material_jump);
   }
-  Node_layout->addWidget(Material_box, 2, 0, 1, -1);
+  Node_layout->addWidget(Material_box, y_location++, 0, 1, -1);
 
   QScrollArea* Scrolling = new QScrollArea(this);
   Scrolling->setWindowFlags(Qt::Window);
@@ -253,109 +255,117 @@ QStandardItem* Settings::set_node(Node* node, QStandardItem* parent) {
   }
 
   RootNode* root_node = dynamic_cast<RootNode*>(node);
-  if (root_node != nullptr) { // If the node is a root node
-    if (root_node->animation.size() > 0) {
-      QGroupBox* animation_box = new QGroupBox(tr("Animation"), Node_widget);
-      QGridLayout* animation_layout = new QGridLayout(animation_box);
-
-      auto animation_status_to_string = [](RootNode::Animation_Status animation_status) {
-        QString animation_status_string;
-        switch (animation_status) {
-          case RootNode::Animation_Status::NO_ANIMATION:
-          animation_status_string = "NO_ANIMATION";
-          break;
-          case RootNode::Animation_Status::ANIMATION_PAUSED:
-          animation_status_string = "ANIMATION_PAUSED";
-          break;
-          case RootNode::Animation_Status::ANIMATED:
-          animation_status_string = "ANIMATED";
-          break;
-        }
-        return animation_status_string;
-      };
-
-      QLabel* animation_status_label = new QLabel(tr("Current Animation Status: ")+animation_status_to_string(root_node->get_animation_status()), animation_box);
-      animation_layout->addWidget(animation_status_label, 1, 0, 1, -1);
-      connect(root_node, &RootNode::animation_status_changed, this,
-        [animation_status_label, animation_status_to_string] (RootNode::Animation_Status new_animation_status) {
-          animation_status_label->setText(tr("Current Animation Status: ")+animation_status_to_string(new_animation_status));
-        }
-      );
-
-      QLabel* animation_name_label = new QLabel(tr("Current Animation: ")+tr(root_node->get_current_animation_name().c_str()), animation_box);
-      animation_layout->addWidget(animation_name_label, 2, 0, 1, -1);
-      connect(root_node, &RootNode::animation_changed, this,
-        [animation_name_label] (NodeAnimation* new_animation) {
-          animation_name_label->setText(tr("Current Animation: ")+tr(new_animation->name.c_str()));
-        }
-      );
-
-      QLabel* animation_time_label = new QLabel(tr("Animation Time: ")+QString::number(root_node->get_animation_time()), animation_box);
-      animation_layout->addWidget(animation_time_label, 3, 0, 1, -1);
-      connect(this, &Settings::updating, this,
-        [animation_time_label, root_node] () {
-          animation_time_label->setText(tr("Animation Time: ")+QString::number(root_node->get_animation_time()));
-        }
-      );
-
-      QSlider* animation_time_slider = new QSlider(Qt::Horizontal, animation_box);
-      animation_time_slider->setRange(0,100);
-      animation_layout->addWidget(animation_time_slider, 4, 0, 1, -1);
-      connect(this, &Settings::updating, this,
-        [animation_time_slider, root_node] () {
-          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
-            animation_time_slider->setValue(int(root_node->get_animation_time()/root_node->get_current_animation()->duration*100));
-          }
-        }
-      );
-      connect(animation_time_slider, &QSlider::valueChanged, this,
-        [root_node] (int value) {
-          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATION_PAUSED) {
-            root_node->set_animation_time(value/100.0f*root_node->get_current_animation()->duration);
-          }
-        }
-      );
-
-      QPushButton* play_pause_button = new QPushButton(tr("Play/Pause"), animation_box);
-      animation_layout->addWidget(play_pause_button, 5, 0, 1, 1);
-      connect(play_pause_button, &QPushButton::clicked, this,
-        [root_node] () {
-          if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
-            root_node->stop_animation();
-          } else {
-            root_node->start_animation();
-          }
-        }
-      );
-
-      QPushButton* disable_animation_button = new QPushButton(tr("Disable Animation"), animation_box);
-      animation_layout->addWidget(disable_animation_button, 5, 1, 1, 1);
-      connect(disable_animation_button, &QPushButton::clicked, this,
-        [root_node] () {
-          root_node->disable_animation();
-        }
-      );
-
-      unsigned int y_pos = 5;
-      for (auto it : root_node->animation) {
-        QPushButton* animation_jump = new QPushButton(animation_box);
-        animation_jump->setText(tr(it.second->name.c_str()));
-        animation_layout->addWidget(animation_jump, ++y_pos, 0, 1, -1);
-
-        QScrollArea* animation_menu = set_animation(it.second);
-        connect(animation_jump, &QPushButton::clicked, this,
-          [animation_menu](){
-            animation_menu->show();
-            QApplication::setActiveWindow(animation_menu);
-          }
-        );
-      }
-
-      Node_layout->addWidget(animation_box, 3, 0, 1, -1);
+  if (root_node) { // If the node is a root node
+    QGroupBox* animation_box = set_root_node(root_node, Node_widget);
+    if (animation_box) {
+      Node_layout->addWidget(animation_box, y_location++, 0, 1, -1);
     }
   }
 
   return item;
+}
+
+QGroupBox* Settings::set_root_node(RootNode* root_node, QWidget* parent) {
+  if (root_node->animation.size() > 0) {
+    QGroupBox* animation_box = new QGroupBox(tr("Animation"), parent);
+    QGridLayout* animation_layout = new QGridLayout(animation_box);
+
+    auto animation_status_to_string = [](RootNode::Animation_Status animation_status) {
+      QString animation_status_string;
+      switch (animation_status) {
+        case RootNode::Animation_Status::NO_ANIMATION:
+        animation_status_string = "NO_ANIMATION";
+        break;
+        case RootNode::Animation_Status::ANIMATION_PAUSED:
+        animation_status_string = "ANIMATION_PAUSED";
+        break;
+        case RootNode::Animation_Status::ANIMATED:
+        animation_status_string = "ANIMATED";
+        break;
+      }
+      return animation_status_string;
+    };
+
+    QLabel* animation_status_label = new QLabel(tr("Current Animation Status: ")+animation_status_to_string(root_node->get_animation_status()), animation_box);
+    animation_layout->addWidget(animation_status_label, 1, 0, 1, -1);
+    connect(root_node, &RootNode::animation_status_changed, this,
+      [animation_status_label, animation_status_to_string] (RootNode::Animation_Status new_animation_status) {
+        animation_status_label->setText(tr("Current Animation Status: ")+animation_status_to_string(new_animation_status));
+      }
+    );
+
+    QLabel* animation_name_label = new QLabel(tr("Current Animation: ")+tr(root_node->get_current_animation_name().c_str()), animation_box);
+    animation_layout->addWidget(animation_name_label, 2, 0, 1, -1);
+    connect(root_node, &RootNode::animation_changed, this,
+      [animation_name_label] (NodeAnimation* new_animation) {
+        animation_name_label->setText(tr("Current Animation: ")+tr(new_animation->name.c_str()));
+      }
+    );
+
+    QLabel* animation_time_label = new QLabel(tr("Animation Time: ")+QString::number(root_node->get_animation_time()), animation_box);
+    animation_layout->addWidget(animation_time_label, 3, 0, 1, -1);
+    connect(this, &Settings::updating, this,
+      [animation_time_label, root_node] () {
+        animation_time_label->setText(tr("Animation Time: ")+QString::number(root_node->get_animation_time()));
+      }
+    );
+
+    QSlider* animation_time_slider = new QSlider(Qt::Horizontal, animation_box);
+    animation_time_slider->setRange(0,100);
+    animation_layout->addWidget(animation_time_slider, 4, 0, 1, -1);
+    connect(this, &Settings::updating, this,
+      [animation_time_slider, root_node] () {
+        if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
+          animation_time_slider->setValue(int(root_node->get_animation_time()/root_node->get_current_animation()->duration*100));
+        }
+      }
+    );
+    connect(animation_time_slider, &QSlider::valueChanged, this,
+      [root_node] (int value) {
+        if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATION_PAUSED) {
+          root_node->set_animation_time(value/100.0f*root_node->get_current_animation()->duration);
+        }
+      }
+    );
+
+    QPushButton* play_pause_button = new QPushButton(tr("Play/Pause"), animation_box);
+    animation_layout->addWidget(play_pause_button, 5, 0, 1, 1);
+    connect(play_pause_button, &QPushButton::clicked, this,
+      [root_node] () {
+        if (root_node->get_animation_status() == RootNode::Animation_Status::ANIMATED) {
+          root_node->stop_animation();
+        } else {
+          root_node->start_animation();
+        }
+      }
+    );
+
+    QPushButton* disable_animation_button = new QPushButton(tr("Disable Animation"), animation_box);
+    animation_layout->addWidget(disable_animation_button, 5, 1, 1, 1);
+    connect(disable_animation_button, &QPushButton::clicked, this,
+      [root_node] () {
+        root_node->disable_animation();
+      }
+    );
+
+    unsigned int y_pos = 5;
+    for (auto it : root_node->animation) {
+      QPushButton* animation_jump = new QPushButton(animation_box);
+      animation_jump->setText(tr(it.second->name.c_str()));
+      animation_layout->addWidget(animation_jump, ++y_pos, 0, 1, -1);
+
+      QScrollArea* animation_menu = set_animation(it.second);
+      connect(animation_jump, &QPushButton::clicked, this,
+        [animation_menu](){
+          animation_menu->show();
+          QApplication::setActiveWindow(animation_menu);
+        }
+      );
+    }
+
+    return animation_box;
+  }
+  return nullptr;
 }
 
 QStandardItem* Settings::set_mesh(Mesh* mesh) {
@@ -366,12 +376,26 @@ QStandardItem* Settings::set_mesh(Mesh* mesh) {
 
   // Window Creation
   if (loaded_meshes.find(mesh) == loaded_meshes.end()) {
-    QLabel* label = new QLabel(tr("Nothing to see here!"));
+    QWidget* mesh_box = new QWidget(this);
+    QGridLayout* mesh_layout = new QGridLayout(mesh_box);
+
+    unsigned int y_location = 0;
+
+    Tesseract* as_tesseract = dynamic_cast<Tesseract*>(mesh);
+    if (as_tesseract) {
+      QGroupBox* tesseract_box = set_tesseract(as_tesseract, mesh_box);
+      mesh_layout->addWidget(tesseract_box, y_location++, 0, 1, -1);
+    }
+
+    if (y_location == 0) {
+      QLabel* label = new QLabel(tr("Nothing to see here!"), mesh_box);
+      mesh_layout->addWidget(label, y_location++, 0, 1, -1);
+    }
 
     QScrollArea* Scrolling = new QScrollArea(this);
     Scrolling->setWindowFlags(Qt::Window);
     Scrolling->setWindowTitle(mesh->name.c_str());
-    Scrolling->setWidget(label);
+    Scrolling->setWidget(mesh_box);
     Scrolling->setWidgetResizable(true);
 
     loaded_meshes[mesh] = Scrolling;
@@ -383,6 +407,141 @@ QStandardItem* Settings::set_mesh(Mesh* mesh) {
 
   mesh_item->setData(mesh_item_data);
   return mesh_item;
+}
+
+QGroupBox* Settings::set_tesseract(Tesseract* tesseract, QWidget* parent) {
+  QGroupBox* tesseract_box = new QGroupBox(tr("Tesseract Settings"), parent);
+  QGridLayout* tesseract_layout = new QGridLayout(tesseract_box);
+
+  unsigned int y_location = 0;
+
+  QGroupBox* rotation_box = new QGroupBox(tr("Rotation Settings"), tesseract_box);
+  QGridLayout* rotation_layout = new QGridLayout(rotation_box);
+
+  Slider_Spinbox_Group* angle_group = new Slider_Spinbox_Group(0, 2*3.141592654, 0.05, 2, tr("Angle"), rotation_box);
+  rotation_layout->addWidget(angle_group, 0, 0, 1, -1);
+
+  QGroupBox* rotation_plane_box = new QGroupBox(tr("Plane of Rotation"), rotation_box);
+  QGridLayout* rotation_plane_layout = new QGridLayout(rotation_plane_box);
+  QRadioButton *xy = new QRadioButton("XY", angle_group);
+  xy->setChecked(true);
+  rotation_plane_layout->addWidget(xy, 0, 0, 1, 1);
+  QRadioButton *xz = new QRadioButton("XZ", angle_group);
+  rotation_plane_layout->addWidget(xz, 1, 0, 1, 1);
+  QRadioButton *xw = new QRadioButton("XW", angle_group);
+  rotation_plane_layout->addWidget(xw, 2, 0, 1, 1);
+  QRadioButton *yz = new QRadioButton("YZ", angle_group);
+  rotation_plane_layout->addWidget(yz, 0, 1, 1, 1);
+  QRadioButton *yw = new QRadioButton("YW", angle_group);
+  rotation_plane_layout->addWidget(yw, 1, 1, 1, 1);
+  QRadioButton *zw = new QRadioButton("ZW", angle_group);
+  rotation_plane_layout->addWidget(zw, 2, 1, 1, 1);
+
+  rotation_layout->addWidget(rotation_plane_box, 1, 0, 1, -1);
+
+  QPushButton* apply_rotation_button = new QPushButton(tr("Apply Rotation"), rotation_box);
+  tesseract_layout->addWidget(rotation_box, y_location++, 0, 1, -1);
+
+  auto rotate_tesseract_based_on_radio_buttons = [tesseract,xy,xz,xw,yz,yw,zw](float angle){
+    if (xy->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::XY);
+    }
+    if (xz->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::XZ);
+    }
+    if (xw->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::XW);
+    }
+    if (yz->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::YZ);
+    }
+    if (yw->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::YW);
+    }
+    if (zw->isChecked()) {
+      tesseract->rotate(angle, rotation_4D::RotationPlane::ZW);
+    }
+  };
+
+  connect(apply_rotation_button, &QPushButton::clicked, this,
+    [rotate_tesseract_based_on_radio_buttons,angle_group](){
+      rotate_tesseract_based_on_radio_buttons(angle_group->get_value());
+      angle_group->setValue(0.0);
+    }
+  );
+  rotation_layout->addWidget(apply_rotation_button, 2, 0, 1, -1);
+
+  // This is probably a stupid way of doing this
+  std::shared_ptr<float> rotation_angle = std::make_shared<float>(0.0f);
+  connect(angle_group, &Slider_Spinbox_Group::valueChanged, this,
+    [rotate_tesseract_based_on_radio_buttons, rotation_angle](double a){
+      float delta_angle = a-(*rotation_angle);
+      *rotation_angle = a;
+      rotate_tesseract_based_on_radio_buttons(delta_angle);
+    }
+  );
+
+  connect(xy, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::XY);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::XY);
+      }
+    }
+  );
+
+  connect(xz, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::XZ);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::XZ);
+      }
+    }
+  );
+
+  connect(xw, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::XW);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::XW);
+      }
+    }
+  );
+
+  connect(yz, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::YZ);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::YZ);
+      }
+    }
+  );
+
+  connect(yw, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::YW);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::YW);
+      }
+    }
+  );
+
+  connect(zw, &QRadioButton::toggled, this,
+    [rotate_tesseract_based_on_radio_buttons, tesseract, rotation_angle](bool checked) {
+      if (!checked) {
+        tesseract->rotate(-1.0f*(*rotation_angle), rotation_4D::RotationPlane::ZW);
+      } else {
+        tesseract->rotate(*rotation_angle, rotation_4D::RotationPlane::ZW);
+      }
+    }
+  );
+
+  return tesseract_box;
 }
 
 QStandardItem* Settings::set_material(Material* material) {
