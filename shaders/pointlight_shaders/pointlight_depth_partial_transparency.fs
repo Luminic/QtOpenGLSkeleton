@@ -5,6 +5,8 @@ in vec2 texture_coordinate;
 
 struct Material {
   sampler2D opacity_map; // Only exists in the full transparency & partial transparency shaders
+  bool use_opacity_map;
+  float opacity;
 };
 
 uniform Material material;
@@ -12,7 +14,11 @@ uniform vec3 pointlight_position;
 uniform float far_plane;
 
 void main() {
-  if (texture(material.opacity_map, texture_coordinate).a <= 0.05f) {
+  float opacity = material.opacity;
+	if (material.use_opacity_map) {
+		opacity *= texture(material.opacity_map, texture_coordinate).a;
+	}
+	if (opacity <= 0.05f) {
 		discard;
 	}
 

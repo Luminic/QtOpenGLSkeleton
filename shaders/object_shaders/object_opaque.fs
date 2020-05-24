@@ -66,10 +66,10 @@ uniform float skybox_multiplier;
 uniform Material material;
 
 uniform int nr_dirlights;
-uniform DirLight dirlights[2];
+uniform DirLight dirlights[1];
 
 uniform int nr_lights;
-uniform Light lights[2];
+uniform Light lights[1];
 
 uniform vec3 camera_position;
 

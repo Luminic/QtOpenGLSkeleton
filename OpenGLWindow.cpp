@@ -11,6 +11,8 @@
 
 #include "OpenGLWindow.h"
 
+#include "rendering/post_processing/helpful_framebuffer_functions.cpp"
+
 OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
   fov = 45.0f;
 }
@@ -94,23 +96,23 @@ void OpenGLWindow::initializeGL() {
   scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
   settings->set_dirlight(dirlight);
 
-  dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
-  dirlight->name = "dirlight #1";
-  dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
-  dirlight->initialize_depth_framebuffer(2048,2048);
-  dirlight->color = glm::vec3(0.0f);
-  dirlight->ambient = 0.5f;
-  dirlight->diffuse = 2.5f;
-  dirlight->specular = 2.5f;
-  scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
-  settings->set_dirlight(dirlight);
+  // dirlight = new DirectionalLight(glm::vec3(3.6f, 4.6f, -2.7f), glm::vec3(0.2f));
+  // dirlight->name = "dirlight #1";
+  // dirlight->set_direction(glm::vec3(-1.0f,-2.0f,1.0f));
+  // dirlight->initialize_depth_framebuffer(2048,2048);
+  // dirlight->color = glm::vec3(0.0f);
+  // dirlight->ambient = 0.5f;
+  // dirlight->diffuse = 2.5f;
+  // dirlight->specular = 2.5f;
+  // scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
+  // settings->set_dirlight(dirlight);
 
   glm::vec3 light_positions[2] = {
     glm::vec3( 2.4f, 1.9, 2.2f),
     glm::vec3(-5.0f, 2.2, 2.0f)
   };
 
-  for (int i=0; i<2; i++) {
+  for (int i=0; i<1; i++) {
     PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
     light->name = "light #" + std::to_string(i);
     light->initialize_depth_framebuffer(1024,1024);
@@ -126,30 +128,29 @@ void OpenGLWindow::initializeGL() {
   // Model* nanosuit = new Model("models/raygun/raygun.fbx");
   // Model* nanosuit = new Model("models/material_test/sphere.fbx");
   // Model* nanosuit = new Model("models/lightray_test/wall2.fbx");
-  // Model* nanosuit = new Model("models/nanosuit/nanosuit.obj", "nanosuit");
   // Model* nanosuit = new Model("models/bone_test/bone_test.fbx", "bone_test");
-  Model* nanosuit = new Model("models/bird/bird_complex.fbx", "bird");
+  Model* nanosuit = new Model("assets/models/bird/bird_complex.fbx", "bird");
   nanosuit->set_scale(glm::vec3(0.3f));
-  nanosuit->set_rotation(glm::vec3(180.0f,0.0f,0.0f));
-  nanosuit->set_position(glm::vec3(0.0f,-3.5f,0.0f));
+  nanosuit->set_rotation(glm::vec3(180.0f,270.0f,0.0f));
+  nanosuit->set_position(glm::vec3(0.0f,2.5f,-1.5f));
   scene->add_node(std::shared_ptr<RootNode>(nanosuit));
   settings->set_node(nanosuit);
 
-  // nanosuit->set_current_animation("Armature|ArmatureAction");
-  // nanosuit->start_animation();
+  nanosuit->set_current_animation("Armature|ArmatureAction");
+  nanosuit->start_animation();
 
   std::shared_ptr<Mesh> cube = std::make_shared<Mesh>();
   cube->name = "default cube";
   cube->initialize_cube();
   cube->material = new Material("box");
-  cube->material->load_texture("textures/container2.png", ALBEDO_MAP);
-  cube->material->load_texture("textures/container2_specular.png", METALNESS_MAP);
-  cube->material->load_texture("textures/container2_specular.png", ROUGHNESS_MAP);
+  cube->material->load_texture("assets/textures/container2.png", ALBEDO_MAP);
+  cube->material->load_texture("assets/textures/container2_specular.png", METALNESS_MAP);
+  cube->material->load_texture("assets/textures/container2_specular.png", ROUGHNESS_MAP);
   cube->material->metalness = 1.0f;
   cube->material = Scene::is_material_loaded(cube->material);
 
   glm::vec3 cube_positions[10] = {
-    glm::vec3( 0.0f,  0.0f,  2.0f),
+    glm::vec3( 0.0f,  0.0f,  0.0f),
     glm::vec3( 2.0f,  5.0f,  17.0f),
     glm::vec3(-1.5f, -2.2f,  4.5f),
     glm::vec3(-3.8f, -2.0f,  14.3f),
@@ -173,7 +174,7 @@ void OpenGLWindow::initializeGL() {
   grass->name = "grass";
   grass->initialize_plane(false);
   grass->material = new Material("grass");
-  grass->material->opacity_map = grass->material->load_texture("textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
+  grass->material->opacity_map = grass->material->load_texture("assets/textures/grass.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
   grass->material->opacity_map.type = OPACITY_MAP;
   grass->set_transparency(FULL_TRANSPARENCY);
   grass->material = Scene::is_material_loaded(grass->material);
@@ -206,7 +207,7 @@ void OpenGLWindow::initializeGL() {
   window->name = "window";
   window->initialize_plane(false);
   window->material = new Material("window");
-  window->material->opacity_map = window->material->load_texture("textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
+  window->material->opacity_map = window->material->load_texture("assets/textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
   window->material->opacity_map.type = OPACITY_MAP;
   window->set_transparency(PARTIAL_TRANSPARENCY);
   window->material = Scene::is_material_loaded(window->material);
@@ -231,7 +232,7 @@ void OpenGLWindow::initializeGL() {
   floor_mesh->name = "floor";
   floor_mesh->initialize_plane(true, 3.0f);
   floor_mesh->material = new Material("wooden planks");
-  floor_mesh->material->load_texture("textures/wood_floor.png", ALBEDO_MAP);
+  floor_mesh->material->load_texture("assets/textures/wood_floor.png", ALBEDO_MAP);
   floor_mesh->material->ambient = 0.2f;
   floor_mesh->material->diffuse = 0.6f;
   floor_mesh->material->specular = 0.3f;
@@ -252,6 +253,7 @@ void OpenGLWindow::initializeGL() {
   create_scene_framebuffer();
   create_ping_pong_framebuffer();
   create_post_processing_framebuffer();
+  gaussian_blur.init(framebuffer_quad);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Not really needed
 
@@ -290,11 +292,17 @@ void OpenGLWindow::load_shaders() {
   depth_shaders.dirlight.full_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_full_transparency.fs");
   depth_shaders.dirlight.partial_transparency->loadShaders("shaders/dirlight_shaders/dirlight_depth.vs", "shaders/dirlight_shaders/dirlight_depth_partial_transparency.fs");
 
+  depth_shaders.dirlight.full_transparency->initialize_placeholder_textures(Image_Type::OPACITY_MAP);
+  depth_shaders.dirlight.partial_transparency->initialize_placeholder_textures(Image_Type::OPACITY_MAP);
+
   depth_shaders.dirlight.validate_shader_programs();
 
   depth_shaders.pointlight.opaque->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_opaque.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.full_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_full_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
   depth_shaders.pointlight.partial_transparency->loadShaders("shaders/pointlight_shaders/pointlight_depth.vs", "shaders/pointlight_shaders/pointlight_depth_partial_transparency.fs", "shaders/pointlight_shaders/pointlight_depth.gs");
+
+  depth_shaders.pointlight.full_transparency->initialize_placeholder_textures(Image_Type::OPACITY_MAP);
+  depth_shaders.pointlight.partial_transparency->initialize_placeholder_textures(Image_Type::OPACITY_MAP);
 
   depth_shaders.pointlight.validate_shader_programs();
 
@@ -304,8 +312,11 @@ void OpenGLWindow::load_shaders() {
   object_shaders.partial_transparency->loadShaders("shaders/object_shaders/object.vs", "shaders/object_shaders/object_partial_transparency.fs");
 
   object_shaders.opaque->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP);
+  // object_shaders.opaque->initialize_placeholder_2D_textures(std::vector<const char*>{"dirlights[0].shadow_map"});
   object_shaders.full_transparency->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP | Image_Type::OPACITY_MAP);
+  // object_shaders.full_transparency->initialize_placeholder_2D_textures(std::vector<const char*>{"dirlights[0].shadow_map"});
   object_shaders.partial_transparency->initialize_placeholder_textures(Image_Type::ALBEDO_MAP | Image_Type::AMBIENT_OCCLUSION_MAP | Image_Type::ROUGHNESS_MAP | Image_Type::METALNESS_MAP | Image_Type::OPACITY_MAP);
+  // object_shaders.partial_transparency->initialize_placeholder_2D_textures(std::vector<const char*>{"dirlights[0].shadow_map"});
 
   object_shaders.validate_shader_programs();
 
@@ -338,7 +349,7 @@ void OpenGLWindow::create_framebuffer() {
 
   // Create the texture attachment
   int nr_color_buffers = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
-  scene->create_color_buffers(800, 600, nr_color_buffers, colorbuffers);
+  create_color_buffers(800, 600, nr_color_buffers, colorbuffers);
 
   // Create the renderbuffer
   glGenRenderbuffers(1, &renderbuffer);
@@ -358,7 +369,7 @@ void OpenGLWindow::create_scene_framebuffer() {
   glDrawBuffers(2, attachments);
 
   int nr_color_buffers = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
-  scene->create_color_buffers(800, 600, nr_color_buffers, scene_colorbuffers);
+  create_color_buffers(800, 600, nr_color_buffers, scene_colorbuffers);
 
   Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -370,9 +381,9 @@ void OpenGLWindow::create_ping_pong_framebuffer() {
 
   // Note: these colorbuffers should be attached when they will be used
   // Their attachment locations here mean nothing
-  scene->create_color_buffers(400, 300, 1, &bloom_colorbuffer);
+  create_color_buffers(400, 300, 1, &bloom_colorbuffer);
   // The ping pong colorbuffers should be created last so the drawbuffers is 2
-  scene->create_color_buffers(400, 300, 2, ping_pong_colorbuffers);
+  create_color_buffers(400, 300, 2, ping_pong_colorbuffers);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -381,7 +392,7 @@ void OpenGLWindow::create_post_processing_framebuffer() {
   glGenFramebuffers(1, &post_processing_framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, post_processing_framebuffer);
 
-  scene->create_color_buffers(800, 600, 1, &post_processing_colorbuffer);
+  create_color_buffers(800, 600, 1, &post_processing_colorbuffer);
 
   Q_ASSERT_X(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "framebuffer creation", "incomplete framebuffer");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -523,6 +534,8 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->simple_draw();
 
+  /*
+
   // Create bloom effect with gaussian blur
   glViewport(0, 0, width()/2, height()/2);
   // Clear the buffers (if they aren't cleared it causes problems when window is resized)
@@ -557,6 +570,9 @@ void OpenGLWindow::paintGL() {
   }
 
   glBlendFunc(GL_ONE, GL_ZERO);
+  */
+
+  unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[0], 2, width(), height());
 
   glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
@@ -566,7 +582,7 @@ void OpenGLWindow::paintGL() {
 
   switch (scene->display_type) {
     case SCENE:
-      post_processing_shader->setBool("do_bloom", true);
+      post_processing_shader->setBool("do_bloom", false);
       post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
 
@@ -576,11 +592,11 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", false);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, blurred);//scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      post_processing_shader->setInt("bloom_texture", 1);
+      // glActiveTexture(GL_TEXTURE1);
+      // glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
+      // post_processing_shader->setInt("bloom_texture", 1);
       break;
     case BLOOM:
       post_processing_shader->setBool("do_bloom", false);
@@ -647,23 +663,23 @@ void OpenGLWindow::update_perspective_matrix() {
 void OpenGLWindow::resizeGL(int w, int h) {
   // Update framebuffer textures
   int nr_color_buffers = sizeof(colorbuffers)/sizeof(colorbuffers[0]);
-  scene->update_color_buffers_size(w, h, nr_color_buffers, colorbuffers);
+  update_color_buffers_size(w, h, nr_color_buffers, colorbuffers);
 
   glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
 
   // Update scene texture
   nr_color_buffers = sizeof(scene_colorbuffers)/sizeof(scene_colorbuffers[0]);
-  scene->update_color_buffers_size(w, h, nr_color_buffers, scene_colorbuffers);
+  update_color_buffers_size(w, h, nr_color_buffers, scene_colorbuffers);
 
   // Update ping-pong textures
-  scene->update_color_buffers_size(w/2, h/2, 2, ping_pong_colorbuffers);
+  update_color_buffers_size(w/2, h/2, 2, ping_pong_colorbuffers);
 
   // Update bloom texture
-  scene->update_color_buffers_size(w/2, h/2, 1, &bloom_colorbuffer);
+  update_color_buffers_size(w/2, h/2, 1, &bloom_colorbuffer);
 
   // Update post-processing texture
-  scene->update_color_buffers_size(w, h, 1, &post_processing_colorbuffer);
+  update_color_buffers_size(w, h, 1, &post_processing_colorbuffer);
 
   update_perspective_matrix();
 

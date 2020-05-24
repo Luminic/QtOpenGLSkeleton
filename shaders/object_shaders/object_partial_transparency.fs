@@ -23,6 +23,8 @@ struct Material {
   sampler2D metalness_map;
 
 	sampler2D opacity_map; // Only exists in the full transparency & partial transparency shaders
+	bool use_opacity_map;
+	float opacity;
 
 	vec3 color;
 	float ambient;
@@ -68,10 +70,10 @@ uniform float skybox_multiplier;
 uniform Material material;
 
 uniform int nr_dirlights;
-uniform DirLight dirlights[2];
+uniform DirLight dirlights[1];
 
 uniform int nr_lights;
-uniform Light lights[2];
+uniform Light lights[1];
 
 uniform vec3 camera_position;
 
@@ -197,7 +199,10 @@ float linear_depth(float depth) {
 }
 
 void main() {
-	float opacity = texture(material.opacity_map, fs_in.texture_coordinate).a;
+	float opacity = material.opacity;
+	if (material.use_opacity_map) {
+		opacity *= texture(material.opacity_map, fs_in.texture_coordinate).a;
+	}
 	if (opacity <= 0.05f) {
 		discard;
 	}
