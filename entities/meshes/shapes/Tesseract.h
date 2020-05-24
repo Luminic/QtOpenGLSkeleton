@@ -26,6 +26,8 @@ public:
   void rotate(float angle, rotation_4D::RotationPlane rotation_plane);
   void project_to_3d();
 
+  virtual void draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) override;
+
   float xy_angle;
   float xz_angle;
   float xw_angle;

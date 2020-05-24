@@ -140,3 +140,9 @@ void Tesseract::project_to_3d() {
   }
   update_vertex_buffer(false);
 }
+
+void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
+  glDepthMask(GL_FALSE);
+  Mesh::draw(shader, draw_type, model, texture_unit);
+  glDepthMask(GL_TRUE);
+}

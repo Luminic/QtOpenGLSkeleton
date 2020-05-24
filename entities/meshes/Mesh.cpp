@@ -5,9 +5,9 @@
 int Mesh::nr_meshes_created = 0;
 
 Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material) :
+  material(material),
   vertices(vertices),
-  indices(indices),
-  material(material)
+  indices(indices)
 {
   init();
   initialize_buffers();

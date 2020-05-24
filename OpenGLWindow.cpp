@@ -175,10 +175,10 @@ void OpenGLWindow::initializeGL() {
   std::shared_ptr<Mesh> tesseract_as_mesh(tesseract);
   tesseract_as_mesh->name = "tesseract";
   tesseract_as_mesh->material = new Material("tesseract");
-  tesseract_as_mesh->material->color = glm::vec3(1.0f,0.0f,0.0f);
-  tesseract_as_mesh->material->opacity = 0.5f;
+  tesseract_as_mesh->material->color = glm::vec3(0.4f,0.0f,1.0f);
+  tesseract_as_mesh->material->opacity = 0.4f;
   tesseract_as_mesh->material->ambient = 1.0f;
-  tesseract_as_mesh->material->diffuse = 0.1f;
+  tesseract_as_mesh->material->diffuse = 0.05f;
   tesseract_as_mesh->material->specular = 0.0f;
   tesseract_as_mesh->material->roughness = 0.0f;
   tesseract_as_mesh->set_transparency(PARTIAL_TRANSPARENCY);
