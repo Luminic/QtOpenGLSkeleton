@@ -170,7 +170,7 @@ void OpenGLWindow::initializeGL() {
   }
 
   Tesseract* tesseract = new Tesseract();
-  tesseract->rotate(0.2, rotation_4D::YW);
+  tesseract->rotate(0.707, rotation_4D::YW);
   tesseract->project_to_3d();
   std::shared_ptr<Mesh> tesseract_as_mesh(tesseract);
   tesseract_as_mesh->name = "tesseract";

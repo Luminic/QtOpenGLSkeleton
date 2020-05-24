@@ -415,6 +415,7 @@ QStandardItem* Settings::set_material(Material* material) {
     create_option_group("Specular:", &material->specular, 0.0, 5.0, 0.05, 2, Misc_box, Misc_layout, 2);
     create_option_group("Roughness:", &material->roughness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 3);
     create_option_group("Metalness:", &material->metalness, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 4);
+    create_option_group("Opacity:", &material->opacity, 0.0, 1.0, 0.01, 2, Misc_box, Misc_layout, 5);
     Material_layout->addWidget(Misc_box, 0, 1);
 
     if (material->textures.size() >= 1) {
