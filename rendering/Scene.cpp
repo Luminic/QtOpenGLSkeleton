@@ -149,9 +149,7 @@ void Scene::draw_objects(Shader_Opacity_Triplet shaders, Shader::DrawType draw_t
     }
   );
 
-  // shaders.partial_transparency->use();
   for (auto draw_call : partially_transparent_meshes) {
-    // shaders.partial_transparency->setMat4("model", draw_call.model);
     draw_call.mesh->draw(draw_call.shader, draw_type, draw_call.model, draw_call.texture_unit);
   }
   glBlendFunc(GL_ONE, GL_ZERO);

@@ -22,7 +22,7 @@ struct Vertex {
 };
 
 class Mesh : public QObject, protected QOpenGLFunctions_4_5_Core {
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
   Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, Material *material);
@@ -35,7 +35,7 @@ public:
 
   void initialize_cube(float texture_scale=1.0f);
   void initialize_plane(bool horizontal=true, float texture_scale=1.0f);
-  void initialize_buffers();
+  virtual void initialize_buffers();
 
   void draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit=0);
   void simple_draw(); // Just draws the object to the screen. The shader should be set before calling this.
@@ -43,12 +43,13 @@ public:
   Transparency get_transparency() {return transparency;};
   void set_transparency(Transparency new_transparency) {transparency=new_transparency;};
 
-  std::vector<Vertex> vertices;
-  std::vector<unsigned int> indices;
 
   Material* material = nullptr;
 
 protected:
+  std::vector<Vertex> vertices;
+  std::vector<unsigned int> indices;
+  
   glm::mat4 transformation;
 
   unsigned int vao;
