@@ -66,22 +66,26 @@ Tesseract::Tesseract() {
     glm::ivec4(3, 7, 15, 11)
   };
 
-  for (auto face : indices_4D) {
-    // Triangulate
-    unsigned int trangulated_indices[6] = {
-      (unsigned int) face.x, (unsigned int) face.y, (unsigned int) face.w,
-      (unsigned int) face.w, (unsigned int) face.y, (unsigned int) face.z
-    };
-    indices.insert(indices.end(), std::begin(trangulated_indices), std::end(trangulated_indices));
-
+  unsigned int nr_vertices = 0;
+  for (unsigned int i=0; i<indices_4D.size(); i++) {
+    // Each face will have its own corner vertices shared with no other faces
+    // This way, each face can have its own normal
     Vertex vertices_3D[4] = {
-      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
-      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
-      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
-      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)}
+      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec2(0.0f,1.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
+      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec2(1.0f,1.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
+      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec2(1.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)},
+      Vertex {glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec2(0.0f,0.0f), glm::ivec4(0.0f,0.0f,0.0f,0.0f), glm::vec4(0.0f,0.0f,0.0f,0.0f)}
     };
     vertices.insert(vertices.end(), std::begin(vertices_3D), std::end(vertices_3D));
-    // TODO: Expand each face to have its own vertices in 3d so proper texture coordinates and normals can be calculated
+
+    // Expand the indices
+    // indices4D[i] should be the same face as (indices[i*6]..indices[i*6+5])
+    unsigned int trangulated_indices[6] = {
+      0+nr_vertices, 1+nr_vertices, 3+nr_vertices,
+      3+nr_vertices, 1+nr_vertices, 2+nr_vertices
+    };
+    indices.insert(indices.end(), std::begin(trangulated_indices), std::end(trangulated_indices));
+    nr_vertices += 4;
   }
 
   initialize_buffers();
@@ -134,9 +138,28 @@ void Tesseract::rotate(float angle, rotation_4D::RotationPlane rotation_plane) {
 }
 
 void Tesseract::project_to_3d() {
-  // Near plane will be at (0,0,0,-2)
-  for (unsigned int i=0; i<vertices_4D.size(); i++) {
-    vertices[i].position = glm::vec3(vertices_4D[i].position)*(1.0f/(vertices_4D[i].position.w+2.0f));
+  for (unsigned int i=0; i<indices_4D.size(); i++) {
+    // Face indices are in the form 0,1,3, 3,1,2
+    // 0----1
+    // | ,' |
+    // 3----2
+    // So the unique vertices are indices[i*6], indices[i*6+1], indices[i*6+5], indices[i*6+2]
+    // Note the ordering: indices must be ordered this way to match with the ordering of indices4D
+    // Camera will be at <0,0,0,-2> facing towards +w to simplify the projection calculation
+    vertices[indices[i*6 +0]].position = glm::vec3(vertices_4D[indices_4D[i].x].position) / (vertices_4D[indices_4D[i].x].position.w + 2.0f);
+    vertices[indices[i*6 +1]].position = glm::vec3(vertices_4D[indices_4D[i].y].position) / (vertices_4D[indices_4D[i].y].position.w + 2.0f);
+    vertices[indices[i*6 +5]].position = glm::vec3(vertices_4D[indices_4D[i].z].position) / (vertices_4D[indices_4D[i].z].position.w + 2.0f);
+    vertices[indices[i*6 +2]].position = glm::vec3(vertices_4D[indices_4D[i].w].position) / (vertices_4D[indices_4D[i].w].position.w + 2.0f);
+
+    // Calculate normals
+    glm::vec3 a = vertices[indices[i*6 +1]].position - vertices[indices[i*6 +0]].position;
+    glm::vec3 b = vertices[indices[i*6 +5]].position - vertices[indices[i*6 +0]].position;
+    glm::vec3 norm = glm::cross(a,b);
+
+    vertices[indices[i*6 +0]].normal = norm;
+    vertices[indices[i*6 +1]].normal = norm;
+    vertices[indices[i*6 +5]].normal = norm;
+    vertices[indices[i*6 +2]].normal = norm;
   }
   update_vertex_buffer(false);
 }
