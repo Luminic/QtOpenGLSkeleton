@@ -141,7 +141,7 @@ void Scene::draw_objects(Shader_Opacity_Triplet shaders, Shader::DrawType draw_t
   for (auto node : nodes) {
     node->draw(shaders, draw_type, &partially_transparent_meshes, glm::mat4(1.0f), texture_unit);
   }
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_SRC1_COLOR);
 
   std::sort(partially_transparent_meshes.begin(), partially_transparent_meshes.end(),
     [&camera_position](Transparent_Draw& obj1, Transparent_Draw& obj2){

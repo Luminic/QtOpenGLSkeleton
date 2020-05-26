@@ -214,21 +214,22 @@ void main() {
   if (material.use_metalness_map)
     metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
 
-  vec3 diffuse = material.diffuse * material.color;
+  vec3 diffuse_color = material.color;
 	if (material.use_albedo_map) {
-		diffuse *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
+		diffuse_color *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
 	}
+	vec3 diffuse = material.diffuse * diffuse_color;
 
   vec3 specular = vec3(material.specular);
   specular *= pow(roughness, 2);
 
-  vec3 metal_tint = diffuse;
+  vec3 metal_tint = diffuse_color;
   if (metalness >= 0.9f) {
     specular *= normalize(diffuse) * 1.73;
     diffuse *= 1.0f-roughness;
   }
 
-	vec3 ambient = diffuse * material.ambient;
+	vec3 ambient = diffuse_color * material.ambient;
   if (material.use_ambient_occlusion_map) {
     ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }

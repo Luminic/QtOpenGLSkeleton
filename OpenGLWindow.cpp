@@ -443,7 +443,7 @@ void OpenGLWindow::paintGL() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->get_pointlights()[0]->depth_cubemap);
     skybox_shader->setInt("skybox", 0);
-    // scene->skybox->draw(skybox_shader, false);
+    scene->skybox->simple_draw();
 
     glDepthMask(GL_TRUE);
 
@@ -503,7 +503,7 @@ void OpenGLWindow::paintGL() {
   switch (scene->display_type) {
     case SUNLIGHT_DEPTH:
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[1]->depth_map);
+      glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[0]->depth_map);
       scene_shader->setInt("screen_texture", 0);
       scene_shader->setBool("greyscale", true);
       break;
@@ -535,7 +535,7 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->simple_draw();
 
-  // unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[0], 2, width(), height());
+  unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[1], 2, width(), height());
 
   glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
@@ -555,7 +555,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", false);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
       // glActiveTexture(GL_TEXTURE1);
       // glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
@@ -567,7 +567,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", true);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, blurred);
       post_processing_shader->setInt("screen_texture", 0);
       break;
     case BRIGHT:

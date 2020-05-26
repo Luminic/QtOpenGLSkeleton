@@ -166,6 +166,16 @@ void Tesseract::project_to_3d() {
 
 void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
   glDepthMask(GL_FALSE);
+  GLint src;
+  GLint dst;
+  glGetIntegerv(GL_BLEND_SRC, &src);
+  glGetIntegerv(GL_BLEND_DST, &dst);
+  if (draw_type == Shader::DrawType::COLOR) {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
   Mesh::draw(shader, draw_type, model, texture_unit);
+  if (draw_type == Shader::DrawType::COLOR) {
+    glBlendFunc(src, dst);
+  }
   glDepthMask(GL_TRUE);
 }

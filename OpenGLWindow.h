@@ -58,7 +58,7 @@ protected:
 
   unsigned int framebuffer;
   unsigned int renderbuffer;
-  unsigned int colorbuffers[2];
+  unsigned int colorbuffers[1];
 
   unsigned int scene_framebuffer;
   unsigned int scene_colorbuffers[2];

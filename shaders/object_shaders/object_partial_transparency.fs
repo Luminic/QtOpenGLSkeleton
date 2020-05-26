@@ -1,7 +1,9 @@
 #version 450
 
-layout (location = 0) out vec4 frag_color;
-layout (location = 1) out vec4 volumetric_color;
+layout (location = 0, index=0) out vec4 frag_color;
+layout (location = 0, index=1) out vec4 mult_color;
+// layout (location = 1, index=0) out vec4 volumetric_color;
+// layout (location = 1, index=1) out vec4 volumetric_mult_color;
 
 in VS_OUT {
 	vec3 fragment_position;
@@ -203,9 +205,9 @@ void main() {
 	if (material.use_opacity_map) {
 		opacity *= texture(material.opacity_map, fs_in.texture_coordinate).a;
 	}
-	if (opacity <= 0.05f) {
-		discard;
-	}
+	// if (opacity <= 0.05f) {
+	// 	discard;
+	// }
 
 	vec3 fragment_normal = normalize(fs_in.normal);
 	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
@@ -224,21 +226,22 @@ void main() {
     metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
 	}
 
-  vec3 diffuse = material.diffuse * material.color;
+  vec3 diffuse_color = material.color;
 	if (material.use_albedo_map) {
-		diffuse *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
+		diffuse_color *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
 	}
+	vec3 diffuse = material.diffuse * diffuse_color;
 
   vec3 specular = vec3(material.specular);
   specular *= pow(roughness, 2);
 
-  vec3 metal_tint = diffuse;
+  vec3 metal_tint = diffuse_color;
   if (metalness >= 0.9f) {
     specular *= normalize(diffuse) * 1.73;
     diffuse *= 1.0f-roughness;
   }
 
-	vec3 ambient = diffuse * material.ambient;
+	vec3 ambient = diffuse_color * material.ambient;
   if (material.use_ambient_occlusion_map) {
     ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
@@ -263,6 +266,7 @@ void main() {
 	total_color = clamp(total_color, 0.0f.xxx, MAXIMUM_BRIGHTNESS.xxx);
 
 	// Final result
-  frag_color = vec4(total_color, opacity);
-	volumetric_color = frag_color;
+  frag_color = vec4(total_color*opacity, opacity);
+	mult_color = vec4(mix(total_color,vec3(1.0f), (1-opacity))*(1-opacity), 1-opacity);
+	// volumetric_color = vec4(total_color, opacity);
 }
