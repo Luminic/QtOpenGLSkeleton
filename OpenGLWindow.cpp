@@ -14,6 +14,7 @@
 #include "rendering/post_processing/helpful_framebuffer_functions.cpp"
 
 OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent) {
+  settings = new Settings(this);
   fov = 45.0f;
 }
 
@@ -68,7 +69,6 @@ void OpenGLWindow::initializeGL() {
 
   qDebug() << "GL Version:" << QString((const char*)glGetString(GL_VERSION));
 
-  settings = new Settings(this);
   settings->setWindowFlags(Qt::Window);
   settings->setWindowTitle(tr("Settings"));
 

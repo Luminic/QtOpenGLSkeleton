@@ -416,6 +416,7 @@ QGroupBox* Settings::set_tesseract(Tesseract* tesseract, QWidget* parent) {
   unsigned int y_location = 0;
 
   QGroupBox* rotation_box = new QGroupBox(tr("Rotation Settings"), tesseract_box);
+  tesseract_layout->addWidget(rotation_box, y_location++, 0, 1, -1);
   QGridLayout* rotation_layout = new QGridLayout(rotation_box);
 
   Slider_Spinbox_Group* angle_group = new Slider_Spinbox_Group(0, 2*3.141592654, 0.05, 2, tr("Angle"), rotation_box);
@@ -440,7 +441,11 @@ QGroupBox* Settings::set_tesseract(Tesseract* tesseract, QWidget* parent) {
   rotation_layout->addWidget(rotation_plane_box, 1, 0, 1, -1);
 
   QPushButton* apply_rotation_button = new QPushButton(tr("Apply Rotation"), rotation_box);
-  tesseract_layout->addWidget(rotation_box, y_location++, 0, 1, -1);
+  rotation_layout->addWidget(apply_rotation_button, 2, 0, 1, -1);
+
+  QPushButton* animate_button = new QPushButton(tr("Animate"), rotation_box);
+  animate_button->setCheckable(true);
+  rotation_layout->addWidget(animate_button, 3, 0, 1, -1);
 
   auto rotate_tesseract_based_on_radio_buttons = [tesseract,xy,xz,xw,yz,yw,zw](float angle){
     if (xy->isChecked()) {
@@ -469,7 +474,6 @@ QGroupBox* Settings::set_tesseract(Tesseract* tesseract, QWidget* parent) {
       angle_group->setValue(0.0);
     }
   );
-  rotation_layout->addWidget(apply_rotation_button, 2, 0, 1, -1);
 
   // This is probably a stupid way of doing this
   std::shared_ptr<float> rotation_angle = std::make_shared<float>(0.0f);
@@ -478,6 +482,22 @@ QGroupBox* Settings::set_tesseract(Tesseract* tesseract, QWidget* parent) {
       float delta_angle = a-(*rotation_angle);
       *rotation_angle = a;
       rotate_tesseract_based_on_radio_buttons(delta_angle);
+    }
+  );
+
+  std::shared_ptr<QMetaObject::Connection> update_tesseract_connection = std::make_shared<QMetaObject::Connection>();
+  connect(animate_button, &QPushButton::clicked, this,
+    [this, update_tesseract_connection, rotate_tesseract_based_on_radio_buttons, angle_group, animate_button] (bool checked) {
+      auto animation = [rotate_tesseract_based_on_radio_buttons, angle_group]() {
+        rotate_tesseract_based_on_radio_buttons(angle_group->get_value());
+      };
+      if (checked) {
+        *update_tesseract_connection = connect(update_timer, &QTimer::timeout, this, animation);
+        animate_button->setText("Stop Animation");
+      } else {
+        disconnect(*update_tesseract_connection);
+        animate_button->setText("Animate");
+      }
     }
   );
 

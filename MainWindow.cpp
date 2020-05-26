@@ -41,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   current_pft_index = 0;
   frame_time.start();
 
+  GLWindow->settings->set_update_timer(timer);
+
   // Show the main window (also shows child widget: GLWindow)
   show();
 }

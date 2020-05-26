@@ -11,6 +11,7 @@
 #include <QVBoxLayout>
 #include <QTreeView>
 #include <QStandardItemModel>
+#include <QTimer>
 #include <QDebug>
 
 #include <vector>
@@ -36,6 +37,7 @@ public:
   Settings(QWidget* parent=nullptr);
   ~Settings();
 
+  void set_update_timer(QTimer* update_timer) {this->update_timer = update_timer;};
   void update_settings() {emit updating();}
 
   void set_scene(Scene *scene);
@@ -55,6 +57,8 @@ signals:
   void updating(); // Only for internal use (with lambdas)
 
 private:
+  QTimer* update_timer = nullptr;
+
   void create_list_tab(QGroupBox*& widget, QVBoxLayout*& layout, const char* name);
   // Node tab
   void set_up_nodes_tab();
