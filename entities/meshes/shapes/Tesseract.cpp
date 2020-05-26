@@ -171,7 +171,7 @@ void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4
   glGetIntegerv(GL_BLEND_SRC, &src);
   glGetIntegerv(GL_BLEND_DST, &dst);
   if (draw_type == Shader::DrawType::COLOR) {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_SRC1_ALPHA); // SRC is already multiplied by SRC_ALPHA in the shader
   }
   Mesh::draw(shader, draw_type, model, texture_unit);
   if (draw_type == Shader::DrawType::COLOR) {

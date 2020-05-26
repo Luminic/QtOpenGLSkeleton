@@ -7,11 +7,53 @@
 unsigned int Shader::placeholder_texture = 0;
 std::unordered_map<std::string, unsigned int> Shader::uniform_block_buffers;
 
-std::string textContent(QString path) {
-    QFile file(path);
-    file.open(QFile::ReadOnly | QFile::Text);
-    QTextStream in(&file);
-    return in.readAll().toStdString();
+std::string textContent(QString path, std::shared_ptr<std::vector<std::string>> already_included_names = std::make_shared<std::vector<std::string>>()) {
+  QFile file(path);
+  file.open(QFile::ReadOnly | QFile::Text);
+  QTextStream in(&file);
+  unsigned int current_line_number = 0;
+  std::string current_content = "";
+  while (!in.atEnd()) {
+    current_line_number++;
+    // readLine() strips \n so we have to re-add the \n
+    std::string current_line = in.readLine().toStdString()+'\n';
+
+    // Is a mypreprocessor directive
+    if (current_line.compare(0, 15, "#mypreprocessor") == 0) {
+      // Is an include directive
+      if (current_line.compare(16, 7, "include") == 0) {
+        std::string include_file_name = current_line.substr(25, std::string::npos);
+        include_file_name.pop_back(); // Remove last \n
+        include_file_name.pop_back(); // Remove last "
+        QString path_without_file_name = path.section('/',0,-2);
+        if (path_without_file_name != "") {
+          path_without_file_name += '/';
+        }
+        QString include_file_path = path_without_file_name+include_file_name.c_str();
+
+        // Check if the file has already been included
+        bool already_included = false;
+        for (auto name : *already_included_names) {
+          if (include_file_name == name) {
+            already_included = true;
+            current_line = "\n";
+          }
+        }
+        if (!already_included) {
+          // Add the included file to the shader
+          current_line = textContent(include_file_path, already_included_names);
+          already_included_names->push_back(include_file_name);
+        }
+      } else {
+        qWarning() << "Unknown include directive" << current_line.c_str() << "in" << path << "line" << current_line_number;
+        current_line = "\n";
+      }
+    }
+
+    current_content.append(current_line);
+  }
+  return current_content;
+  // return in.readAll().toStdString();
 }
 
 Shader::Shader() {}

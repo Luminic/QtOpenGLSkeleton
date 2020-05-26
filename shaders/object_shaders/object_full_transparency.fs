@@ -1,7 +1,6 @@
 #version 450
 
 layout (location = 0) out vec4 frag_color;
-layout (location = 1) out vec4 volumetric_color;
 
 in VS_OUT {
 	vec3 fragment_position;
@@ -34,35 +33,7 @@ struct Material {
   float metalness;
 };
 
-struct DirLight {
-	vec3 direction;
-
-	vec3 color;
-	float ambient;
-	float diffuse;
-	float specular;
-
-	sampler2D shadow_map;
-	mat4 light_space;
-};
-
-struct Light {
-	vec3 position;
-
-	vec3 color;
-	float ambient;
-	float diffuse;
-	float specular;
-
-	float constant;
-	float linear;
-	float quadratic;
-
-	int samples;
-	float sample_radius;
-
-	samplerCube shadow_cubemap;
-};
+#mypreprocessor include "../shader_components/light_structs.glsl"
 
 uniform samplerCube skybox;
 uniform float skybox_multiplier;
@@ -70,75 +41,16 @@ uniform float skybox_multiplier;
 uniform Material material;
 
 uniform int nr_dirlights;
-uniform DirLight dirlights[1];
+uniform DirLight dirlights[MAX_NR_DIRLIGHTS];
 
 uniform int nr_lights;
-uniform Light lights[1];
+uniform Light lights[MAX_NR_LIGHTS];
 
 uniform vec3 camera_position;
 
-#define SHADOW_BIAS 0.001f
 #define MAXIMUM_BRIGHTNESS 50.0f
 
-float in_dirlight_shadow(DirLight dirlight, bool use_pcf) {
-	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
-	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
-	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
-	if (projected_coordinates.z > 1.0f) return 0.0f;
-
-	float current_depth = max(0.001f,projected_coordinates.z); // If a fragment has a depth of <=0.0f, then it will always be lit... even if its behind the light source
-
-	if (use_pcf) {
-		float shadow = 0.0f;
-		vec2 texel_size = 1.0f / textureSize(dirlight.shadow_map, 0);
-		for (int x=-1; x<=1; x++) {
-			for (int y=-1; y<=1; y++) {
-				float pcf_depth = texture(dirlight.shadow_map, projected_coordinates.xy+vec2(x,y)*texel_size).r;
-				shadow += current_depth > pcf_depth+SHADOW_BIAS ? 1.0f : 0.0f;
-			}
-		}
-		shadow /= 9.0f;
-
-		return shadow;
-	} else {
-		float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
-		return current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
-	}
-}
-
-vec3 dirlight_vis(DirLight dirlight) {
-	vec4 position_light_space = dirlight.light_space * vec4(fs_in.fragment_position, 1.0f);
-	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
-	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
-	// if (projected_coordinates.z > 1.0f) return vec3(1.0f,0.0f,0.0f);
-	// float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
-	return projected_coordinates;
-}
-
-vec3 sample_offset_directions[26] = vec3[](
-	vec3( 0,  0,  0), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1),
-	vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
-	vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
-	vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
-	vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1),
-	vec3( 0,  0,  1), vec3( 0,  0, -1), vec3( 0,  1,  0), vec3( 1,  0,  0),
-	vec3( 0, -1,  0), vec3(-1,  0,  0)
-);
-
-float in_pointlight_shadow(Light pointlight, vec3 position, bool use_pcf) {
-	vec3 position_to_light = position - pointlight.position;
-	float current_depth = length(position_to_light);
-	float shadow = 0.0f;
-
-	for (int i=0; i<pointlight.samples; i++) {
-		float closest_depth = texture(pointlight.shadow_cubemap, position_to_light+sample_offset_directions[i]*pointlight.sample_radius).r;
-		closest_depth *= 45.0f;
-		shadow += current_depth > closest_depth+SHADOW_BIAS ? 1.0f : 0.0f;
-	}
-	shadow /= pointlight.samples;
-
-	return shadow;
-}
+#mypreprocessor include "../shader_components/shadow_functions.glsl"
 
 float compute_scattering(float cos_theta, float G) {
 	// This is the Henyey Greenstein Phase Function
@@ -148,48 +60,7 @@ float compute_scattering(float cos_theta, float G) {
 	return result;
 }
 
-vec3 calculate_dirlight(DirLight dirlight, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
-
-	vec3 dirlight_direction = normalize(dirlight.direction);
-  vec3 dirlight_halfway_direction = normalize(dirlight_direction+camera_direction);
-	fragment_normal = fragment_normal * sign(dot(fragment_normal, camera_direction));
-
-	// Ambient lighting
-	vec3 ambient = ambient_color * dirlight.ambient * dirlight.color;
-	// Diffuse Lighting
-	float diff = max(dot(fragment_normal, dirlight_direction), 0.0f);
-	vec3 diffuse = diff * albedo_color * dirlight.diffuse * dirlight.color;
-	// Specular Lighting
-	float spec = pow(max(dot(fragment_normal, dirlight_halfway_direction), 0.0), shininess);
-	vec3 specular = spec * specular_color * dirlight.specular * dirlight.color;
-
-	// Total Sunlight
-	return ambient + (1.0f-in_dirlight_shadow(dirlight, true))*(diffuse + specular);
-	// return dirlight_vis(dirlight);
-}
-
-vec3 calculate_pointlight(Light light, vec3 ambient_color, vec3 albedo_color, vec3 specular_color, float shininess, vec3 fragment_normal, vec3 camera_direction) {
-
-	vec3 light_direction = normalize(light.position-fs_in.fragment_position);
-  vec3 halfway_direction = normalize(light_direction+camera_direction);
-	fragment_normal = fragment_normal * sign(dot(fragment_normal, camera_direction));
-
-	// Ambient lighting
-	vec3 ambient = ambient_color * light.ambient * light.color;
-	// Diffuse Lighting
-	float diff = max(dot(fragment_normal, light_direction), 0.0f);
-	vec3 diffuse = diff * albedo_color * light.diffuse * light.color;
-	// Specular Lighting
-	float spec = pow(max(dot(fragment_normal, halfway_direction), 0.0), shininess);
-	vec3 specular = spec * specular_color * light.specular * light.color;
-
-	// Falloff
-	float distance = length(fs_in.fragment_position-light.position);
-	float falloff = 1.0f / (light.constant + light.linear*distance + light.quadratic*distance*distance);
-
-	// Total Point Lighting
-	return (ambient + (1.0f-in_pointlight_shadow(light, fs_in.fragment_position, false))*(diffuse + specular)) * falloff;
-}
+#mypreprocessor include "../shader_components/light_calculation_functions.glsl"
 
 float linear_depth(float depth) {
   float near = 0.1;
@@ -247,11 +118,11 @@ void main() {
 	vec3 lighting_color = vec3(0.0f);
 
 	for (int i=0; i<nr_dirlights; i++) {
-		lighting_color += calculate_dirlight(dirlights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
+		lighting_color += calculate_dirlight(dirlights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction, fs_in.fragment_position);
 	}
 
 	for (int i=0; i<nr_lights; i++) {
-		lighting_color += calculate_pointlight(lights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction);
+		lighting_color += calculate_pointlight(lights[i], ambient, diffuse, specular, shininess, fragment_normal, camera_direction, fs_in.fragment_position);
 	}
 
 	vec3 reflection_color = vec3(0.0f);
@@ -265,5 +136,4 @@ void main() {
 
 	// Final result
   frag_color = vec4(total_color, 1.0f);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);
-	volumetric_color = frag_color;
 }

@@ -58,7 +58,7 @@ void OpenGLWindow::initializeGL() {
         if (message.severity() != QOpenGLDebugMessage::NotificationSeverity) {
           qDebug() << message;
           if (message.severity() == QOpenGLDebugMessage::HighSeverity) {
-
+            qFatal("^");
           }
         }
       }
@@ -175,8 +175,8 @@ void OpenGLWindow::initializeGL() {
   tesseract->material = new Material("tesseract");
   tesseract->material->color = glm::vec3(0.4f,0.0f,1.0f);
   tesseract->material->opacity = 0.4f;
-  tesseract->material->ambient = 1.0f;
-  tesseract->material->diffuse = 0.05f;
+  tesseract->material->ambient = 0.4f;
+  tesseract->material->diffuse = 0.0f;
   tesseract->material->specular = 0.0f;
   tesseract->material->roughness = 0.0f;
   tesseract->set_transparency(PARTIAL_TRANSPARENCY);
@@ -224,6 +224,8 @@ void OpenGLWindow::initializeGL() {
   window->name = "window";
   window->initialize_plane(false);
   window->material = new Material("window");
+  window->material->ambient = 0.0f;
+  window->material->diffuse = 0.0f;
   window->material->opacity_map = window->material->load_texture("assets/textures/blending_transparent_window.png", ALBEDO_MAP, ImageLoading::Options::TRANSPARENCY | ImageLoading::Options::FLIP_ON_LOAD | ImageLoading::Options::CLAMPED);
   window->material->opacity_map.type = OPACITY_MAP;
   window->set_transparency(PARTIAL_TRANSPARENCY);
@@ -535,7 +537,7 @@ void OpenGLWindow::paintGL() {
 
   framebuffer_quad->simple_draw();
 
-  unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[1], 2, width(), height());
+  unsigned int blurred = gaussian_blur.apply_blur(scene_colorbuffers[1], 4, width(), height());
 
   glViewport(0, 0, width(), height());
   glBindFramebuffer(GL_FRAMEBUFFER, scene->antialiasing==FXAA ? post_processing_framebuffer : qt_framebuffer);
@@ -545,7 +547,7 @@ void OpenGLWindow::paintGL() {
 
   switch (scene->display_type) {
     case SCENE:
-      post_processing_shader->setBool("do_bloom", false);
+      post_processing_shader->setBool("do_bloom", true);
       post_processing_shader->setFloat("bloom_multiplier", scene->bloom_multiplier);
       post_processing_shader->setFloat("bloom_offset", scene->bloom_offset);
 
@@ -557,9 +559,9 @@ void OpenGLWindow::paintGL() {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
-      // glActiveTexture(GL_TEXTURE1);
-      // glBindTexture(GL_TEXTURE_2D, bloom_colorbuffer);
-      // post_processing_shader->setInt("bloom_texture", 1);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, blurred);
+      post_processing_shader->setInt("bloom_texture", 1);
       break;
     case BLOOM:
       post_processing_shader->setBool("do_bloom", false);
