@@ -27,6 +27,7 @@ public:
   void project_to_3d();
 
   virtual void draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) override;
+  virtual void points_draw();
 
   float xy_angle;
   float xz_angle;

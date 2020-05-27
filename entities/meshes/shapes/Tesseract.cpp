@@ -176,6 +176,13 @@ void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4
   Mesh::draw(shader, draw_type, model, texture_unit);
   if (draw_type == Shader::DrawType::COLOR) {
     glBlendFunc(src, dst);
+    glPointSize(5.0f);
+    points_draw();
   }
   glDepthMask(GL_TRUE);
+}
+
+void Tesseract::points_draw() {
+  glBindVertexArray(vao);
+  glDrawArrays(GL_POINTS, 0, vertices.size());
 }

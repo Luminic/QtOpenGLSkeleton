@@ -42,8 +42,6 @@ void Mesh::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& mod
 void Mesh::simple_draw() {
   glBindVertexArray(vao);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Mesh::initialize_cube(float texture_scale) {
