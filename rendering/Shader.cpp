@@ -7,29 +7,27 @@
 unsigned int Shader::placeholder_texture = 0;
 std::unordered_map<std::string, unsigned int> Shader::uniform_block_buffers;
 
-std::string textContent(QString path, std::shared_ptr<std::vector<std::string>> already_included_names = std::make_shared<std::vector<std::string>>()) {
+QString textContent(QString path, std::shared_ptr<std::vector<QString>> already_included_names = std::make_shared<std::vector<QString>>()) {
   QFile file(path);
   file.open(QFile::ReadOnly | QFile::Text);
   QTextStream in(&file);
   unsigned int current_line_number = 0;
-  std::string current_content = "";
+  QString current_content = "";
   while (!in.atEnd()) {
     current_line_number++;
     // readLine() strips \n so we have to re-add the \n
-    std::string current_line = in.readLine().toStdString()+'\n';
+    QString current_line = in.readLine()+'\n';
 
     // Is a mypreprocessor directive
-    if (current_line.compare(0, 15, "#mypreprocessor") == 0) {
+    if (current_line.contains("#mypreprocessor")) {
       // Is an include directive
-      if (current_line.compare(16, 7, "include") == 0) {
-        std::string include_file_name = current_line.substr(25, std::string::npos);
-        include_file_name.pop_back(); // Remove last \n
-        include_file_name.pop_back(); // Remove last "
+      if (current_line.contains("include")) {
+        QString include_file_name = current_line.section("\"", 1, 1);
         QString path_without_file_name = path.section('/',0,-2);
         if (path_without_file_name != "") {
           path_without_file_name += '/';
         }
-        QString include_file_path = path_without_file_name+include_file_name.c_str();
+        QString include_file_path = path_without_file_name+include_file_name;
 
         // Check if the file has already been included
         bool already_included = false;
@@ -45,7 +43,7 @@ std::string textContent(QString path, std::shared_ptr<std::vector<std::string>> 
           already_included_names->push_back(include_file_name);
         }
       } else {
-        qWarning() << "Unknown include directive" << current_line.c_str() << "in" << path << "line" << current_line_number;
+        qWarning() << "Unknown include directive" << current_line << "in" << path << "line" << current_line_number;
         current_line = "\n";
       }
     }
@@ -70,8 +68,8 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
   ID = glCreateProgram();
 
   // Load vertex shader
-  std::string vertex_shader_str = textContent(vertex_path);
-  const char *vertex_shader_code = vertex_shader_str.data();
+  std::string vertex_shader_str = textContent(vertex_path).toStdString();
+  const char* vertex_shader_code = vertex_shader_str.data();
   // Compile vertex shader
   vert_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vert_shader, 1, &vertex_shader_code, NULL);
@@ -86,8 +84,8 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
   glDeleteShader(vert_shader);
 
   // Load fragment shader
-  std::string fragment_shader_str = textContent(fragment_path);
-  const char *fragment_shader_code = fragment_shader_str.data();
+  std::string fragment_shader_str = textContent(fragment_path).toStdString();
+  const char* fragment_shader_code = fragment_shader_str.data();
   // Compile fragment shader
   frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(frag_shader, 1, &fragment_shader_code, NULL);
@@ -103,11 +101,11 @@ void Shader::loadShaders(const char* vertex_path, const char* fragment_path, con
 
   if (geometry_path[0] != '\0') {
     // Load geometry shader
-    std::string geometry_shader_str = textContent(geometry_path);
-    const char *fragment_shader_code = geometry_shader_str.data();
+    std::string geometry_shader_str = textContent(geometry_path).toStdString();
+    const char* geometry_shader_code = geometry_shader_str.data();
     // Compile geometry shader
     unsigned int geom_shader = glCreateShader(GL_GEOMETRY_SHADER);
-    glShaderSource(geom_shader, 1, &fragment_shader_code, NULL);
+    glShaderSource(geom_shader, 1, &geometry_shader_code, NULL);
     glCompileShader(geom_shader);
     // Check for errors
     glGetShaderiv(geom_shader, GL_COMPILE_STATUS, &success);
