@@ -1,5 +1,8 @@
 #version 450
 
+#define TRANSPARENCY_FULL 1
+#define TYPE_DIRLIGHT 1
+
 layout (depth_greater) out float gl_FragDepth;
 
 in vec2 texture_coordinate;

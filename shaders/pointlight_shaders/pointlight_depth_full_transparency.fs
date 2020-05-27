@@ -1,5 +1,8 @@
 #version 450
 
+#define TRANSPARENCY_FULL 1
+#define TYPE_LIGHT 1
+
 in vec4 fragment_position;
 in vec2 texture_coordinate;
 

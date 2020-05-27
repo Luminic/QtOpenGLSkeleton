@@ -1,5 +1,8 @@
 #version 450
 
+#define TRANSPARENCY_OPAQUE 1
+#define TYPE_LIGHT 1
+
 in vec4 fragment_position;
 
 uniform vec3 pointlight_position;

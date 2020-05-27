@@ -1,9 +1,10 @@
 #version 450
 
+#define TRANSPARENCY_PARTIAL 1
+#define TYPE_OBJECT 1
+
 layout (location = 0, index=0) out vec4 frag_color;
 layout (location = 0, index=1) out vec4 mult_color;
-// layout (location = 1, index=0) out vec4 volumetric_color;
-// layout (location = 1, index=1) out vec4 volumetric_mult_color;
 
 in VS_OUT {
 	vec3 fragment_position;
@@ -11,30 +12,7 @@ in VS_OUT {
 	vec3 normal;
 } fs_in;
 
-struct Material {
-  // Should be 0 and false by default
-  bool use_albedo_map;
-  bool use_ambient_occlusion_map;
-  bool use_roughness_map; // Inverted (white is smooth and black is rough)
-  bool use_metalness_map;
-
-  // These should be uninitialized and unused by default
-  sampler2D albedo_map;
-  sampler2D ambient_occlusion_map;
-  sampler2D roughness_map;
-  sampler2D metalness_map;
-
-	sampler2D opacity_map; // Only exists in the full transparency & partial transparency shaders
-	bool use_opacity_map;
-	float opacity;
-
-	vec3 color;
-	float ambient;
-  float diffuse;
-	float specular;
-  float roughness; // Should be in range 0.1 - 1.0 (shininess is calculated as 2^(roughness*10))
-  float metalness;
-};
+#mypreprocessor include "../shader_components/material_struct.glsl"
 
 #mypreprocessor include "../shader_components/light_structs.glsl"
 
@@ -55,22 +33,7 @@ uniform vec3 camera_position;
 
 #mypreprocessor include "../shader_components/shadow_functions.glsl"
 
-float compute_scattering(float cos_theta, float G) {
-	// This is the Henyey Greenstein Phase Function
-	// Equation from https://www.astro.umd.edu/~jph/HG_note.pdf
-	float result = 1 - G*G;
-	result /= 4 * 3.1415926535f * pow(1 + G*G - 2*G*cos_theta, 1.5f);
-	return result;
-}
-
 #mypreprocessor include "../shader_components/light_calculation_functions.glsl"
-
-float linear_depth(float depth) {
-  float near = 0.1;
-  float far  = 100.0;
-  float z = 2 * depth - 1;
-  return (2.0 * near * far) / (far + near - z * (far - near)) / far;
-}
 
 void main() {
 	float opacity = material.opacity;
@@ -81,39 +44,16 @@ void main() {
 	vec3 fragment_normal = normalize(fs_in.normal);
 	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
 
-  // Get the colors for everything
-
-  float roughness = material.roughness;
-  if (material.use_roughness_map) {
-    roughness *= length(texture(material.roughness_map, fs_in.texture_coordinate).rgb)/1.73f;
-	}
-
-  float shininess = pow(2,(roughness)*10);
-
-  float metalness = material.metalness;
-  if (material.use_metalness_map) {
-    metalness *= length(texture(material.metalness_map, fs_in.texture_coordinate).rgb)/1.73f;
-	}
-
-  vec3 diffuse_color = material.color;
-	if (material.use_albedo_map) {
-		diffuse_color *= texture(material.albedo_map, fs_in.texture_coordinate).rgb;
-	}
-	vec3 diffuse = material.diffuse * diffuse_color;
-
-  vec3 specular = vec3(material.specular);
-  specular *= pow(roughness, 2);
-
-  vec3 metal_tint = diffuse_color;
-  if (metalness >= 0.9f) {
-    specular *= normalize(diffuse) * 1.73;
-    diffuse *= 1.0f-roughness;
-  }
-
-	vec3 ambient = diffuse_color * material.ambient;
-  if (material.use_ambient_occlusion_map) {
-    ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
-  }
+  // Get the material properties
+	float roughness;
+	float shininess;
+	float metalness;
+	vec3 color;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	vec3 metal_tint;
+  #mypreprocessor include "../shader_components/material_properties_calculation.glsl"
 
 	vec3 lighting_color = vec3(0.0f);
 
@@ -136,5 +76,5 @@ void main() {
 
 	// Final result
   frag_color = vec4(total_color*opacity, opacity);
-	mult_color = vec4(mix(diffuse_color,vec3(1.0f), (1-opacity))*(1-opacity), 1-opacity);
+	mult_color = vec4(mix(color,vec3(1.0f), (1-opacity))*(1-opacity), 1-opacity);
 }
