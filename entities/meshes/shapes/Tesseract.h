@@ -28,6 +28,7 @@ public:
 
   virtual void draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) override;
   virtual void points_draw();
+  virtual void outline_draw();
 
   float xy_angle;
   float xz_angle;
@@ -39,6 +40,9 @@ public:
 protected:
   std::vector<glm::ivec4> indices_4D;
   std::vector<Vertex4D> vertices_4D;
+
+  std::vector<unsigned int> outline_indices;
+  unsigned int outline_ebo;
 };
 
 #endif

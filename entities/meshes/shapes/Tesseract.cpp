@@ -85,10 +85,22 @@ Tesseract::Tesseract() {
       3+nr_vertices, 1+nr_vertices, 2+nr_vertices
     };
     indices.insert(indices.end(), std::begin(trangulated_indices), std::end(trangulated_indices));
+
+    unsigned int face_outline_indices[8] = {
+      0+nr_vertices, 1+nr_vertices,
+      1+nr_vertices, 2+nr_vertices,
+      2+nr_vertices, 3+nr_vertices,
+      3+nr_vertices, 0+nr_vertices
+    };
+    outline_indices.insert(outline_indices.end(), std::begin(face_outline_indices), std::end(face_outline_indices));
+
     nr_vertices += 4;
   }
 
   initialize_buffers();
+  glGenBuffers(1, &outline_ebo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, outline_ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, outline_indices.size() * sizeof(unsigned int), outline_indices.data(), GL_STATIC_DRAW);
 }
 
 Tesseract::~Tesseract() {}
@@ -165,24 +177,43 @@ void Tesseract::project_to_3d() {
 }
 
 void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4& model, int texture_unit) {
-  glDepthMask(GL_FALSE);
+  shader->use();
+  shader->setMat4("model", model);
+
   GLint src;
   GLint dst;
   glGetIntegerv(GL_BLEND_SRC, &src);
   glGetIntegerv(GL_BLEND_DST, &dst);
   if (draw_type == Shader::DrawType::COLOR) {
+    shader->setBool("material.simple", true);
+    shader->setVec3("material.color", glm::vec3(1.0f));
+    glBlendFunc(GL_ONE, GL_ZERO);
+    outline_draw();
+    points_draw();
+    material->draw(shader, texture_unit);
     glBlendFunc(GL_ONE, GL_SRC1_ALPHA); // SRC is already multiplied by SRC_ALPHA in the shader
   }
-  Mesh::draw(shader, draw_type, model, texture_unit);
+  if (transparency != Transparency::OPAQUE) {
+    material->set_opacity(shader, texture_unit);
+  }
+  // Mesh::draw(shader, draw_type, model, texture_unit);
+  glDepthMask(GL_FALSE);
+  simple_draw();
+  glDepthMask(GL_TRUE);
   if (draw_type == Shader::DrawType::COLOR) {
     glBlendFunc(src, dst);
-    glPointSize(5.0f);
-    points_draw();
+
   }
-  glDepthMask(GL_TRUE);
 }
 
 void Tesseract::points_draw() {
   glBindVertexArray(vao);
   glDrawArrays(GL_POINTS, 0, vertices.size());
+}
+
+void Tesseract::outline_draw() {
+  glBindVertexArray(vao);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, outline_ebo);
+  glDrawElements(GL_LINES, outline_indices.size(), GL_UNSIGNED_INT, (void*)0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 }

@@ -23,6 +23,13 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+float linear_depth(float depth) {
+  float near = 0.1;
+  float far  = 100.0;
+  float z = 2 * depth - 1;
+  return (2.0 * near * far) / (far + near - z * (far - near)) / far;
+}
+
 void main() {
 	mat4 bone_transform;
 	float vertex_weight_total = vertex_weights[0]+vertex_weights[1]+vertex_weights[2]+vertex_weights[3];
@@ -39,4 +46,5 @@ void main() {
 	vs_out.texture_coordinate = vertex_texture_coordinate;
 	vs_out.normal = transpose(inverse(mat3(bone_transform*model))) * vertex_normal;
 	gl_Position = projection * view * vec4(vs_out.fragment_position, 1.0);
+	gl_PointSize = 10.0f/gl_Position.z;
 }

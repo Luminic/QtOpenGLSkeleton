@@ -277,6 +277,7 @@ void OpenGLWindow::initializeGL() {
 
   //glEnable(GL_FRAMEBUFFER_SRGB);
   //glEnable(GL_CULL_FACE);
+  glEnable(GL_PROGRAM_POINT_SIZE);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

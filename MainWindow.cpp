@@ -248,7 +248,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     case Qt::Key_F4: {
       QPoint screen_top_left(geometry().left(), geometry().top());
       QColor col = GLWindow->grabFramebuffer().pixelColor(QCursor::pos()-screen_top_left);
-      qDebug() << col.red()/255.0 << col.green()/255.0 << col.blue()/255.0;
+      qDebug() << col.red() << col.green() << col.blue();
       break;}
     default:
       keys_pressed.insert(event->key());

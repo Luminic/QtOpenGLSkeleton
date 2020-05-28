@@ -1,6 +1,3 @@
-#ifndef MATERIAL_PROPERTIES_CALCULATION
-#define MATERIAL_PROPERTIES_CALCULATION
-
 {
   roughness = material.roughness;
   if (material.use_roughness_map) {
@@ -34,5 +31,3 @@
     ambient *= texture(material.ambient_occlusion_map, fs_in.texture_coordinate).rgb;
   }
 }
-
-#endif

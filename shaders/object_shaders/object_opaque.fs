@@ -35,6 +35,11 @@ uniform vec3 camera_position;
 #mypreprocessor include "../shader_components/light_calculation_functions.glsl"
 
 void main() {
+	if (material.simple) {
+		frag_color = vec4(material.color, 1.0f);
+		return;
+	}
+
 	vec3 fragment_normal = normalize(fs_in.normal);
 	vec3 camera_direction = normalize(camera_position - fs_in.fragment_position);
 

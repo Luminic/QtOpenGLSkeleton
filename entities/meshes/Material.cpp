@@ -45,6 +45,8 @@ int Material::draw(Shader* shader, int texture_unit) {
   shader->setFloat("material.specular", specular);
   shader->setFloat("material.roughness", roughness);
   shader->setFloat("material.metalness", metalness);
+
+  shader->setBool("material.simple", false);
   return texture_unit;
 }
 

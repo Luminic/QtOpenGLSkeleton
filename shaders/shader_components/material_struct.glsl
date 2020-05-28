@@ -26,6 +26,9 @@ struct Material {
 	float specular;
   float roughness; // Should be in range 0.1 - 1.0 (shininess is calculated as 2^(roughness*10))
   float metalness;
+
+  // If simple, the shader should return vec4(color, 1.0f)
+  bool simple;
 };
 
 #endif

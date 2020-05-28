@@ -35,6 +35,11 @@ uniform vec3 camera_position;
 #mypreprocessor include "../shader_components/light_calculation_functions.glsl"
 
 void main() {
+	if (material.simple) {
+		frag_color = vec4(material.color, 1.0f);
+		return;
+	}
+	
 	float opacity = material.opacity;
 	if (material.use_opacity_map) {
 		opacity *= texture(material.opacity_map, fs_in.texture_coordinate).a;
