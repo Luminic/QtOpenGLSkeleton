@@ -25,6 +25,11 @@ Scene::Scene(QObject *parent) : QObject(parent) {
   bloom_interpolation = 1;
   bloom_applications = 10;
 
+  volumetric_samples = 75;
+  volumetric_scattering = 0.75;
+  volumetric_density = 0.5;
+  scattering_direction = 0.85;
+
   skybox = new Mesh();
   skybox->initialize_cube();
   std::vector<std::string> faces {
@@ -141,7 +146,7 @@ void Scene::draw_objects(Shader_Opacity_Triplet shaders, Shader::DrawType draw_t
   for (auto node : nodes) {
     node->draw(shaders, draw_type, &partially_transparent_meshes, glm::mat4(1.0f), texture_unit);
   }
-  glBlendFunc(GL_SRC_ALPHA, GL_SRC1_COLOR);
+  glBlendFuncSeparate(GL_ONE, GL_SRC1_COLOR, GL_ONE, GL_ZERO);
 
   std::sort(partially_transparent_meshes.begin(), partially_transparent_meshes.end(),
     [&camera_position](Transparent_Draw& obj1, Transparent_Draw& obj2){

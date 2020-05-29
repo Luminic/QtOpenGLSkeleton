@@ -34,9 +34,11 @@ uniform vec3 camera_position;
 
 #mypreprocessor include "../shader_components/light_calculation_functions.glsl"
 
+#mypreprocessor include "../shader_components/misc_functions.glsl"
+
 void main() {
 	if (material.simple) {
-		frag_color = vec4(material.color, 1.0f);
+		frag_color = vec4(material.color, linear_depth(gl_FragCoord.z));
 		return;
 	}
 
@@ -76,5 +78,5 @@ void main() {
 
 	// Final result
 	// frag_color = vec4(max(fs_in.fragment_position/10.0f.xxx,0.0f.xxx), 1.0f);
-  frag_color = vec4(total_color, 1.0f);//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);
+  frag_color = vec4(total_color, linear_depth(gl_FragCoord.z));//vec4(mix(total_color,total_scattering.rgb,total_scattering.a), 1.0f);
 }

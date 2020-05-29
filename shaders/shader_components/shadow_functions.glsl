@@ -9,7 +9,9 @@ float in_dirlight_shadow(DirLight dirlight, vec3 fragment_position, bool use_pcf
 	vec4 position_light_space = dirlight.light_space * vec4(fragment_position, 1.0f);
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
-	if (projected_coordinates.z > 1.0f) return 0.0f;
+	if (abs(projected_coordinates.x) > 1.0f || abs(projected_coordinates.y) > 1.0f || abs(projected_coordinates.z) > 1.0f) {
+		return 0.0f;
+	};
 
 	float current_depth = max(0.001f,projected_coordinates.z); // If a fragment has a depth of <=0.0f, then it will always be lit... even if its behind the light source
 
@@ -36,11 +38,11 @@ vec3 dirlight_vis(DirLight dirlight, vec3 fragment_position) {
 	vec3 projected_coordinates = position_light_space.xyz / position_light_space.w;
 	projected_coordinates = projected_coordinates * 0.5f + 0.5f;
 	// if (projected_coordinates.z > 1.0f) return vec3(1.0f,0.0f,0.0f);
-	// float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
-	return projected_coordinates;
+	float closest_depth = texture(dirlight.shadow_map, projected_coordinates.xy).r;
+	// return projected_coordinates;
 	// float current_depth = max(0.001f,projected_coordinates.z);
 	// float closest_depth = texture(dirlights[1].shadow_map, projected_coordinates.xy).r;
-	// return closest_depth.xxx;
+	return closest_depth.xxx;
 	// return current_depth > closest_depth+SHADOW_BIAS ? 1.0f.xxx : 0.0f.xxx;
 }
 

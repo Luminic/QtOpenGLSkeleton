@@ -180,10 +180,14 @@ void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4
   shader->use();
   shader->setMat4("model", model);
 
-  GLint src;
-  GLint dst;
-  glGetIntegerv(GL_BLEND_SRC, &src);
-  glGetIntegerv(GL_BLEND_DST, &dst);
+  GLint src_rgb;
+  GLint dst_rgb;
+  GLint src_a;
+  GLint dst_a;
+  glGetIntegerv(GL_BLEND_SRC_RGB, &src_rgb);
+  glGetIntegerv(GL_BLEND_DST_RGB, &dst_rgb);
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &src_a);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &dst_a);
   if (draw_type == Shader::DrawType::COLOR) {
     shader->setBool("material.simple", true);
     shader->setVec3("material.color", glm::vec3(1.0f));
@@ -191,7 +195,7 @@ void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4
     outline_draw();
     points_draw();
     material->draw(shader, texture_unit);
-    glBlendFunc(GL_ONE, GL_SRC1_ALPHA); // SRC is already multiplied by SRC_ALPHA in the shader
+    glBlendFuncSeparate(GL_ONE, GL_SRC1_ALPHA, GL_ONE, GL_ZERO); // SRC is already multiplied by SRC_ALPHA in the shader
   }
   if (transparency != Transparency::OPAQUE) {
     material->set_opacity(shader, texture_unit);
@@ -201,8 +205,7 @@ void Tesseract::draw(Shader* shader, Shader::DrawType draw_type, const glm::mat4
   simple_draw();
   glDepthMask(GL_TRUE);
   if (draw_type == Shader::DrawType::COLOR) {
-    glBlendFunc(src, dst);
-
+    glBlendFuncSeparate(src_rgb, dst_rgb, src_a, dst_a);
   }
 }
 

@@ -113,6 +113,11 @@ public:
   */
   int display_type;
 
+  int volumetric_samples;
+  float volumetric_scattering;
+  float volumetric_density;
+  float scattering_direction;
+
 protected:
   std::vector<std::shared_ptr<DirectionalLight>> dirlights;
   std::vector<std::shared_ptr<PointLight>> pointlights;

@@ -125,6 +125,14 @@ void Settings::set_scene(Scene *scene) {
   }
   Scene_layout->addWidget(AA_box, 2, 1);
 
+  QGroupBox *Volumetrics_box = new QGroupBox(tr("Volumetrics_box"), this);
+  QGridLayout *Volumetrics_layout = new QGridLayout(Volumetrics_box);
+  create_option_group("Samples:",    &scene->volumetric_samples,    0.0, 1000.0, 1.00, 0, Volumetrics_box, Volumetrics_layout, 0);
+  create_option_group("Scattering:", &scene->volumetric_scattering, 0.0,    1.0, 0.01, 2, Volumetrics_box, Volumetrics_layout, 1);
+  create_option_group("Density:",    &scene->volumetric_density,    0.0,    1.0, 0.01, 2, Volumetrics_box, Volumetrics_layout, 2);
+  create_option_group("Scattering Direction:", &scene->scattering_direction, -1.0, 1.0, 0.01, 2, Volumetrics_box, Volumetrics_layout, 3);
+  Scene_layout->addWidget(Volumetrics_box, 3, 1);
+
   QScrollArea *Scrolling = new QScrollArea(this);
   Scrolling->setWidget(Scene_widget);
   Scrolling->setWidgetResizable(true);
@@ -705,16 +713,16 @@ void Settings::set_point_light(PointLight *point_light) {
 
   QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
   QGridLayout *Color_Layout = new QGridLayout(Color_Box);
-  create_option_group("R:", &point_light->color.r, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 0);
-  create_option_group("G:", &point_light->color.g, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 1);
-  create_option_group("B:", &point_light->color.b, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("R:", &point_light->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &point_light->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 1);
+  create_option_group("B:", &point_light->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
   Light_layout->addWidget(Color_Box, 0, 0);
 
   QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);
   QGridLayout *Lighting_Layout = new QGridLayout(Lighting_Box);
-  create_option_group("Ambient:", &point_light->ambient, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
-  create_option_group("Diffuse:", &point_light->diffuse, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 1);
-  create_option_group("Specular:", &point_light->specular, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
+  create_option_group("Ambient:", &point_light->ambient, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
+  create_option_group("Diffuse:", &point_light->diffuse, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 1);
+  create_option_group("Specular:", &point_light->specular, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
   Light_layout->addWidget(Lighting_Box, 0, 1);
 
   QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
@@ -743,16 +751,16 @@ void Settings::set_dirlight(DirectionalLight *dirlight) {
 
   QGroupBox *Color_Box = new QGroupBox(tr("Color"), this);
   QGridLayout *Color_Layout = new QGridLayout(Color_Box);
-  create_option_group("R:", &dirlight->color.r, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 0);
-  create_option_group("G:", &dirlight->color.g, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 1);
-  create_option_group("B:", &dirlight->color.b, 0.0, 50.0, 0.1, 2, Color_Box, Color_Layout, 2);
+  create_option_group("R:", &dirlight->color.r, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 0);
+  create_option_group("G:", &dirlight->color.g, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 1);
+  create_option_group("B:", &dirlight->color.b, 0.0, 1.0, 0.1, 2, Color_Box, Color_Layout, 2);
   Light_layout->addWidget(Color_Box, 0, 0);
 
   QGroupBox *Lighting_Box = new QGroupBox(tr("Lighting"), this);
   QGridLayout *Lighting_Layout = new QGridLayout(Lighting_Box);
-  create_option_group("Ambient:", &dirlight->ambient, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
-  create_option_group("Diffuse:", &dirlight->diffuse, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 1);
-  create_option_group("Specular:", &dirlight->specular, 0.0, 5.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
+  create_option_group("Ambient:", &dirlight->ambient, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 0);
+  create_option_group("Diffuse:", &dirlight->diffuse, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 1);
+  create_option_group("Specular:", &dirlight->specular, 0.0, 25.0, 0.1, 1, Lighting_Box, Lighting_Layout, 2);
   Light_layout->addWidget(Lighting_Box, 0, 1);
 
   QGroupBox *Position_box = new QGroupBox(tr("Position"), this);
@@ -792,11 +800,12 @@ QWidget* Settings::create_option_group(
   double min_val, double max_val, double step, int decimals,
   QWidget *parent, QGridLayout *layout, int y_pos
 ) {
+  T initial_value = *option;
   Slider_Spinbox_Group* group = new Slider_Spinbox_Group(min_val, max_val, step, decimals, name, parent);
-  group->setValue(*option);
+  group->setValue(initial_value);
   connect(group, &Slider_Spinbox_Group::valueChanged, this,
     [option](double value){
-      (*option) = (float)value;
+      (*option) = (T)value;
     }
   );
   layout->addWidget(group, y_pos, 0, 1,-1);

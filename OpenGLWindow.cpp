@@ -88,9 +88,9 @@ void OpenGLWindow::initializeGL() {
   dirlight->y_view_size = 35;
   dirlight->initialize_depth_framebuffer(2048,2048);
   dirlight->color = glm::vec3(3.5f);
-  dirlight->ambient = 0.8f;
-  dirlight->diffuse = 2.5f;
-  dirlight->specular = 2.5f;
+  dirlight->ambient = 1.0f;
+  dirlight->diffuse = 5.0;
+  dirlight->specular = 5.0;
   dirlight->set_visibility(false);
   scene->add_dirlight(std::shared_ptr<DirectionalLight>(dirlight));
   settings->set_dirlight(dirlight);
@@ -115,7 +115,10 @@ void OpenGLWindow::initializeGL() {
     PointLight* light = new PointLight(light_positions[i], glm::vec3(0.2f));
     light->name = "light #" + std::to_string(i);
     light->initialize_depth_framebuffer(1024,1024);
-    light->color = glm::vec3(4.5);
+    light->color = glm::vec3(1.0);
+    light->ambient = 0.3;
+    light->diffuse = 2.8;
+    light->specular = 2.8;
     scene->add_pointlight(std::shared_ptr<PointLight>(light));
   }
 
@@ -503,35 +506,48 @@ void OpenGLWindow::paintGL() {
   scene_shader->setFloat("bloom_threshold_lower", scene->bloom_threshold_lower);
   scene_shader->setInt("bloom_interpolation", scene->bloom_interpolation);
 
+  scene_shader->setVec3("camera_position", camera.position);
+  scene_shader->setMat4("inverse_view_transform", glm::inverse(view));
+  scene_shader->setMat4("inverse_perspective_transform", glm::inverse(projection));
+
+  scene_shader->setInt("volumetric_samples", scene->volumetric_samples);
+  scene_shader->setFloat("volumetric_scattering", scene->volumetric_scattering);
+  scene_shader->setFloat("volumetric_density", scene->volumetric_density);
+  scene_shader->setFloat("scattering_direction", scene->scattering_direction);
+
+  unsigned int texture_unit = 0;
+  texture_unit = scene->set_dirlight_settings("dirlights", scene_shader, texture_unit);
+  texture_unit = scene->set_light_settings("lights", scene_shader, texture_unit);
+
   switch (scene->display_type) {
     case SUNLIGHT_DEPTH:
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0+texture_unit);
       glBindTexture(GL_TEXTURE_2D, scene->get_dirlights()[0]->depth_map);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("screen_texture", texture_unit);
       scene_shader->setBool("greyscale", true);
       break;
     case POINTLIGHT_DEPTH:
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0+texture_unit);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("screen_texture", texture_unit);
       scene_shader->setBool("greyscale", true);
       break;
     case BLOOM:
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0+texture_unit);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("screen_texture", texture_unit);
       scene_shader->setBool("greyscale", false);
       break;
     case BRIGHT:
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0+texture_unit);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("screen_texture", texture_unit);
       scene_shader->setBool("greyscale", false);
       break;
     default:
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0+texture_unit);
       glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
-      scene_shader->setInt("screen_texture", 0);
+      scene_shader->setInt("screen_texture", texture_unit);
       scene_shader->setBool("greyscale", false);
       break;
   }
@@ -558,7 +574,7 @@ void OpenGLWindow::paintGL() {
       post_processing_shader->setBool("do_gamma_correction", false);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, colorbuffers[0]);
+      glBindTexture(GL_TEXTURE_2D, scene_colorbuffers[0]);
       post_processing_shader->setInt("screen_texture", 0);
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, blurred);

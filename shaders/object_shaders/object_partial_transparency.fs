@@ -35,12 +35,14 @@ uniform vec3 camera_position;
 
 #mypreprocessor include "../shader_components/light_calculation_functions.glsl"
 
+#mypreprocessor include "../shader_components/misc_functions.glsl"
+
 void main() {
 	if (material.simple) {
-		frag_color = vec4(material.color, 1.0f);
+		frag_color = vec4(material.color, linear_depth(gl_FragCoord.z));
 		return;
 	}
-	
+
 	float opacity = material.opacity;
 	if (material.use_opacity_map) {
 		opacity *= texture(material.opacity_map, fs_in.texture_coordinate).a;
@@ -80,6 +82,6 @@ void main() {
 	total_color = clamp(total_color, 0.0f.xxx, MAXIMUM_BRIGHTNESS.xxx);
 
 	// Final result
-  frag_color = vec4(total_color*opacity, opacity);
+  frag_color = vec4(total_color*opacity, linear_depth(gl_FragCoord.z));
 	mult_color = vec4(mix(color,vec3(1.0f), (1-opacity))*(1-opacity), 1-opacity);
 }
