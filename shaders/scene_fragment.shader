@@ -60,6 +60,9 @@ void main() {
   int steps = volumetric_samples;
   vec3 camera_direction = normalize(camera_position - world_space_position);
 
+  // Volumetric lighting
+  // Calculated using the method created by Toth et al in Real-time Volumetric Lighting in Participating Media
+  // See: https://pdfs.semanticscholar.org/d401/ec889361a907a5c1734415c82b13bfa1deeb.pdf
   float albedo = volumetric_scattering;
   float tau = volumetric_density;
   vec3 L0 = 0.0f.xxx;
